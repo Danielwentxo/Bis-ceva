@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Bis",
+      "hasCanvas": false,
+      "bodyTextLen": 1280,
+      "bodyTextHash": "c861cb9de40c60a33fd5877b412236f315748fb66fcffc85404dd0097b0a3174",
+      "bodyTextPrefix": "Bis Arhiva ta de concerte Concerte Formății Locuri Statistici Ad",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Bis",
+      "hasCanvas": false,
+      "bodyTextLen": 1243,
+      "bodyTextHash": "8c165b5d0287087ca6b126323051d2ff82dc89fe9fae97f35678d97f217b61d6",
+      "bodyTextPrefix": "Bis Arhiva live Concertele tale 18 de concerte · 17 de formații ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

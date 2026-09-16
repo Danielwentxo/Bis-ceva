@@ -1,0 +1,1 @@
+import{d as e}from"./createLucideIcon-Be2ML8mG.js";import{p as t}from"./format-8uNzxqL2.js";import{n}from"./countries-DoHYLKSF.js";var r=e();function i({code:e,className:i}){return e?(0,r.jsx)(`img`,{src:n(e,40),alt:``,className:t(`h-3.5 w-5 rounded-sm object-cover shadow-[var(--shadow-border)]`,i)}):null}export{i as t};
