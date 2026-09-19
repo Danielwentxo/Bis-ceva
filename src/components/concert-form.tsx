@@ -14,6 +14,7 @@ import { COUNTRIES } from "@/lib/countries";
 import { todayIso } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
+import { resizeImageFile } from "@/lib/image-file";
 import { useArchive } from "@/lib/store";
 import type { ArtistMedia, Concert } from "@/lib/types";
 import { artistKey, cn } from "@/lib/utils";
@@ -89,6 +90,7 @@ export function ConcertForm({
   const [saving, setSaving] = useState(false);
   const [catalogVenues, setCatalogVenues] = useState<{ venue: string; city: string; countryCode: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [manual, setManual] = useState<{ name: string; country: string; logoUrl: string | null } | null>(null);
 
   useEffect(() => {
     const q = query.trim();
@@ -166,17 +168,48 @@ export function ConcertForm({
     setForm((f) => ({ ...f, artists: [...f.artists, hit] }));
     setQuery("");
     setHits([]);
+    setManual(null);
   }
 
-  function addManualArtist() {
+  function startManualArtist() {
     const name = query.trim();
     if (name.length < 2) return;
-    addArtist({ name, logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null });
-    void saveCatalogArtist({ data: { name } }).catch(() => undefined);
+    setManual({ name, country: "", logoUrl: null });
+  }
+
+  function confirmManualArtist() {
+    if (!manual) return;
+    const origin = COUNTRIES.find((c) => c.code === manual.country)?.name ?? null;
+    addArtist({
+      name: manual.name,
+      logoUrl: manual.logoUrl,
+      thumbUrl: manual.logoUrl,
+      genre: null,
+      country: origin,
+      bio: null,
+    });
+    void saveCatalogArtist({
+      data: {
+        name: manual.name,
+        logoUrl: manual.logoUrl,
+        thumbUrl: manual.logoUrl,
+        country: origin,
+      },
+    }).catch(() => undefined);
   }
 
   function removeArtist(name: string) {
     setForm((f) => ({ ...f, artists: f.artists.filter((a) => a.name !== name) }));
+  }
+
+  async function onLogo(file: File | undefined) {
+    if (!file || !manual) return;
+    try {
+      const logoUrl = await resizeImageFile(file);
+      setManual({ ...manual, logoUrl });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not use this image.");
+    }
   }
 
   async function submit(e: FormEvent) {
@@ -249,12 +282,7 @@ export function ConcertForm({
 
       <div className="space-y-2">
         <Label htmlFor="festival">{t("festivalBadge")}</Label>
-        <Input
-          id="festival"
-          value={form.festivalName}
-          onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))}
-          placeholder="Untold, Sziget, Download…"
-        />
+        <Input id="festival" value={form.festivalName} onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))} placeholder="Untold, Sziget, Download…" />
       </div>
 
       <div className="space-y-2">
@@ -269,6 +297,7 @@ export function ConcertForm({
                   <p className="truncate text-sm font-medium">{a.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {i === 0 ? t("headliner") : t("support")}
+                    {a.country ? ` · ${a.country}` : ""}
                     {a.genre ? ` · ${a.genre}` : ""}
                   </p>
                 </div>
@@ -283,7 +312,7 @@ export function ConcertForm({
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
           <Input id="artist-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchArtistsPh")} className="pl-10" autoComplete="off" />
         </div>
-        {query.trim().length >= 2 ? (
+        {query.trim().length >= 2 && !manual ? (
           <ul className="overflow-hidden rounded-xl bg-popover shadow-[var(--shadow-border)]">
             {searching && !hits.length ? <li className="px-3 py-3 text-sm text-muted-foreground">{t("searchingLogos")}</li> : null}
             {hits.map((hit) => {
@@ -302,12 +331,48 @@ export function ConcertForm({
             })}
             {!exactHit ? (
               <li>
-                <button type="button" onClick={addManualArtist} className="flex w-full items-center px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+                <button type="button" onClick={startManualArtist} className="flex w-full items-center px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
                   {extraLabel(locale, "addManually", { name: query.trim() })}
                 </button>
               </li>
             ) : null}
           </ul>
+        ) : null}
+        {manual ? (
+          <div className="space-y-3 rounded-xl bg-card p-4 shadow-[var(--shadow-border)]">
+            <p className="text-sm font-medium">{manual.name}</p>
+            <div className="space-y-2">
+              <Label htmlFor="artist-origin">{t("country")}</Label>
+              <select
+                id="artist-origin"
+                value={manual.country}
+                onChange={(e) => setManual({ ...manual, country: e.target.value })}
+                className="flex h-11 w-full rounded-lg bg-secondary px-3 text-sm text-foreground shadow-[var(--shadow-border)] outline-none"
+              >
+                <option value="">Optional</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="artist-logo">Logo</Label>
+              <Input id="artist-logo" type="file" accept="image/*" onChange={(e) => void onLogo(e.target.files?.[0])} />
+              {manual.logoUrl ? (
+                <img src={manual.logoUrl} alt="" className="size-14 rounded-lg object-cover" />
+              ) : null}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" onClick={confirmManualArtist}>
+                {t("save")}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setManual(null)}>
+                {t("cancel")}
+              </Button>
+            </div>
+          </div>
         ) : null}
       </div>
 
