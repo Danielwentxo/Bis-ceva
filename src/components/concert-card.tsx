@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin, Star } from "lucide-react";
 import { ArtistStack } from "@/components/artist-mark";
-import { Badge } from "@/components/ui/badge";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
 import { concertArtists } from "@/lib/stats";
@@ -16,9 +15,9 @@ export function ConcertCard({
 }) {
   const lineup = concertArtists(concert, artists);
   const names = lineup.map((l) => l.artist.name);
-  const title = names[0] ?? "Concert";
-  const rest = names.slice(1);
-  const festivalLabel = concert.festivalName?.trim() || (concert.festival ? "Festival" : "");
+  const festivalName = concert.festivalName?.trim() ?? "";
+  const title = festivalName || names[0] || "Concert";
+  const subtitle = festivalName ? names : names.slice(1);
 
   return (
     <Link
@@ -33,11 +32,8 @@ export function ConcertCard({
             <h3 className="truncate font-medium text-foreground">{title}</h3>
             {concert.favorite ? <Star className="mt-0.5 size-3.5 shrink-0 fill-primary text-primary" /> : null}
           </div>
-          {rest.length ? <p className="truncate text-sm text-muted-foreground">{rest.join(", ")}</p> : null}
-          {festivalLabel ? (
-            <Badge className="mt-1" variant="outline">
-              {festivalLabel}
-            </Badge>
+          {subtitle.length ? (
+            <p className="truncate text-sm text-muted-foreground">{subtitle.join(", ")}</p>
           ) : null}
           <p className="mt-1 text-sm text-muted-foreground">{formatConcertDate(concert.date)}</p>
           <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-subtle">
