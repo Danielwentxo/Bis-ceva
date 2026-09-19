@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/star-rating";
 import { searchArtists } from "@/lib/artist-api";
+import { saveCatalogArtist, saveCatalogVenue, searchCatalogArtists, searchCatalogVenues } from "@/lib/catalog";
 import { COUNTRIES } from "@/lib/countries";
 import { todayIso } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 import type { ArtistMedia, Concert } from "@/lib/types";
 import { artistKey, cn } from "@/lib/utils";
@@ -58,6 +60,7 @@ export function ConcertForm({
   existing?: Concert;
   presetArtist?: ArtistMedia | null;
 }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const archiveArtists = useArchive((s) => s.artists);
   const concerts = useArchive((s) => s.concerts);
@@ -82,6 +85,7 @@ export function ConcertForm({
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<ArtistMedia[]>([]);
   const [searching, setSearching] = useState(false);
+  const [catalogVenues, setCatalogVenues] = useState<{ venue: string; city: string; countryCode: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -91,14 +95,20 @@ export function ConcertForm({
       return;
     }
     let cancelled = false;
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       setSearching(true);
-      void searchArtists({ data: { query: q } })
-        .then((rows) => {
-          if (!cancelled) setHits(rows);
-        })
-        .catch(() => {
-          if (!cancelled) setHits([]);
+      void Promise.all([
+        searchCatalogArtists({ data: { query: q } }).catch(() => [] as ArtistMedia[]),
+        searchArtists({ data: { query: q } }).catch(() => [] as ArtistMedia[]),
+      ])
+        .then(([catalog, api]) => {
+          if (cancelled) return;
+          const byName = new Map<string, ArtistMedia>();
+          for (const row of [...catalog, ...api]) {
+            const key = artistKey(row.name);
+            if (!byName.has(key)) byName.set(key, row);
+          }
+          setHits([...byName.values()]);
         })
         .finally(() => {
           if (!cancelled) setSearching(false);
@@ -106,32 +116,68 @@ export function ConcertForm({
     }, 280);
     return () => {
       cancelled = true;
-      window.clearTimeout(t);
+      window.clearTimeout(timer);
     };
   }, [query]);
 
+  useEffect(() => {
+    const q = form.venue.trim();
+    if (q.length < 2) {
+      setCatalogVenues([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void searchCatalogVenues({ data: { query: q } })
+        .then((rows) => {
+          if (!cancelled) setCatalogVenues(rows);
+        })
+        .catch(() => {
+          if (!cancelled) setCatalogVenues([]);
+        });
+    }, 280);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [form.venue]);
+
   const venueSuggestions = useMemo(() => {
     const seen = new Map<string, { venue: string; city: string; countryCode: string }>();
+    for (const row of catalogVenues) seen.set(`${row.venue}|${row.city}`, row);
     for (const c of concerts) {
       const key = `${c.venue}|${c.city}`;
-      if (!seen.has(key)) {
-        seen.set(key, { venue: c.venue, city: c.city, countryCode: c.countryCode });
-      }
+      if (!seen.has(key)) seen.set(key, { venue: c.venue, city: c.city, countryCode: c.countryCode });
     }
     const q = form.venue.trim().toLowerCase();
     return [...seen.values()]
-      .filter((v) => !q || v.venue.toLowerCase().includes(q))
-      .slice(0, 5);
-  }, [concerts, form.venue]);
+      .filter((v) => !q || v.venue.toLowerCase().includes(q) || v.city.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [concerts, form.venue, catalogVenues]);
 
   const selectedIds = new Set(form.artists.map((a) => artistKey(a.name)));
   const country = COUNTRIES.find((c) => c.code === form.countryCode);
+  const exactHit = hits.some((hit) => artistKey(hit.name) === artistKey(query.trim()));
 
   function addArtist(hit: ArtistMedia) {
     if (selectedIds.has(artistKey(hit.name))) return;
     setForm((f) => ({ ...f, artists: [...f.artists, hit] }));
     setQuery("");
     setHits([]);
+  }
+
+  function addManualArtist() {
+    const name = query.trim();
+    if (name.length < 2) return;
+    addArtist({
+      name,
+      logoUrl: null,
+      thumbUrl: null,
+      genre: null,
+      country: null,
+      bio: null,
+    });
+    void saveCatalogArtist({ data: { name } }).catch(() => undefined);
   }
 
   function removeArtist(name: string) {
@@ -141,19 +187,19 @@ export function ConcertForm({
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!form.date) {
-      setError("Alege data concertului.");
+      setError(t("needDate"));
       return;
     }
     if (!form.artists.length) {
-      setError("Adaugă cel puțin o formație.");
+      setError(t("needArtist"));
       return;
     }
     if (!form.venue.trim() || !form.city.trim()) {
-      setError("Completează locația și orașul.");
+      setError(t("needPlace"));
       return;
     }
     if (!form.countryCode) {
-      setError("Choose a country.");
+      setError(t("chooseCountry"));
       return;
     }
     const draft = {
@@ -168,13 +214,24 @@ export function ConcertForm({
       favorite: form.favorite,
       festival: form.festival,
     };
+    void saveCatalogVenue({
+      data: {
+        venue: draft.venue.trim(),
+        city: draft.city.trim(),
+        country: draft.country,
+        countryCode: draft.countryCode,
+      },
+    }).catch(() => undefined);
+    for (const artist of draft.artists) {
+      void saveCatalogArtist({ data: artist }).catch(() => undefined);
+    }
     if (existing) {
       updateConcert(existing.id, draft);
-      toast.success("Concert actualizat");
+      toast.success(t("save"));
       void navigate({ to: "/concerts/$id", params: { id: existing.id } });
     } else {
       const id = addConcert(draft);
-      toast.success("Concert adăugat în arhivă");
+      toast.success(t("addToArchive"));
       void navigate({ to: "/concerts/$id", params: { id } });
     }
   }
@@ -182,40 +239,26 @@ export function ConcertForm({
   return (
     <form onSubmit={submit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="date">Data</Label>
-        <Input
-          id="date"
-          type="date"
-          value={form.date}
-          onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-          required
-        />
+        <Label htmlFor="date">{t("date")}</Label>
+        <Input id="date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="artist-search">Formații</Label>
-        <p className="text-xs text-subtle">Prima din listă e cap de afiș. Logo-urile vin din TheAudioDB și Deezer.</p>
+        <Label htmlFor="artist-search">{t("artists")}</Label>
+        <p className="text-xs text-subtle">{t("artistsHint")}</p>
         {form.artists.length ? (
           <ul className="space-y-2">
             {form.artists.map((a, i) => (
-              <li
-                key={a.name}
-                className="flex items-center gap-3 rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]"
-              >
+              <li key={a.name} className="flex items-center gap-3 rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">
                 <ArtistMark artist={a} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{a.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {i === 0 ? "Cap de afiș" : "Invitat"}
+                    {i === 0 ? t("headliner") : t("support")}
                     {a.genre ? ` · ${a.genre}` : ""}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  onClick={() => removeArtist(a.name)}
-                  aria-label={`Scoate ${a.name}`}
-                >
+                <button type="button" className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground" onClick={() => removeArtist(a.name)}>
                   <X className="size-4" />
                 </button>
               </li>
@@ -224,57 +267,39 @@ export function ConcertForm({
         ) : null}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
-          <Input
-            id="artist-search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Caută Metallica, Phoenix, Golan…"
-            className="pl-10"
-            autoComplete="off"
-          />
+          <Input id="artist-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchArtistsPh")} className="pl-10" autoComplete="off" />
         </div>
-        {(searching || hits.length > 0) && query.trim().length >= 2 ? (
+        {query.trim().length >= 2 ? (
           <ul className="overflow-hidden rounded-xl bg-popover shadow-[var(--shadow-border)]">
-            {searching && !hits.length ? (
-              <li className="px-3 py-3 text-sm text-muted-foreground">Căutăm logo-uri…</li>
-            ) : null}
+            {searching && !hits.length ? <li className="px-3 py-3 text-sm text-muted-foreground">{t("searchingLogos")}</li> : null}
             {hits.map((hit) => {
               const taken = selectedIds.has(artistKey(hit.name));
               return (
                 <li key={hit.name}>
-                  <button
-                    type="button"
-                    disabled={taken}
-                    onClick={() => addArtist(hit)}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-secondary",
-                      taken && "opacity-40",
-                    )}
-                  >
+                  <button type="button" disabled={taken} onClick={() => addArtist(hit)} className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-secondary", taken && "opacity-40")}>
                     <ArtistMark artist={hit} size="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{hit.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {[hit.genre, hit.country].filter(Boolean).join(" · ") || "Fără detalii extra"}
-                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">{[hit.genre, hit.country].filter(Boolean).join(" · ") || t("noExtra")}</span>
                     </span>
                   </button>
                 </li>
               );
             })}
+            {!exactHit ? (
+              <li>
+                <button type="button" onClick={addManualArtist} className="flex w-full items-center px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+                  Add “{query.trim()}” manually
+                </button>
+              </li>
+            ) : null}
           </ul>
         ) : null}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="venue">Locație</Label>
-        <Input
-          id="venue"
-          value={form.venue}
-          onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
-          placeholder="Romexpo, Control Club, Untold…"
-          required
-        />
+        <Label htmlFor="venue">{t("venue")}</Label>
+        <Input id="venue" value={form.venue} onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))} placeholder={t("venuePh")} required />
         {form.venue && venueSuggestions.length ? (
           <div className="flex flex-wrap gap-2">
             {venueSuggestions.map((v) => (
@@ -282,14 +307,7 @@ export function ConcertForm({
                 key={`${v.venue}-${v.city}`}
                 type="button"
                 className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() =>
-                  setForm((f) => ({
-                    ...f,
-                    venue: v.venue,
-                    city: v.city,
-                    countryCode: v.countryCode,
-                  }))
-                }
+                onClick={() => setForm((f) => ({ ...f, venue: v.venue, city: v.city, countryCode: v.countryCode || f.countryCode }))}
               >
                 {v.venue} · {v.city}
               </button>
@@ -300,17 +318,11 @@ export function ConcertForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="city">Oraș</Label>
-          <Input
-            id="city"
-            value={form.city}
-            onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-            placeholder="City"
-            required
-          />
+          <Label htmlFor="city">{t("city")}</Label>
+          <Input id="city" value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} placeholder={t("city")} required />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
+          <Label htmlFor="country">{t("country")}</Label>
           <select
             id="country"
             value={form.countryCode}
@@ -322,7 +334,7 @@ export function ConcertForm({
             required
           >
             <option value="" disabled>
-              Country
+              {t("country")}
             </option>
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code} className="text-foreground">
@@ -334,45 +346,30 @@ export function ConcertForm({
       </div>
 
       <label className="flex h-11 items-center gap-3 rounded-xl bg-card px-3 shadow-[var(--shadow-border)]">
-        <input
-          type="checkbox"
-          checked={form.festival}
-          onChange={(e) => setForm((f) => ({ ...f, festival: e.target.checked }))}
-          className="size-4 accent-primary"
-        />
-        <span className="text-sm">A fost festival</span>
+        <input type="checkbox" checked={form.festival} onChange={(e) => setForm((f) => ({ ...f, festival: e.target.checked }))} className="size-4 accent-primary" />
+        <span className="text-sm">{t("festival")}</span>
       </label>
 
       <label className="flex h-11 items-center gap-3 rounded-xl bg-card px-3 shadow-[var(--shadow-border)]">
-        <input
-          type="checkbox"
-          checked={form.favorite}
-          onChange={(e) => setForm((f) => ({ ...f, favorite: e.target.checked }))}
-          className="size-4 accent-primary"
-        />
-        <span className="text-sm">Marchează ca favorit</span>
+        <input type="checkbox" checked={form.favorite} onChange={(e) => setForm((f) => ({ ...f, favorite: e.target.checked }))} className="size-4 accent-primary" />
+        <span className="text-sm">{t("favorite")}</span>
       </label>
 
       <div className="space-y-2">
-        <Label>Notă</Label>
+        <Label>{t("rating")}</Label>
         <StarRating value={form.rating} onChange={(rating) => setForm((f) => ({ ...f, rating }))} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Însemnări</Label>
-        <Textarea
-          id="notes"
-          value={form.notes}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          placeholder="Setlist, oameni, vreme, ce a rămas."
-        />
+        <Label htmlFor="notes">{t("notes")}</Label>
+        <Textarea id="notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={t("notesPh")} />
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="flex gap-3">
         <Button type="submit" className="flex-1">
-          {existing ? "Salvează" : "Adaugă în arhivă"}
+          {existing ? t("save") : t("addToArchive")}
         </Button>
         <Button
           type="button"
@@ -382,7 +379,7 @@ export function ConcertForm({
             else void navigate({ to: "/" });
           }}
         >
-          Anulează
+          {t("cancel")}
         </Button>
       </div>
     </form>
