@@ -38,3 +38,19 @@ export function todayIso() {
 export function countLabel(n: number, one: string, many: string) {
   return n === 1 ? one : many.replace("{n}", String(n));
 }
+
+export function showsLabel(n: number) {
+  return n === 1 ? "1 show" : `${n} shows`;
+}
+
+export function artistsLabel(n: number) {
+  return n === 1 ? "1 artist" : `${n} artists`;
+}
+
+export function venuesLabel(n: number) {
+  return n === 1 ? "1 venue" : `${n} venues`;
+}
+
+export function countriesLabel(n: number) {
+  return n === 1 ? "1 country" : `${n} countries`;
+}
