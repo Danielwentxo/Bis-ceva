@@ -19,7 +19,10 @@ function StatsPage() {
   const artists = useArchive((s) => s.artists);
   const seedDemo = useArchive((s) => s.seedDemo);
   const stats = useMemo(() => computeStats(concerts, artists), [concerts, artists]);
-  const topArtist = stats.artistCounts[0];
+  const topArtists = stats.artistCounts.slice(0, 3);
+  const topCountries = stats.countryCounts.slice(0, 3);
+  const topOrigins = stats.artistOriginCounts.slice(0, 8);
+  const maxYear = Math.max(1, ...stats.yearCounts.map((y) => y.count));
 
   if (!hasHydrated) {
     return (
@@ -49,33 +52,57 @@ function StatsPage() {
         <Tile label={t("tileVenues")} value={String(stats.uniqueVenues)} />
         <Tile label={t("tileCountries")} value={String(stats.uniqueCountries)} />
       </div>
-      {topArtist ? (
-        <Link
-          to="/artists/$slug"
-          params={{ slug: topArtist.data.id }}
-          className="mt-6 flex items-center gap-4 rounded-2xl bg-card p-5 shadow-[var(--shadow-border)]"
-        >
-          <ArtistMark artist={topArtist.data} size="xl" />
-          <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-subtle">{t("mostSeen")}</p>
-            <p className="mt-1 font-display text-2xl font-medium">{topArtist.data.name}</p>
-            <p className="text-sm text-muted-foreground">{showsLabel(topArtist.count)}</p>
-          </div>
-        </Link>
-      ) : null}
-      <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
-        <Meta label={t("firstShow")} value={stats.firstShow ? formatConcertDate(stats.firstShow.date) : "\u2014"} />
-        <Meta label={t("lastShow")} value={stats.lastShow ? formatConcertDate(stats.lastShow.date) : "\u2014"} />
-        <Meta label={t("festivals")} value={String(stats.festivals)} />
-        <Meta label={t("favorites")} value={String(stats.favorites)} />
-      </dl>
-      {stats.countryCounts.length ? (
+
+      {stats.yearCounts.length ? (
         <section className="mt-8">
-          <h2 className="mb-3 font-display text-xl font-medium">{t("tileCountries")}</h2>
+          <h2 className="mb-3 font-display text-xl font-medium">{t("concertsPerYear")}</h2>
+          <div className="flex items-end gap-2 rounded-2xl bg-card px-4 py-5 shadow-[var(--shadow-border)]">
+            {stats.yearCounts.map((row) => (
+              <div key={row.year} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <p className="text-xs tabular-nums text-muted-foreground">{row.count}</p>
+                <div className="flex h-28 w-full items-end justify-center">
+                  <div
+                    className="w-full max-w-10 rounded-t-md bg-primary"
+                    style={{ height: `${Math.max(8, (row.count / maxYear) * 100)}%` }}
+                  />
+                </div>
+                <p className="text-[11px] tabular-nums text-subtle">{row.year}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {topArtists.length ? (
+        <section className="mt-8">
+          <h2 className="mb-3 font-display text-xl font-medium">{t("mostSeen")}</h2>
           <ul className="space-y-2">
-            {stats.countryCounts.map((row) => (
+            {topArtists.map((row, index) => (
+              <li key={row.key}>
+                <Link
+                  to="/artists/$slug"
+                  params={{ slug: row.data.id }}
+                  className="flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]"
+                >
+                  <span className="w-5 text-sm tabular-nums text-subtle">{index + 1}</span>
+                  <ArtistMark artist={row.data} size="sm" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{row.data.name}</span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{showsLabel(row.count)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {topCountries.length ? (
+        <section className="mt-8">
+          <h2 className="mb-3 font-display text-xl font-medium">{t("topCountries")}</h2>
+          <ul className="space-y-2">
+            {topCountries.map((row, index) => (
               <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
                 <span className="flex items-center gap-2 text-sm font-medium">
+                  <span className="w-5 text-subtle">{index + 1}</span>
                   <CountryFlag code={row.data.countryCode} />
                   {row.data.country}
                 </span>
@@ -85,6 +112,27 @@ function StatsPage() {
           </ul>
         </section>
       ) : null}
+
+      {topOrigins.length ? (
+        <section className="mt-8">
+          <h2 className="mb-3 font-display text-xl font-medium">{t("bandsByCountry")}</h2>
+          <ul className="space-y-2">
+            {topOrigins.map((row) => (
+              <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <span className="text-sm font-medium">{row.data.country}</span>
+                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
+        <Meta label={t("firstShow")} value={stats.firstShow ? formatConcertDate(stats.firstShow.date) : "\u2014"} />
+        <Meta label={t("lastShow")} value={stats.lastShow ? formatConcertDate(stats.lastShow.date) : "\u2014"} />
+        <Meta label={t("favorites")} value={String(stats.favorites)} />
+      </dl>
+
       <div className="mt-10">
         <button
           type="button"

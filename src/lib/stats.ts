@@ -24,13 +24,13 @@ export type ArchiveStats = {
   venueCounts: CountItem<{ venue: string; city: string; country: string; countryCode: string }>[];
   cityCounts: CountItem<{ city: string; country: string; countryCode: string }>[];
   countryCounts: CountItem<{ country: string; countryCode: string }>[];
+  artistOriginCounts: CountItem<{ country: string }>[];
   yearCounts: { year: number; count: number }[];
   monthCounts: { month: number; count: number }[];
 };
 
 function headlinerId(concert: Concert) {
-  return concert.lineup.find((l) => l.role === "headliner")?.artistId
-    ?? concert.lineup[0]?.artistId;
+  return concert.lineup.find((l) => l.role === "headliner")?.artistId ?? concert.lineup[0]?.artistId;
 }
 
 export function concertHeadliner(concert: Concert, artists: Record<string, Artist>) {
@@ -50,10 +50,7 @@ function bump<T>(map: Map<string, CountItem<T>>, key: string, data: T) {
   else map.set(key, { key, count: 1, data });
 }
 
-export function computeStats(
-  concerts: Concert[],
-  artists: Record<string, Artist>,
-): ArchiveStats {
+export function computeStats(concerts: Concert[], artists: Record<string, Artist>): ArchiveStats {
   const today = todayIso();
   const past = concerts.filter((c) => c.date <= today);
   const upcoming = concerts.filter((c) => c.date > today);
@@ -63,9 +60,9 @@ export function computeStats(
   const venueMap = new Map<string, CountItem<{ venue: string; city: string; country: string; countryCode: string }>>();
   const cityMap = new Map<string, CountItem<{ city: string; country: string; countryCode: string }>>();
   const countryMap = new Map<string, CountItem<{ country: string; countryCode: string }>>();
+  const originMap = new Map<string, CountItem<{ country: string }>>();
   const yearMap = new Map<number, number>();
   const monthMap = new Map<number, number>();
-
   const seenArtists = new Set<string>();
 
   for (const c of concerts) {
@@ -97,6 +94,13 @@ export function computeStats(
     }
   }
 
+  for (const id of seenArtists) {
+    const artist = artists[id];
+    const origin = artist?.country?.trim();
+    if (!origin) continue;
+    bump(originMap, origin.toLowerCase(), { country: origin });
+  }
+
   const sortCount = <T>(items: CountItem<T>[]) =>
     [...items].sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 
@@ -111,10 +115,7 @@ export function computeStats(
 
   const rated = concerts.filter((c) => typeof c.rating === "number");
   const avgRating =
-    rated.length > 0
-      ? rated.reduce((sum, c) => sum + (c.rating ?? 0), 0) / rated.length
-      : null;
-
+    rated.length > 0 ? rated.reduce((sum, c) => sum + (c.rating ?? 0), 0) / rated.length : null;
   const busiestYear = [...yearCounts].sort((a, b) => b.count - a.count)[0] ?? null;
 
   return {
@@ -136,14 +137,12 @@ export function computeStats(
     venueCounts: sortCount([...venueMap.values()]),
     cityCounts: sortCount([...cityMap.values()]),
     countryCounts: sortCount([...countryMap.values()]),
+    artistOriginCounts: sortCount([...originMap.values()]),
     yearCounts,
     monthCounts,
   };
 }
 
-export function artistShowCount(
-  artistId: string,
-  concerts: Concert[],
-) {
+export function artistShowCount(artistId: string, concerts: Concert[]) {
   return concerts.filter((c) => c.lineup.some((l) => l.artistId === artistId)).length;
 }
