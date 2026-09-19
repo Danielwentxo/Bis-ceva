@@ -26,7 +26,7 @@ type FormState = {
   notes: string;
   rating: number | null;
   favorite: boolean;
-  festival: boolean;
+  festivalName: string;
   artists: ArtistMedia[];
 };
 
@@ -39,7 +39,7 @@ function concertToForm(concert: Concert, artists: Record<string, import("@/lib/t
     notes: concert.notes,
     rating: concert.rating,
     favorite: concert.favorite,
-    festival: concert.festival,
+    festivalName: concert.festivalName ?? "",
     artists: concert.lineup
       .map((l) => artists[l.artistId])
       .filter(Boolean)
@@ -79,7 +79,7 @@ export function ConcertForm({
           notes: "",
           rating: null,
           favorite: false,
-          festival: false,
+          festivalName: "",
           artists: presetArtist ? [presetArtist] : [],
         },
   );
@@ -197,6 +197,7 @@ export function ConcertForm({
       setError(t("chooseCountry"));
       return;
     }
+    const festivalName = form.festivalName.trim();
     const draft = {
       date: form.date,
       venue: form.venue,
@@ -207,7 +208,8 @@ export function ConcertForm({
       notes: form.notes,
       rating: form.rating,
       favorite: form.favorite,
-      festival: form.festival,
+      festival: Boolean(festivalName),
+      festivalName,
     };
     setSaving(true);
     try {
@@ -243,6 +245,16 @@ export function ConcertForm({
       <div className="space-y-2">
         <Label htmlFor="date">{t("date")}</Label>
         <Input id="date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="festival">{t("festivalBadge")}</Label>
+        <Input
+          id="festival"
+          value={form.festivalName}
+          onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))}
+          placeholder="Untold, Sziget, Download…"
+        />
       </div>
 
       <div className="space-y-2">
@@ -346,11 +358,6 @@ export function ConcertForm({
           </select>
         </div>
       </div>
-
-      <label className="flex h-11 items-center gap-3 rounded-xl bg-card px-3 shadow-[var(--shadow-border)]">
-        <input type="checkbox" checked={form.festival} onChange={(e) => setForm((f) => ({ ...f, festival: e.target.checked }))} className="size-4 accent-primary" />
-        <span className="text-sm">{t("festival")}</span>
-      </label>
 
       <label className="flex h-11 items-center gap-3 rounded-xl bg-card px-3 shadow-[var(--shadow-border)]">
         <input type="checkbox" checked={form.favorite} onChange={(e) => setForm((f) => ({ ...f, favorite: e.target.checked }))} className="size-4 accent-primary" />
