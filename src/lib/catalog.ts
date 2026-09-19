@@ -5,6 +5,70 @@ import { getSql } from "@/lib/db";
 import type { ArtistMedia } from "@/lib/types";
 import { artistKey, venueKey } from "@/lib/utils";
 
+function like(query: string) {
+  return `%${query.replace(/[%_]/g, "")}%`;
+}
+
+export const searchCatalogArtists = createServerFn({ method: "POST" })
+  .validator(z.object({ query: z.string().trim().min(1).max(80) }))
+  .handler(async ({ data }): Promise<ArtistMedia[]> => {
+    const sql = await getSql();
+    const rows = await sql<{
+      name: string;
+      logo_url: string | null;
+      thumb_url: string | null;
+      genre: string | null;
+      country: string | null;
+      bio: string | null;
+    }>`
+      select name, logo_url, thumb_url, genre, country, bio
+      from catalog_artists
+      where lower(name) like lower(${like(data.query)})
+      order by name
+      limit 12
+    `;
+    return rows.map((row) => ({
+      name: row.name,
+      logoUrl: row.logo_url,
+      thumbUrl: row.thumb_url,
+      genre: row.genre,
+      country: row.country,
+      bio: row.bio,
+    }));
+  });
+
+export const saveCatalogArtist = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      name: z.string().trim().min(1).max(200),
+      logoUrl: z.string().nullable().optional(),
+      thumbUrl: z.string().nullable().optional(),
+      genre: z.string().nullable().optional(),
+      country: z.string().nullable().optional(),
+      bio: z.string().nullable().optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    const id = artistKey(data.name);
+    await sql`
+      insert into catalog_artists (id, name, logo_url, thumb_url, genre, country, bio, created_by)
+      values (
+        ${id}, ${data.name}, ${data.logoUrl ?? null}, ${data.thumbUrl ?? null},
+        ${data.genre ?? null}, ${data.country ?? null}, ${data.bio ?? null}, ${context.userId}
+      )
+      on conflict (id) do update set
+        name = excluded.name,
+        logo_url = coalesce(excluded.logo_url, catalog_artists.logo_url),
+        thumb_url = coalesce(excluded.thumb_url, catalog_artists.thumb_url),
+        genre = coalesce(excluded.genre, catalog_artists.genre),
+        country = coalesce(excluded.country, catalog_artists.country),
+        bio = coalesce(excluded.bio, catalog_artists.bio)
+    `;
+    return { id, name: data.name };
+  });
+
 export type CatalogVenue = {
   venue: string;
   city: string;
@@ -12,38 +76,10 @@ export type CatalogVenue = {
   countryCode: string;
 };
 
-export async function findCatalogArtists(query: string): Promise<ArtistMedia[]> {
-  const sql = await getSql();
-  const needle = `%${query.trim()}%`;
-  const rows = await sql<{
-    name: string;
-    logo_url: string | null;
-    thumb_url: string | null;
-    genre: string | null;
-    country: string | null;
-    bio: string | null;
-  }>`
-    select name, logo_url, thumb_url, genre, country, bio
-    from catalog_artists
-    where name ilike ${needle}
-    order by name asc
-    limit 8
-  `;
-  return rows.map((row) => ({
-    name: row.name,
-    logoUrl: row.logo_url,
-    thumbUrl: row.thumb_url,
-    genre: row.genre,
-    country: row.country,
-    bio: row.bio,
-  }));
-}
-
 export const searchCatalogVenues = createServerFn({ method: "POST" })
-  .validator(z.object({ query: z.string().trim().min(1).max(120) }))
+  .validator(z.object({ query: z.string().trim().min(1).max(80) }))
   .handler(async ({ data }): Promise<CatalogVenue[]> => {
     const sql = await getSql();
-    const needle = `%${data.query}%`;
     const rows = await sql<{
       venue: string;
       city: string;
@@ -52,8 +88,8 @@ export const searchCatalogVenues = createServerFn({ method: "POST" })
     }>`
       select venue, city, country, country_code
       from catalog_venues
-      where venue ilike ${needle} or city ilike ${needle}
-      order by venue asc
+      where lower(venue) like lower(${like(data.query)}) or lower(city) like lower(${like(data.query)})
+      order by venue
       limit 8
     `;
     return rows.map((row) => ({
@@ -64,76 +100,27 @@ export const searchCatalogVenues = createServerFn({ method: "POST" })
     }));
   });
 
-export const addManualArtist = createServerFn({ method: "POST" })
+export const saveCatalogVenue = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
     z.object({
-      name: z.string().trim().min(1).max(200),
-      country: z.string().trim().max(120).optional(),
-      genre: z.string().trim().max(80).optional(),
+      venue: z.string().trim().min(1).max(200),
+      city: z.string().trim().min(1).max(120),
+      country: z.string().trim().max(120).default(""),
+      countryCode: z.string().trim().max(8).default(""),
     }),
   )
-  .handler(async ({ data, context }): Promise<ArtistMedia> => {
+  .handler(async ({ data, context }) => {
     const sql = await getSql();
-    const id = artistKey(data.name);
-    const existing = await sql<{ name: string; country: string | null; genre: string | null; logo_url: string | null; thumb_url: string | null; bio: string | null }>`
-      select name, country, genre, logo_url, thumb_url, bio from catalog_artists where id = ${id} limit 1
-    `;
-    if (existing[0]) {
-      return {
-        name: existing[0].name,
-        logoUrl: existing[0].logo_url,
-        thumbUrl: existing[0].thumb_url,
-        genre: existing[0].genre,
-        country: existing[0].country,
-        bio: existing[0].bio,
-      };
-    }
+    const id = venueKey(data.venue, data.city);
     await sql`
-      insert into catalog_artists (id, name, genre, country, created_by)
-      values (${id}, ${data.name}, ${data.genre ?? null}, ${data.country ?? null}, ${context.userId})
-    `;
-    return {
-      name: data.name,
-      logoUrl: null,
-      thumbUrl: null,
-      genre: data.genre ?? null,
-      country: data.country ?? null,
-      bio: null,
-    };
-  });
-
-export async function upsertCatalogFromConcert(input: {
-  userId: string;
-  artists: ArtistMedia[];
-  venue: string;
-  city: string;
-  country: string;
-  countryCode: string;
-}) {
-  const sql = await getSql();
-  for (const a of input.artists) {
-    const id = artistKey(a.name);
-    await sql`
-      insert into catalog_artists (id, name, logo_url, thumb_url, genre, country, bio, created_by)
-      values (
-        ${id}, ${a.name}, ${a.logoUrl ?? null}, ${a.thumbUrl ?? null},
-        ${a.genre ?? null}, ${a.country ?? null}, ${a.bio ?? null}, ${input.userId}
-      )
+      insert into catalog_venues (id, venue, city, country, country_code, created_by)
+      values (${id}, ${data.venue}, ${data.city}, ${data.country}, ${data.countryCode}, ${context.userId})
       on conflict (id) do update set
-        logo_url = coalesce(catalog_artists.logo_url, excluded.logo_url),
-        thumb_url = coalesce(catalog_artists.thumb_url, excluded.thumb_url),
-        genre = coalesce(catalog_artists.genre, excluded.genre),
-        country = coalesce(catalog_artists.country, excluded.country),
-        bio = coalesce(catalog_artists.bio, excluded.bio)
+        venue = excluded.venue,
+        city = excluded.city,
+        country = case when excluded.country = '' then catalog_venues.country else excluded.country end,
+        country_code = case when excluded.country_code = '' then catalog_venues.country_code else excluded.country_code end
     `;
-  }
-  const vid = venueKey(input.venue, input.city);
-  await sql`
-    insert into catalog_venues (id, venue, city, country, country_code, created_by)
-    values (${vid}, ${input.venue}, ${input.city}, ${input.country}, ${input.countryCode}, ${input.userId})
-    on conflict (id) do update set
-      country = case when catalog_venues.country = '' then excluded.country else catalog_venues.country end,
-      country_code = case when catalog_venues.country_code = '' then excluded.country_code else catalog_venues.country_code end
-  `;
-}
+    return { id };
+  });
