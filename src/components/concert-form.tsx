@@ -71,7 +71,7 @@ export function ConcertForm({
           date: todayIso(),
           venue: "",
           city: "",
-          countryCode: "RO",
+          countryCode: "",
           notes: "",
           rating: null,
           favorite: false,
@@ -150,6 +150,10 @@ export function ConcertForm({
     }
     if (!form.venue.trim() || !form.city.trim()) {
       setError("Completează locația și orașul.");
+      return;
+    }
+    if (!form.countryCode) {
+      setError("Choose a country.");
       return;
     }
     const draft = {
@@ -301,20 +305,27 @@ export function ConcertForm({
             id="city"
             value={form.city}
             onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-            placeholder="București"
+            placeholder="City"
             required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="country">Țară</Label>
+          <Label htmlFor="country">Country</Label>
           <select
             id="country"
             value={form.countryCode}
             onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))}
-            className="flex h-11 w-full rounded-lg bg-secondary px-3 text-base text-foreground shadow-[var(--shadow-border)] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm"
+            className={
+              "flex h-11 w-full rounded-lg bg-secondary px-3 text-base shadow-[var(--shadow-border)] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm " +
+              (form.countryCode ? "text-foreground" : "text-muted-foreground")
+            }
+            required
           >
+            <option value="" disabled>
+              Country
+            </option>
             {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>
+              <option key={c.code} value={c.code} className="text-foreground">
                 {c.name}
               </option>
             ))}
