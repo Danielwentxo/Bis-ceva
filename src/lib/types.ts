@@ -31,7 +31,7 @@ export type Concert = {
   rating: number | null;
   favorite: boolean;
   festival: boolean;
-  festivalName: string;
+  festivalName?: string;
   createdAt: string;
 };
 
@@ -46,5 +46,5 @@ export type ConcertDraft = {
   rating: number | null;
   favorite: boolean;
   festival: boolean;
-  festivalName: string;
+  festivalName?: string;
 };
