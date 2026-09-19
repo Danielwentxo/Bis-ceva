@@ -11,7 +11,12 @@ export type Locale = (typeof LOCALES)[number]["code"];
 
 const STORAGE_KEY = "bis-locale";
 
-const dict = {
+let currentLocale: Locale = "en";
+export function getLocale() {
+  return currentLocale;
+}
+
+const dict: Record<Locale, Record<string, string>> = {
   en: {
     archiveSubtitle: "Your concert archive",
     navConcerts: "Concerts",
@@ -50,6 +55,57 @@ const dict = {
     language: "Language",
     signOut: "Sign out",
     signingOut: "Signing out…",
+    liveArchive: "Live archive",
+    yourConcerts: "Your concerts",
+    searchShows: "Search artist, venue, city",
+    allYears: "All years",
+    upcoming: "Upcoming",
+    noMatches: "Nothing matches this filter.",
+    emptyTitle: "Your archive is empty",
+    emptyBody: "Add your first concert. Artist logos come from TheAudioDB and Deezer.",
+    loadExamples: "Load examples",
+    artistsLead: "Artist logos",
+    searchArtist: "Search an artist",
+    venuesLead: "Halls, clubs, arenas",
+    venuesTitle: "Venues",
+    statsLead: "Scene recap",
+    statsTitle: "Stats",
+    tileConcerts: "Concerts",
+    tileArtists: "Artists",
+    tileVenues: "Venues",
+    tileCountries: "Countries",
+    mostSeen: "Most seen artist",
+    firstShow: "First concert",
+    lastShow: "Latest concert",
+    festivals: "Festivals",
+    favorites: "Favorites",
+    clearArchive: "Clear archive",
+    clearArchiveConfirm: "Delete all concerts in this account?",
+    edit: "Edit",
+    newEntry: "New entry",
+    editConcert: "Edit concert",
+    headliner: "Headliner",
+    support: "Support",
+    lineup: "Lineup",
+    viewArtist: "View artist",
+    concertMissing: "This concert is no longer in the archive.",
+    backToConcerts: "Back to concerts",
+    artistMissing: "This artist is not in the archive.",
+    back: "Back",
+    seenLive: "Seen live",
+    with: "with",
+    favoriteBadge: "Favorite",
+    festivalBadge: "Festival",
+    deleteConcertConfirm: "Remove this concert from the archive?",
+    artistsHint: "The first artist is the headliner. Logos come from TheAudioDB and Deezer.",
+    searchArtistsPh: "Search Metallica, Phoenix…",
+    venuePh: "Arena, club, festival…",
+    notesPh: "Setlist, people, weather, what stayed with you.",
+    needDate: "Pick a date.",
+    needArtist: "Add at least one artist.",
+    needPlace: "Fill in venue and city.",
+    searchingLogos: "Looking up logos…",
+    noExtra: "No extra details",
   },
   fr: {
     archiveSubtitle: "Votre archive de concerts",
@@ -89,6 +145,57 @@ const dict = {
     language: "Langue",
     signOut: "Déconnexion",
     signingOut: "Déconnexion…",
+    liveArchive: "Archive live",
+    yourConcerts: "Vos concerts",
+    searchShows: "Rechercher artiste, lieu, ville",
+    allYears: "Toutes les années",
+    upcoming: "À venir",
+    noMatches: "Aucun résultat pour ce filtre.",
+    emptyTitle: "L'archive est vide",
+    emptyBody: "Ajoutez votre premier concert. Les logos viennent de TheAudioDB et Deezer.",
+    loadExamples: "Charger des exemples",
+    artistsLead: "Logos des artistes",
+    searchArtist: "Rechercher un artiste",
+    venuesLead: "Salles, clubs, arènes",
+    venuesTitle: "Lieux",
+    statsLead: "Bilan",
+    statsTitle: "Statistiques",
+    tileConcerts: "Concerts",
+    tileArtists: "Artistes",
+    tileVenues: "Lieux",
+    tileCountries: "Pays",
+    mostSeen: "Artiste le plus vu",
+    firstShow: "Premier concert",
+    lastShow: "Dernier concert",
+    festivals: "Festivals",
+    favorites: "Favoris",
+    clearArchive: "Vider l'archive",
+    clearArchiveConfirm: "Supprimer tous les concerts de ce compte ?",
+    edit: "Modifier",
+    newEntry: "Nouvelle entrée",
+    editConcert: "Modifier le concert",
+    headliner: "Tête d'affiche",
+    support: "Invité",
+    lineup: "Affiche",
+    viewArtist: "Voir l'artiste",
+    concertMissing: "Ce concert n'est plus dans l'archive.",
+    backToConcerts: "Retour aux concerts",
+    artistMissing: "Cet artiste n'est pas dans l'archive.",
+    back: "Retour",
+    seenLive: "Vu en live",
+    with: "avec",
+    favoriteBadge: "Favori",
+    festivalBadge: "Festival",
+    deleteConcertConfirm: "Retirer ce concert de l'archive ?",
+    artistsHint: "Le premier artiste est la tête d'affiche.",
+    searchArtistsPh: "Rechercher Metallica, Phoenix…",
+    venuePh: "Salle, club, festival…",
+    notesPh: "Setlist, amis, météo, souvenirs.",
+    needDate: "Choisissez une date.",
+    needArtist: "Ajoutez au moins un artiste.",
+    needPlace: "Indiquez le lieu et la ville.",
+    searchingLogos: "Recherche des logos…",
+    noExtra: "Pas de détails",
   },
   de: {
     archiveSubtitle: "Dein Konzertarchiv",
@@ -128,6 +235,57 @@ const dict = {
     language: "Sprache",
     signOut: "Abmelden",
     signingOut: "Abmelden…",
+    liveArchive: "Live-Archiv",
+    yourConcerts: "Deine Konzerte",
+    searchShows: "Künstler, Location, Stadt suchen",
+    allYears: "Alle Jahre",
+    upcoming: "Demnächst",
+    noMatches: "Nichts passt zu diesem Filter.",
+    emptyTitle: "Das Archiv ist leer",
+    emptyBody: "Füge dein erstes Konzert hinzu.",
+    loadExamples: "Beispiele laden",
+    artistsLead: "Künstlerlogos",
+    searchArtist: "Künstler suchen",
+    venuesLead: "Halls, Clubs, Arenen",
+    venuesTitle: "Locations",
+    statsLead: "Überblick",
+    statsTitle: "Statistik",
+    tileConcerts: "Konzerte",
+    tileArtists: "Künstler",
+    tileVenues: "Locations",
+    tileCountries: "Länder",
+    mostSeen: "Meistgesehener Künstler",
+    firstShow: "Erstes Konzert",
+    lastShow: "Letztes Konzert",
+    festivals: "Festivals",
+    favorites: "Favoriten",
+    clearArchive: "Archiv leeren",
+    clearArchiveConfirm: "Alle Konzerte in diesem Konto löschen?",
+    edit: "Bearbeiten",
+    newEntry: "Neuer Eintrag",
+    editConcert: "Konzert bearbeiten",
+    headliner: "Headliner",
+    support: "Support",
+    lineup: "Line-up",
+    viewArtist: "Künstler ansehen",
+    concertMissing: "Dieses Konzert ist nicht mehr im Archiv.",
+    backToConcerts: "Zurück zu den Konzerten",
+    artistMissing: "Dieser Künstler ist nicht im Archiv.",
+    back: "Zurück",
+    seenLive: "Live gesehen",
+    with: "mit",
+    favoriteBadge: "Favorit",
+    festivalBadge: "Festival",
+    deleteConcertConfirm: "Dieses Konzert aus dem Archiv entfernen?",
+    artistsHint: "Der erste Künstler ist der Headliner.",
+    searchArtistsPh: "Metallica, Phoenix suchen…",
+    venuePh: "Arena, Club, Festival…",
+    notesPh: "Setlist, Leute, Wetter.",
+    needDate: "Wähle ein Datum.",
+    needArtist: "Füge mindestens einen Künstler hinzu.",
+    needPlace: "Location und Stadt ausfüllen.",
+    searchingLogos: "Logos werden gesucht…",
+    noExtra: "Keine Extra-Infos",
   },
   es: {
     archiveSubtitle: "Tu archivo de conciertos",
@@ -167,10 +325,59 @@ const dict = {
     language: "Idioma",
     signOut: "Cerrar sesión",
     signingOut: "Cerrando sesión…",
+    liveArchive: "Archivo en vivo",
+    yourConcerts: "Tus conciertos",
+    searchShows: "Buscar artista, recinto, ciudad",
+    allYears: "Todos los años",
+    upcoming: "Próximos",
+    noMatches: "Nada coincide con este filtro.",
+    emptyTitle: "El archivo está vacío",
+    emptyBody: "Añade tu primer concierto.",
+    loadExamples: "Cargar ejemplos",
+    artistsLead: "Logos de artistas",
+    searchArtist: "Buscar un artista",
+    venuesLead: "Salas, clubes, estadios",
+    venuesTitle: "Recintos",
+    statsLead: "Resumen",
+    statsTitle: "Estadísticas",
+    tileConcerts: "Conciertos",
+    tileArtists: "Artistas",
+    tileVenues: "Recintos",
+    tileCountries: "Países",
+    mostSeen: "Artista más visto",
+    firstShow: "Primer concierto",
+    lastShow: "Último concierto",
+    festivals: "Festivales",
+    favorites: "Favoritos",
+    clearArchive: "Vaciar archivo",
+    clearArchiveConfirm: "¿Borrar todos los conciertos de esta cuenta?",
+    edit: "Editar",
+    newEntry: "Nueva entrada",
+    editConcert: "Editar concierto",
+    headliner: "Cabeza de cartel",
+    support: "Invitado",
+    lineup: "Cartel",
+    viewArtist: "Ver artista",
+    concertMissing: "Este concierto ya no está en el archivo.",
+    backToConcerts: "Volver a conciertos",
+    artistMissing: "Este artista no está en el archivo.",
+    back: "Volver",
+    seenLive: "Visto en directo",
+    with: "con",
+    favoriteBadge: "Favorito",
+    festivalBadge: "Festival",
+    deleteConcertConfirm: "¿Quitar este concierto del archivo?",
+    artistsHint: "El primer artista es el cabeza de cartel.",
+    searchArtistsPh: "Busca Metallica, Phoenix…",
+    venuePh: "Arena, club, festival…",
+    notesPh: "Setlist, gente, clima.",
+    needDate: "Elige una fecha.",
+    needArtist: "Añade al menos un artista.",
+    needPlace: "Completa recinto y ciudad.",
+    searchingLogos: "Buscando logos…",
+    noExtra: "Sin detalles extra",
   },
-} as const;
-
-type Key = keyof typeof dict.en;
+};
 
 function readStored(): Locale {
   if (typeof window === "undefined") return "en";
@@ -182,15 +389,20 @@ function readStored(): Locale {
 type I18nValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: Key, vars?: Record<string, string>) => string;
+  t: (key: string, vars?: Record<string, string>) => string;
 };
 
 const I18nContext = createContext<I18nValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(readStored);
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    const initial = readStored();
+    currentLocale = initial;
+    return initial;
+  });
   const value = useMemo<I18nValue>(() => {
     const setLocale = (next: Locale) => {
+      currentLocale = next;
       setLocaleState(next);
       try {
         window.localStorage.setItem(STORAGE_KEY, next);
@@ -199,8 +411,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         /* ignore */
       }
     };
-    const t = (key: Key, vars?: Record<string, string>) => {
-      let text: string = dict[locale][key] ?? dict.en[key] ?? key;
+    const t = (key: string, vars?: Record<string, string>) => {
+      let text = dict[locale][key] ?? dict.en[key] ?? key;
       if (vars) {
         for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, v);
       }
