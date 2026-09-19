@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { MapPin, Pencil, Star, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil, Star, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
@@ -37,22 +37,34 @@ function ConcertDetail() {
 
   const lineup = concertArtists(concert, artists);
   const headliner = lineup[0]?.artist;
+  const festivalName = concert.festivalName?.trim() ?? "";
 
   return (
     <AppShell>
+      <div className="mb-6">
+        <Button asChild variant="outline">
+          <Link to="/">
+            <ArrowLeft className="size-4" />
+            {t("backToConcerts")}
+          </Link>
+        </Button>
+      </div>
       <div className="flex flex-col items-center text-center">
         <ArtistMark artist={headliner} size="hero" />
         <p className="mt-5 text-sm text-muted-foreground">{formatConcertDate(concert.date)}</p>
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">
-          {headliner?.name ?? t("navConcerts")}
+          {festivalName || headliner?.name || t("navConcerts")}
         </h1>
+        {festivalName && headliner?.name ? (
+          <p className="mt-1 text-sm text-muted-foreground">{headliner.name}</p>
+        ) : null}
         <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="size-4" />
           <CountryFlag code={concert.countryCode} />
           {concert.venue} · {concert.city}, {concert.country}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          {concert.festival ? <Badge variant="outline">{t("festivalBadge")}</Badge> : null}
+          {festivalName ? <Badge variant="outline">{festivalName}</Badge> : null}
           {concert.favorite ? <Badge variant="solid">{t("favoriteBadge")}</Badge> : null}
         </div>
         {concert.rating ? (
