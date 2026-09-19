@@ -1,4 +1,4 @@
-export const I18N_EXTRA = {
+export const I18N_EXTRA: Record<string, Record<string, string>> = {
   en: {
     concertsPerYear: "Concerts per year",
     topCountries: "Top countries",
@@ -19,4 +19,8 @@ export const I18N_EXTRA = {
     topCountries: "Países top",
     bandsByCountry: "Bandas por país",
   },
-} as const;
+};
+
+export function extraLabel(locale: string, key: string) {
+  return I18N_EXTRA[locale]?.[key] ?? I18N_EXTRA.en[key] ?? key;
+}
