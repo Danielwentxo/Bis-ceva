@@ -1,9 +1,56 @@
 import { parseISO } from "date-fns";
+import { countryByCode, countryByName } from "./countries";
 import type { Artist, Concert } from "./types";
 import { venueKey } from "./utils";
 import { todayIso } from "./format";
 
 export type CountItem<T> = { key: string; count: number; data: T };
+
+const ORIGIN_ALIAS: Record<string, string> = {
+  usa: "USA",
+  us: "USA",
+  "u.s": "USA",
+  "u.s.a": "USA",
+  "united states": "USA",
+  "united states of america": "USA",
+  america: "USA",
+  uk: "UK",
+  "u.k": "UK",
+  "united kingdom": "UK",
+  england: "UK",
+  scotland: "UK",
+  wales: "UK",
+  "great britain": "UK",
+  britain: "UK",
+  holland: "Netherlands",
+  nederland: "Netherlands",
+  deutschland: "Germany",
+  rumania: "Romania",
+  românia: "Romania",
+};
+
+function cleanToken(value: string) {
+  return value.trim().toLowerCase().replace(/[.]/g, "");
+}
+
+export function originCountry(raw: string | null | undefined) {
+  if (!raw) return null;
+  const parts = raw
+    .split(/[,|/]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!parts.length) return null;
+  const candidates = [...parts].reverse();
+  for (const part of candidates) {
+    const alias = ORIGIN_ALIAS[cleanToken(part)];
+    if (alias) return alias;
+    const named = countryByName(part);
+    if (named) return named.code === "US" ? "USA" : named.code === "GB" ? "UK" : named.name;
+    const coded = countryByCode(part);
+    if (coded) return coded.code === "US" ? "USA" : coded.code === "GB" ? "UK" : coded.name;
+  }
+  return parts[parts.length - 1] ?? null;
+}
 
 export type ArchiveStats = {
   totalShows: number;
@@ -95,8 +142,7 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
   }
 
   for (const id of seenArtists) {
-    const artist = artists[id];
-    const origin = artist?.country?.trim();
+    const origin = originCountry(artists[id]?.country);
     if (!origin) continue;
     bump(originMap, origin.toLowerCase(), { country: origin });
   }
