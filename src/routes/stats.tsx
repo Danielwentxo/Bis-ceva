@@ -6,12 +6,14 @@ import { CountryFlag } from "@/components/country-flag";
 import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatConcertDate, showsLabel } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
 export const Route = createFileRoute("/stats")({ component: StatsPage });
 
 function StatsPage() {
+  const { t } = useI18n();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
@@ -38,14 +40,14 @@ function StatsPage() {
   return (
     <AppShell>
       <header className="mb-8">
-        <p className="text-sm font-medium text-muted-foreground">Bilanțul scenei</p>
-        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">Statistici</h1>
+        <p className="text-sm font-medium text-muted-foreground">{t("statsLead")}</p>
+        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("statsTitle")}</h1>
       </header>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Tile label="Concerte" value={String(stats.totalShows)} />
-        <Tile label="Formații" value={String(stats.uniqueArtists)} />
-        <Tile label="Locații" value={String(stats.uniqueVenues)} />
-        <Tile label="Țări" value={String(stats.uniqueCountries)} />
+        <Tile label={t("tileConcerts")} value={String(stats.totalShows)} />
+        <Tile label={t("tileArtists")} value={String(stats.uniqueArtists)} />
+        <Tile label={t("tileVenues")} value={String(stats.uniqueVenues)} />
+        <Tile label={t("tileCountries")} value={String(stats.uniqueCountries)} />
       </div>
       {topArtist ? (
         <Link
@@ -55,21 +57,21 @@ function StatsPage() {
         >
           <ArtistMark artist={topArtist.data} size="xl" />
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-subtle">Cea mai văzută formație</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-subtle">{t("mostSeen")}</p>
             <p className="mt-1 font-display text-2xl font-medium">{topArtist.data.name}</p>
             <p className="text-sm text-muted-foreground">{showsLabel(topArtist.count)}</p>
           </div>
         </Link>
       ) : null}
       <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
-        <Meta label="Primul concert" value={stats.firstShow ? formatConcertDate(stats.firstShow.date) : "—"} />
-        <Meta label="Cel mai recent" value={stats.lastShow ? formatConcertDate(stats.lastShow.date) : "—"} />
-        <Meta label="Festivale" value={String(stats.festivals)} />
-        <Meta label="Favorite" value={String(stats.favorites)} />
+        <Meta label={t("firstShow")} value={stats.firstShow ? formatConcertDate(stats.firstShow.date) : "\u2014"} />
+        <Meta label={t("lastShow")} value={stats.lastShow ? formatConcertDate(stats.lastShow.date) : "\u2014"} />
+        <Meta label={t("festivals")} value={String(stats.festivals)} />
+        <Meta label={t("favorites")} value={String(stats.favorites)} />
       </dl>
       {stats.countryCounts.length ? (
         <section className="mt-8">
-          <h2 className="mb-3 font-display text-xl font-medium">Țări</h2>
+          <h2 className="mb-3 font-display text-xl font-medium">{t("tileCountries")}</h2>
           <ul className="space-y-2">
             {stats.countryCounts.map((row) => (
               <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
@@ -88,12 +90,12 @@ function StatsPage() {
           type="button"
           className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           onClick={() => {
-            if (window.confirm("Ștergi toate concertele din acest cont?")) {
+            if (window.confirm(t("clearArchiveConfirm"))) {
               void useArchive.getState().clearArchive();
             }
           }}
         >
-          Golește arhiva
+          {t("clearArchive")}
         </button>
       </div>
     </AppShell>

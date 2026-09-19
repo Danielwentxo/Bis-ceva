@@ -5,6 +5,7 @@ import { ConcertCard } from "@/components/concert-card";
 import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { artistsLabel, showsLabel, todayIso } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { t } = useI18n();
   const { q: qParam } = Route.useSearch();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
@@ -63,9 +65,9 @@ function Home() {
   return (
     <AppShell>
       <header className="mb-8">
-        <p className="text-sm font-medium text-muted-foreground">Arhiva live</p>
+        <p className="text-sm font-medium text-muted-foreground">{t("liveArchive")}</p>
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight md:text-5xl">
-          Concertele tale
+          {t("yourConcerts")}
         </h1>
         {hasHydrated ? (
           <p className="mt-2 text-sm text-muted-foreground">
@@ -90,12 +92,12 @@ function Home() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Caută formație, locație, oraș"
+              placeholder={t("searchShows")}
               className="flex h-11 w-full rounded-lg bg-secondary px-3 text-sm text-foreground shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/50"
             />
             <div className="flex gap-2 overflow-x-auto pb-1">
               <YearChip active={year === "all"} onClick={() => setYear("all")}>
-                Toți anii
+                {t("allYears")}
               </YearChip>
               {years.map((y) => (
                 <YearChip key={y} active={year === y} onClick={() => setYear(y)}>
@@ -108,7 +110,7 @@ function Home() {
           {upcoming.length ? (
             <section className="mb-8">
               <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-subtle">
-                Urmează
+                {t("upcoming")}
               </h2>
               <div className="space-y-3">
                 {upcoming.map((c) => (
@@ -130,9 +132,7 @@ function Home() {
           ))}
 
           {!filtered.length ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Nimic nu se potrivește cu filtrul ăsta.
-            </p>
+            <p className="py-10 text-center text-sm text-muted-foreground">{t("noMatches")}</p>
           ) : null}
         </>
       )}
