@@ -18,6 +18,7 @@ export function ConcertCard({
   const names = lineup.map((l) => l.artist.name);
   const title = names[0] ?? "Concert";
   const rest = names.slice(1);
+  const festivalLabel = concert.festivalName?.trim() || (concert.festival ? "Festival" : "");
 
   return (
     <Link
@@ -30,12 +31,13 @@ export function ConcertCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="truncate font-medium text-foreground">{title}</h3>
-            {concert.favorite ? (
-              <Star className="mt-0.5 size-3.5 shrink-0 fill-primary text-primary" />
-            ) : null}
+            {concert.favorite ? <Star className="mt-0.5 size-3.5 shrink-0 fill-primary text-primary" /> : null}
           </div>
-          {rest.length ? (
-            <p className="truncate text-sm text-muted-foreground">cu {rest.join(", ")}</p>
+          {rest.length ? <p className="truncate text-sm text-muted-foreground">{rest.join(", ")}</p> : null}
+          {festivalLabel ? (
+            <Badge className="mt-1" variant="outline">
+              {festivalLabel}
+            </Badge>
           ) : null}
           <p className="mt-1 text-sm text-muted-foreground">{formatConcertDate(concert.date)}</p>
           <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-subtle">
@@ -45,11 +47,6 @@ export function ConcertCard({
               {concert.venue} · {concert.city}
             </span>
           </p>
-          {concert.festival ? (
-            <Badge className="mt-2" variant="outline">
-              Festival
-            </Badge>
-          ) : null}
         </div>
       </div>
     </Link>
