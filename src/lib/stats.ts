@@ -49,7 +49,7 @@ export function originCountry(raw: string | null | undefined) {
     const coded = countryByCode(part);
     if (coded) return coded.code === "US" ? "USA" : coded.code === "GB" ? "UK" : coded.name;
   }
-  return parts[parts.length - 1] ?? null;
+  return null;
 }
 
 export type ArchiveStats = {
