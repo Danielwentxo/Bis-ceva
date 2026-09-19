@@ -121,8 +121,7 @@ function ConcertDetail() {
           variant="destructive"
           onClick={() => {
             if (window.confirm("Ștergi concertul din arhivă?")) {
-              deleteConcert(concert.id);
-              void navigate({ to: "/" });
+              void deleteConcert(concert.id).then(() => navigate({ to: "/" }));
             }
           }}
         >
