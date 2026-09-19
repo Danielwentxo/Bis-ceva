@@ -47,6 +47,7 @@ function mediaToArtist(media: ArtistMedia): Artist {
 }
 
 function fromDraft(id: string, draft: ConcertDraft, createdAt: string): Concert {
+  const festivalName = draft.festivalName?.trim() ?? "";
   return {
     id,
     date: draft.date,
@@ -61,7 +62,8 @@ function fromDraft(id: string, draft: ConcertDraft, createdAt: string): Concert 
     notes: draft.notes.trim(),
     rating: draft.rating,
     favorite: draft.favorite,
-    festival: draft.festival,
+    festival: draft.festival || Boolean(festivalName),
+    festivalName,
     createdAt,
   };
 }
@@ -105,7 +107,7 @@ export const useArchive = create<ArchiveState>()(
           set({
             hasHydrated: true,
             syncing: false,
-            syncError: err instanceof Error ? err.message : "Nu am putut încărca arhiva",
+            syncError: err instanceof Error ? err.message : "Could not load archive",
           });
         }
       },
