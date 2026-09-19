@@ -3,7 +3,14 @@ import { persist } from "zustand/middleware";
 import { createDemoArchive } from "./demo-data";
 import type { Artist, ArtistMedia, Concert, ConcertDraft } from "./types";
 import { artistKey } from "./utils";
-import { authEnabled } from "@/lib/auth/client";
+import { authEnabled } from "@/lib/auth/enabled";
+import {
+  loadArchive,
+  upsertConcert,
+  removeConcert,
+  setConcertFavorite,
+  clearUserArchive,
+} from "@/lib/archive";
 
 const demo = createDemoArchive();
 
@@ -85,7 +92,6 @@ export const useArchive = create<ArchiveState>()(
         }
         set({ syncing: true, syncError: null });
         try {
-          const { loadArchive } = await import("@/lib/archive.server");
           const data = await loadArchive();
           set({
             concerts: data.concerts,
@@ -150,7 +156,6 @@ export const useArchive = create<ArchiveState>()(
           set((state) => ({ concerts: [fromDraft(id, draft, new Date().toISOString()), ...state.concerts] }));
           return id;
         }
-        const { upsertConcert } = await import("@/lib/archive.server");
         const result = await upsertConcert({ data: { draft } });
         set((state) => ({
           concerts: [result.concert, ...state.concerts.filter((c) => c.id !== result.id)],
@@ -167,7 +172,6 @@ export const useArchive = create<ArchiveState>()(
           return;
         }
         const existing = get().concerts.find((c) => c.id === id);
-        const { upsertConcert } = await import("@/lib/archive.server");
         const result = await upsertConcert({ data: { id, draft, createdAt: existing?.createdAt } });
         set((state) => ({
           concerts: state.concerts.map((c) => (c.id === id ? result.concert : c)),
@@ -179,7 +183,6 @@ export const useArchive = create<ArchiveState>()(
           set((state) => ({ concerts: state.concerts.filter((c) => c.id !== id) }));
           return;
         }
-        const { removeConcert } = await import("@/lib/archive.server");
         await removeConcert({ data: { id } });
         set((state) => ({ concerts: state.concerts.filter((c) => c.id !== id) }));
       },
@@ -192,7 +195,6 @@ export const useArchive = create<ArchiveState>()(
         }));
         if (!authEnabled) return;
         try {
-          const { setConcertFavorite } = await import("@/lib/archive.server");
           await setConcertFavorite({ data: { id, favorite: next } });
         } catch {
           set((state) => ({
@@ -210,7 +212,6 @@ export const useArchive = create<ArchiveState>()(
           set({ concerts: [], artists: {}, seeded: true });
           return;
         }
-        const { clearUserArchive } = await import("@/lib/archive.server");
         await clearUserArchive();
         set({ concerts: [], artists: {}, seeded: true });
       },
