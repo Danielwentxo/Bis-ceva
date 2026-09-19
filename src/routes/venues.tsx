@@ -5,12 +5,14 @@ import { CountryFlag } from "@/components/country-flag";
 import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showsLabel, venuesLabel } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
 export const Route = createFileRoute("/venues")({ component: VenuesPage });
 
 function VenuesPage() {
+  const { t } = useI18n();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
@@ -31,8 +33,8 @@ function VenuesPage() {
   return (
     <AppShell>
       <header className="mb-6">
-        <p className="text-sm font-medium text-muted-foreground">Săli, cluburi, arene</p>
-        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">Locuri</h1>
+        <p className="text-sm font-medium text-muted-foreground">{t("venuesLead")}</p>
+        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("venuesTitle")}</h1>
         {hasHydrated ? (
           <p className="mt-2 text-sm text-muted-foreground">{venuesLabel(stats.uniqueVenues)}</p>
         ) : null}

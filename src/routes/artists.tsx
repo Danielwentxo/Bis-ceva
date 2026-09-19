@@ -5,12 +5,14 @@ import { ArtistMark } from "@/components/artist-mark";
 import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { artistsLabel, showsLabel } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
 export const Route = createFileRoute("/artists")({ component: ArtistsPage });
 
 function ArtistsPage() {
+  const { t } = useI18n();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
@@ -28,8 +30,8 @@ function ArtistsPage() {
   return (
     <AppShell>
       <header className="mb-6">
-        <p className="text-sm font-medium text-muted-foreground">Logo-uri din TheAudioDB</p>
-        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">Formații</h1>
+        <p className="text-sm font-medium text-muted-foreground">{t("artistsLead")}</p>
+        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("navArtists")}</h1>
         {hasHydrated ? (
           <p className="mt-2 text-sm text-muted-foreground">{artistsLabel(stats.uniqueArtists)}</p>
         ) : null}
@@ -48,7 +50,7 @@ function ArtistsPage() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Caută o formație"
+            placeholder={t("searchArtist")}
             className="mb-5 flex h-11 w-full rounded-lg bg-secondary px-3 text-sm text-foreground shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/50"
           />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

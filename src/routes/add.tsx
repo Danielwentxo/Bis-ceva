@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ConcertForm } from "@/components/concert-form";
+import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 
 type AddSearch = {
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/add")({
 });
 
 function AddPage() {
+  const { t } = useI18n();
   const { id, artist: artistId } = Route.useSearch();
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
@@ -29,10 +31,10 @@ function AddPage() {
     <AppShell>
       <header className="mb-6">
         <p className="text-sm font-medium text-muted-foreground">
-          {existing ? "Editează" : "Intrare nouă"}
+          {existing ? t("edit") : t("newEntry")}
         </p>
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">
-          {existing ? "Modifică concertul" : "Adaugă concert"}
+          {existing ? t("editConcert") : t("addConcert")}
         </h1>
       </header>
       <ConcertForm
