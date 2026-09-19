@@ -12,6 +12,7 @@ import { searchArtists } from "@/lib/artist-api";
 import { saveCatalogArtist, saveCatalogVenue, searchCatalogArtists, searchCatalogVenues } from "@/lib/catalog";
 import { COUNTRIES } from "@/lib/countries";
 import { todayIso } from "@/lib/format";
+import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 import type { ArtistMedia, Concert } from "@/lib/types";
@@ -60,7 +61,7 @@ export function ConcertForm({
   existing?: Concert;
   presetArtist?: ArtistMedia | null;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const archiveArtists = useArchive((s) => s.artists);
   const concerts = useArchive((s) => s.concerts);
@@ -85,6 +86,7 @@ export function ConcertForm({
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<ArtistMedia[]>([]);
   const [searching, setSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [catalogVenues, setCatalogVenues] = useState<{ venue: string; city: string; countryCode: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -169,14 +171,7 @@ export function ConcertForm({
   function addManualArtist() {
     const name = query.trim();
     if (name.length < 2) return;
-    addArtist({
-      name,
-      logoUrl: null,
-      thumbUrl: null,
-      genre: null,
-      country: null,
-      bio: null,
-    });
+    addArtist({ name, logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null });
     void saveCatalogArtist({ data: { name } }).catch(() => undefined);
   }
 
@@ -184,7 +179,7 @@ export function ConcertForm({
     setForm((f) => ({ ...f, artists: f.artists.filter((a) => a.name !== name) }));
   }
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     if (!form.date) {
       setError(t("needDate"));
@@ -214,30 +209,37 @@ export function ConcertForm({
       favorite: form.favorite,
       festival: form.festival,
     };
-    void saveCatalogVenue({
-      data: {
-        venue: draft.venue.trim(),
-        city: draft.city.trim(),
-        country: draft.country,
-        countryCode: draft.countryCode,
-      },
-    }).catch(() => undefined);
-    for (const artist of draft.artists) {
-      void saveCatalogArtist({ data: artist }).catch(() => undefined);
-    }
-    if (existing) {
-      updateConcert(existing.id, draft);
-      toast.success(t("save"));
-      void navigate({ to: "/concerts/$id", params: { id: existing.id } });
-    } else {
-      const id = addConcert(draft);
-      toast.success(t("addToArchive"));
-      void navigate({ to: "/concerts/$id", params: { id } });
+    setSaving(true);
+    try {
+      void saveCatalogVenue({
+        data: {
+          venue: draft.venue.trim(),
+          city: draft.city.trim(),
+          country: draft.country,
+          countryCode: draft.countryCode,
+        },
+      }).catch(() => undefined);
+      for (const artist of draft.artists) {
+        void saveCatalogArtist({ data: artist }).catch(() => undefined);
+      }
+      if (existing) {
+        await updateConcert(existing.id, draft);
+        toast.success(extraLabel(locale, "savedToArchive"));
+        await navigate({ to: "/concerts/$id", params: { id: existing.id } });
+      } else {
+        const id = await addConcert(draft);
+        toast.success(extraLabel(locale, "savedToArchive"));
+        await navigate({ to: "/concerts/$id", params: { id } });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : extraLabel(locale, "savedToArchive"));
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6">
+    <form onSubmit={(e) => void submit(e)} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="date">{t("date")}</Label>
         <Input id="date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
@@ -289,7 +291,7 @@ export function ConcertForm({
             {!exactHit ? (
               <li>
                 <button type="button" onClick={addManualArtist} className="flex w-full items-center px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
-                  Add “{query.trim()}” manually
+                  {extraLabel(locale, "addManually", { name: query.trim() })}
                 </button>
               </li>
             ) : null}
@@ -368,7 +370,7 @@ export function ConcertForm({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="flex gap-3">
-        <Button type="submit" className="flex-1">
+        <Button type="submit" className="flex-1" disabled={saving}>
           {existing ? t("save") : t("addToArchive")}
         </Button>
         <Button
