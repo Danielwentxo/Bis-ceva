@@ -1,0 +1,27 @@
+name: strip-prebuilt
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  strip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove committed Vercel output
+        run: |
+          if [ ! -d .vercel ]; then
+            echo "nothing to strip"
+            exit 0
+          fi
+          git config user.name "bis-bot"
+          git config user.email "bis-bot@users.noreply.github.com"
+          git rm -r --ignore-unmatch .vercel
+          git commit -m "Elimină .vercel/output ca Vercel să compileze din sursă" || exit 0
+          git push
