@@ -1,5 +1,5 @@
 {
-  "framework": "tanstack-start",
+  "framework": "nitro",
   "buildCommand": "npm run build",
   "installCommand": "npm install"
 }
