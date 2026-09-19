@@ -6,6 +6,7 @@ import { CountryFlag } from "@/components/country-flag";
 import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatConcertDate, showsLabel } from "@/lib/format";
+import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
@@ -13,7 +14,7 @@ import { useArchive } from "@/lib/store";
 export const Route = createFileRoute("/stats")({ component: StatsPage });
 
 function StatsPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
@@ -55,7 +56,7 @@ function StatsPage() {
 
       {stats.yearCounts.length ? (
         <section className="mt-8">
-          <h2 className="mb-3 font-display text-xl font-medium">{t("concertsPerYear")}</h2>
+          <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "concertsPerYear")}</h2>
           <div className="flex items-end gap-2 rounded-2xl bg-card px-4 py-5 shadow-[var(--shadow-border)]">
             {stats.yearCounts.map((row) => (
               <div key={row.year} className="flex min-w-0 flex-1 flex-col items-center gap-2">
@@ -97,7 +98,7 @@ function StatsPage() {
 
       {topCountries.length ? (
         <section className="mt-8">
-          <h2 className="mb-3 font-display text-xl font-medium">{t("topCountries")}</h2>
+          <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topCountries")}</h2>
           <ul className="space-y-2">
             {topCountries.map((row, index) => (
               <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
@@ -115,7 +116,7 @@ function StatsPage() {
 
       {topOrigins.length ? (
         <section className="mt-8">
-          <h2 className="mb-3 font-display text-xl font-medium">{t("bandsByCountry")}</h2>
+          <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "bandsByCountry")}</h2>
           <ul className="space-y-2">
             {topOrigins.map((row) => (
               <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
