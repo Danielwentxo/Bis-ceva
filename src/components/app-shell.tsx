@@ -2,8 +2,9 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { BarChart3, Disc3, MapPin, Plus, Ticket } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { LoginScreen } from "@/components/login-screen";
 import { useEnrichArtists } from "@/components/use-enrich-artists";
-import { RedirectToSignIn, UserButton } from "@/lib/auth/gates";
+import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   if (isPending) return null;
-  if (!user) return <RedirectToSignIn />;
+  if (!user) return <LoginScreen />;
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
