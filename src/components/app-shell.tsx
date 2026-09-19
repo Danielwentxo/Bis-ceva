@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", label: "Concerte", icon: Ticket },
-  { to: "/artists", label: "Formății", icon: Disc3 },
+  { to: "/artists", label: "Formații", icon: Disc3 },
   { to: "/venues", label: "Locuri", icon: MapPin },
   { to: "/stats", label: "Statistici", icon: BarChart3 },
 ] as const;
@@ -25,6 +25,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, isPending } = useCurrentUserState();
   useEnrichArtists();
   useEffect(() => {
+    if (!user) return;
+    void useArchive.getState().loadFromServer();
+  }, [user?.id]);
+  useEffect(() => {
     const t = window.setTimeout(() => {
       if (!useArchive.getState().hasHydrated) {
         useArchive.getState().finishHydration();
@@ -33,10 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(t);
   }, []);
 
-  // Session still resolving — render nothing rather than flashing sign-in UI.
   if (isPending) return null;
-  // Definitely signed out — send to /login. (No-op while auth is disabled,
-  // since useCurrentUserState() always returns the dev user in that mode.)
   if (!user) return <RedirectToSignIn />;
 
   return (
