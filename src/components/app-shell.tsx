@@ -38,8 +38,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(t);
   }, []);
 
+  const isAuthFlow = pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/login";
+
   if (isPending) return null;
-  if (!user) return <LoginScreen />;
+  if (!user && !isAuthFlow) return <LoginScreen />;
+
+  if (!user && isAuthFlow) {
+    return (
+      <div className="min-h-dvh bg-background text-foreground">
+        {children}
+        <Toaster theme="dark" position="top-center" toastOptions={{ className: "bg-popover text-popover-foreground border-border" }} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
