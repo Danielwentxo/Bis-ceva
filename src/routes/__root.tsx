@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { I18nProvider } from "@/lib/i18n";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
@@ -11,10 +12,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: APP_NAME },
-      {
-        name: "description",
-        content: "Arhiva ta de concerte — formații cu logo-uri, locații și statistici.",
-      },
+      { name: "description", content: "Your concert archive — artists, venues and stats." },
       { name: "theme-color", content: "#0c0b0a" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -33,15 +31,17 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="ro" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
         <PreviewHostBridge />
-        <AuthProvider>
-          <Outlet />
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <Outlet />
+          </AuthProvider>
+        </I18nProvider>
         <Scripts />
       </body>
     </html>
