@@ -1,7 +1,5 @@
 {
   "framework": "tanstack-start",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "outputDirectory": ".vercel/output/static",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "installCommand": "npm install"
 }
