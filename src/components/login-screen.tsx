@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
+import { LanguageSelect, useI18n } from "@/lib/i18n";
 
 type Mode = "sign-in" | "sign-up" | "forgot";
 
 export function LoginScreen() {
+  const { t } = useI18n();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,22 +26,20 @@ export function LoginScreen() {
           email,
           redirectTo: "/reset-password",
         });
-        if (error) throw new Error(error.message ?? "Cererea a eșuat");
+        if (error) throw new Error(error.message ?? "Request failed");
         setResetSent(true);
         return;
       }
       if (mode === "sign-up") {
         const { error } = await authClient.signUp.email({ name, email, password });
-        if (error) throw new Error(error.message ?? "Înregistrarea a eșuat");
-        toast.success("Cont creat. Ești autentificat.");
+        if (error) throw new Error(error.message ?? "Sign up failed");
       } else {
         const { error } = await authClient.signIn.email({ email, password });
-        if (error) throw new Error(error.message ?? "Autentificarea a eșuat");
-        toast.success("Bine ai revenit!");
+        if (error) throw new Error(error.message ?? "Sign in failed");
       }
       window.location.assign("/");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "A apărut o eroare");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -48,19 +48,15 @@ export function LoginScreen() {
   async function signInWith(provider: "google" | "apple") {
     setSubmitting(true);
     try {
-      const { error } = await authClient.signIn.social({
-        provider,
-        callbackURL: "/",
-      });
-      if (error) throw new Error(error.message ?? "Autentificarea socială a eșuat");
+      const { error } = await authClient.signIn.social({ provider, callbackURL: "/" });
+      if (error) throw new Error(error.message ?? "Social sign-in failed");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "A apărut o eroare");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
       setSubmitting(false);
     }
   }
 
-  const title =
-    mode === "sign-up" ? "Creează-ți un cont" : mode === "forgot" ? "Resetează-ți parola" : "Autentifică-te în contul tău";
+  const title = mode === "sign-up" ? t("signUpTitle") : mode === "forgot" ? t("forgotTitle") : t("signInTitle");
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-6">
@@ -72,42 +68,26 @@ export function LoginScreen() {
 
         {mode === "forgot" && resetSent ? (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-sm text-foreground">
-              Dacă există un cont cu adresa <strong>{email}</strong>, vei primi un email cu un link de resetare.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("sign-in");
-                setResetSent(false);
-              }}
-              className="text-sm text-muted-foreground underline"
-            >
-              Înapoi la autentificare
+            <p className="text-sm text-foreground">{t("resetSent", { email })}</p>
+            <button type="button" onClick={() => { setMode("sign-in"); setResetSent(false); }} className="text-sm text-muted-foreground underline">
+              {t("backToSignIn")}
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {mode === "sign-up" ? (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="name">Nume</Label>
+                <Label htmlFor="name">{t("name")}</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />
               </div>
             ) : null}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
+              <Label htmlFor="email">{t("email")}</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
             </div>
             {mode !== "forgot" ? (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password">Parolă</Label>
+                <Label htmlFor="password">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -120,19 +100,12 @@ export function LoginScreen() {
               </div>
             ) : null}
             {mode === "sign-in" ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("forgot");
-                  setResetSent(false);
-                }}
-                className="self-end text-sm text-muted-foreground underline"
-              >
-                Am uitat parola
+              <button type="button" onClick={() => { setMode("forgot"); setResetSent(false); }} className="self-end text-sm text-muted-foreground underline">
+                {t("forgotPassword")}
               </button>
             ) : null}
             <Button type="submit" disabled={submitting}>
-              {mode === "sign-in" ? "Autentificare" : mode === "sign-up" ? "Creează cont" : "Trimite link de resetare"}
+              {mode === "sign-in" ? t("signIn") : mode === "sign-up" ? t("createAccount") : t("sendReset")}
             </Button>
           </form>
         )}
@@ -143,7 +116,7 @@ export function LoginScreen() {
               <>
                 <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="h-px flex-1 bg-border" />
-                  Sau mai rapid cu
+                  {t("orFaster")}
                   <span className="h-px flex-1 bg-border" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -164,12 +137,11 @@ export function LoginScreen() {
               }}
               className="mt-4 w-full text-center text-sm text-muted-foreground underline"
             >
-              {mode === "sign-in"
-                ? "Nu ai cont? Creează unul"
-                : mode === "sign-up"
-                  ? "Ai deja cont? Autentifică-te"
-                  : "Înapoi la autentificare"}
+              {mode === "sign-in" ? t("noAccount") : mode === "sign-up" ? t("hasAccount") : t("backToSignIn")}
             </button>
+            <div className="mt-6">
+              <LanguageSelect />
+            </div>
           </>
         ) : null}
       </div>

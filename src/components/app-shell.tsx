@@ -6,15 +6,9 @@ import { LoginScreen } from "@/components/login-screen";
 import { useEnrichArtists } from "@/components/use-enrich-artists";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { LanguageSelect, useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
-
-const NAV = [
-  { to: "/", label: "Concerte", icon: Ticket },
-  { to: "/artists", label: "Formații", icon: Disc3 },
-  { to: "/venues", label: "Locuri", icon: MapPin },
-  { to: "/stats", label: "Statistici", icon: BarChart3 },
-] as const;
 
 function navActive(pathname: string, to: string) {
   if (to === "/") return pathname === "/";
@@ -22,6 +16,7 @@ function navActive(pathname: string, to: string) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   useEnrichArtists();
@@ -30,13 +25,18 @@ export function AppShell({ children }: { children: ReactNode }) {
     void useArchive.getState().loadFromServer();
   }, [user?.id]);
   useEffect(() => {
-    const t = window.setTimeout(() => {
-      if (!useArchive.getState().hasHydrated) {
-        useArchive.getState().finishHydration();
-      }
+    const timer = window.setTimeout(() => {
+      if (!useArchive.getState().hasHydrated) useArchive.getState().finishHydration();
     }, 1200);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  const nav = [
+    { to: "/", label: t("navConcerts"), icon: Ticket },
+    { to: "/artists", label: t("navArtists"), icon: Disc3 },
+    { to: "/venues", label: t("navVenues"), icon: MapPin },
+    { to: "/stats", label: t("navStats"), icon: BarChart3 },
+  ] as const;
 
   const isAuthFlow = pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/login";
 
@@ -57,10 +57,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border px-4 py-6 md:flex">
         <Link to="/" className="mb-8 px-2">
           <p className="font-display text-3xl font-medium tracking-tight text-foreground">Bis</p>
-          <p className="mt-1 text-xs text-muted-foreground">Arhiva ta de concerte</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("archiveSubtitle")}</p>
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const Icon = item.icon;
             const active = navActive(pathname, item.to);
             return (
@@ -69,9 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={item.to}
                 className={cn(
                   "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150",
-                  active
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  active ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                 )}
               >
                 <Icon className="size-4" />
@@ -82,12 +80,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
         <Link
           to="/add"
-          className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-transform duration-150 active:scale-[0.96]"
+          className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
         >
           <Plus className="size-4" />
-          Adaugă concert
+          {t("addConcert")}
         </Link>
-        <div className="mt-4 border-t border-border/70 pt-4">
+        <div className="mt-4 space-y-3 border-t border-border/70 pt-4">
+          <LanguageSelect />
           <UserButton />
         </div>
       </aside>
@@ -97,23 +96,26 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to="/" className="font-display text-2xl font-medium tracking-tight">
             Bis
           </Link>
-          <Link
-            to="/add"
-            className="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground"
-            aria-label="Adaugă concert"
-          >
-            <Plus className="size-5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-28">
+              <LanguageSelect />
+            </div>
+            <Link
+              to="/add"
+              className="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+              aria-label={t("addConcert")}
+            >
+              <Plus className="size-5" />
+            </Link>
+          </div>
         </header>
 
-        <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 md:pb-12 md:pt-10">
-          {children}
-        </main>
+        <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 md:pb-12 md:pt-10">{children}</main>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         <ul className="grid grid-cols-4">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const Icon = item.icon;
             const active = navActive(pathname, item.to);
             return (
@@ -133,13 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </ul>
       </nav>
-      <Toaster
-        theme="dark"
-        position="top-center"
-        toastOptions={{
-          className: "bg-popover text-popover-foreground border-border",
-        }}
-      />
+      <Toaster theme="dark" position="top-center" toastOptions={{ className: "bg-popover text-popover-foreground border-border" }} />
     </div>
   );
 }
