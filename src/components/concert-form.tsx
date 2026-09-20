@@ -94,7 +94,7 @@ export function ConcertForm({
   const [saving, setSaving] = useState(false);
   const [catalogVenues, setCatalogVenues] = useState<{ venue: string; city: string; countryCode: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [manual, setManual] = useState<{ name: string; country: string; logoUrl: string | null } | null>(null);
+  const [manual, setManual] = useState<{ name: string; country: string; genre: string; logoUrl: string | null } | null>(null);
 
   useEffect(() => {
     const q = query.trim();
@@ -178,17 +178,18 @@ export function ConcertForm({
   function startManualArtist() {
     const name = query.trim();
     if (name.length < 2) return;
-    setManual({ name, country: "", logoUrl: null });
+    setManual({ name, country: "", genre: "", logoUrl: null });
   }
 
   function confirmManualArtist() {
     if (!manual) return;
     const origin = COUNTRIES.find((c) => c.code === manual.country)?.name ?? null;
+    const genre = manual.genre.trim() || null;
     addArtist({
       name: manual.name,
       logoUrl: manual.logoUrl,
       thumbUrl: manual.logoUrl,
-      genre: null,
+      genre,
       country: origin,
       bio: null,
     });
@@ -198,6 +199,7 @@ export function ConcertForm({
         logoUrl: manual.logoUrl,
         thumbUrl: manual.logoUrl,
         country: origin,
+        genre,
       },
     }).catch(() => undefined);
   }
@@ -373,6 +375,10 @@ export function ConcertForm({
         {manual ? (
           <div className="space-y-3 rounded-xl bg-card p-4 shadow-[var(--shadow-border)]">
             <p className="text-sm font-medium">{manual.name}</p>
+            <div className="space-y-2">
+              <Label htmlFor="artist-genre">Genre</Label>
+              <Input id="artist-genre" value={manual.genre} onChange={(e) => setManual({ ...manual, genre: e.target.value })} placeholder="Metal, Rock, Jazz…" />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="artist-origin">{t("country")}</Label>
               <select id="artist-origin" value={manual.country} onChange={(e) => setManual({ ...manual, country: e.target.value })} className="flex h-11 w-full rounded-lg bg-secondary px-3 text-sm text-foreground shadow-[var(--shadow-border)] outline-none">
