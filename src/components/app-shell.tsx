@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AppLogo } from "@/components/app-logo";
 import { LoginScreen } from "@/components/login-screen";
+import { SiteFooter } from "@/components/site-footer";
 import { useEnrichArtists } from "@/components/use-enrich-artists";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -15,6 +16,15 @@ function navActive(pathname: string, to: string) {
   if (to === "/") return pathname === "/";
   return pathname === to || pathname.startsWith(`${to}/`);
 }
+
+const PUBLIC_PATHS = new Set([
+  "/forgot-password",
+  "/reset-password",
+  "/login",
+  "/about",
+  "/privacy",
+  "/contact",
+]);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
@@ -39,15 +49,24 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/stats", label: t("navStats"), icon: BarChart3 },
   ] as const;
 
-  const isAuthFlow = pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/login";
+  const isPublic = PUBLIC_PATHS.has(pathname);
 
   if (isPending) return null;
-  if (!user && !isAuthFlow) return <LoginScreen />;
+  if (!user && !isPublic) return <LoginScreen />;
 
-  if (!user && isAuthFlow) {
+  if (!user && isPublic) {
     return (
       <div className="min-h-dvh bg-background text-foreground">
-        {children}
+        <header className="flex items-center justify-between px-4 py-4">
+          <Link to="/login">
+            <AppLogo size="sm" />
+          </Link>
+          <Link to="/login" className="text-sm text-muted-foreground underline">
+            Sign in
+          </Link>
+        </header>
+        <main className="mx-auto w-full max-w-4xl px-4 pb-12 pt-4">{children}</main>
+        <SiteFooter />
         <Toaster theme="dark" position="top-center" toastOptions={{ className: "bg-popover text-popover-foreground border-border" }} />
       </div>
     );
@@ -111,7 +130,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 md:pb-12 md:pt-10">{children}</main>
+        <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 md:pb-12 md:pt-10">
+          {children}
+          <SiteFooter />
+        </main>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
