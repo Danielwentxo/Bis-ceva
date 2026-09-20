@@ -32,6 +32,7 @@ export type Concert = {
   favorite: boolean;
   festival: boolean;
   festivalName?: string;
+  festivalPosterUrl?: string | null;
   createdAt: string;
 };
 
@@ -47,4 +48,5 @@ export type ConcertDraft = {
   favorite: boolean;
   festival: boolean;
   festivalName?: string;
+  festivalPosterUrl?: string | null;
 };
