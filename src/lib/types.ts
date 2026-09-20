@@ -37,6 +37,7 @@ export type Concert = {
   festival: boolean;
   festivalName?: string;
   festivalPosterUrl?: string | null;
+  ticketUrl?: string | null;
   createdAt: string;
 };
 
@@ -53,4 +54,5 @@ export type ConcertDraft = {
   festival: boolean;
   festivalName?: string;
   festivalPosterUrl?: string | null;
+  ticketUrl?: string | null;
 };
