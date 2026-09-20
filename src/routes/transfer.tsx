@@ -44,9 +44,11 @@ function TransferPage() {
       for (const draft of drafts) {
         await addConcert(draft);
         ok += 1;
+        setNote(`Importing ${ok} / ${drafts.length}…`);
       }
-      toast.success(`${ok} concerts imported`);
-      setNote(`${ok} concerts imported into your archive.`);
+      const done = `Done. ${ok} concerts are in your archive.`;
+      toast.success(done);
+      setNote(`${done} Logos will fill in over the next minute.`);
     } catch (err) {
       setNote(err instanceof Error ? err.message : "Could not import this file.");
     } finally {
@@ -88,7 +90,7 @@ function TransferPage() {
           disabled={busy}
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
-        {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
+        {note ? <p className="text-sm text-foreground">{note}</p> : null}
       </section>
     </AppShell>
   );
