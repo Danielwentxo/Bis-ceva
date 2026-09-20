@@ -4,6 +4,7 @@ const MAX_CHARS = 900_000;
 export function assertImageDataUrl(value: string | null | undefined, label = "Image"): string | null {
   if (value == null || value === "") return null;
   if (value.length > MAX_CHARS) throw new Error(`${label} is too large.`);
+  if (/^https:\/\/\S{3,1800}$/i.test(value)) return value;
   const match = /^data:(image\/(?:jpeg|jpg|png|webp));base64,([A-Za-z0-9+/=\s]+)$/i.exec(value);
   if (!match) throw new Error(`${label} must be a JPEG, PNG, or WebP.`);
   const b64 = match[2].replace(/\s/g, "");
