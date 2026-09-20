@@ -9,6 +9,22 @@ export type ArchiveDump = {
   artists: Record<string, Artist>;
 };
 
+const NORDIC = /[\u00C5\u00E5\u00C4\u00E4\u00D6\u00F6\u00C6\u00E6\u00D8\u00F8\u00DC\u00FC\u00C9\u00E9\u00C1\u00E1]/g;
+
+function tidy(value: string) {
+  return value.normalize("NFC").replace(/\uFFFD/g, "").trim();
+}
+
+function scoreText(text: string) {
+  return (text.match(NORDIC) ?? []).length - (text.split("\uFFFD").length - 1) * 8;
+}
+
+export function decodeImportedText(buffer: ArrayBuffer) {
+  const utf8 = new TextDecoder("utf-8").decode(buffer);
+  const windows = new TextDecoder("windows-1252").decode(buffer);
+  return scoreText(windows) > scoreText(utf8) ? windows : utf8;
+}
+
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replaceAll('"', '""')}"`;
   return value;
@@ -43,7 +59,7 @@ function splitCsvLine(line: string, delimiter = ","): string[] {
     } else cur += ch;
   }
   out.push(cur);
-  return out.map((s) => s.trim());
+  return out.map((s) => tidy(s));
 }
 
 function normHeader(h: string) {
@@ -96,7 +112,7 @@ function parseDate(raw: string) {
 }
 
 function blankArtist(name: string) {
-  return { name, logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null };
+  return { name: tidy(name), logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null };
 }
 
 function addNames(draft: ConcertDraft, names: string[]) {
@@ -112,13 +128,13 @@ function addNames(draft: ConcertDraft, names: string[]) {
 function sameShow(draft: ConcertDraft, date: string, venue: string, festivalName: string) {
   return (
     draft.date === date &&
-    draft.venue.toLowerCase() === venue.toLowerCase() &&
-    (draft.festivalName || "").toLowerCase() === (festivalName || "").toLowerCase()
+    draft.venue.toLocaleLowerCase("sv") === venue.toLocaleLowerCase("sv") &&
+    (draft.festivalName || "").toLocaleLowerCase("sv") === (festivalName || "").toLocaleLowerCase("sv")
   );
 }
 
 export function draftsFromCsv(text: string): ConcertDraft[] {
-  const rawLines = text.replace(/^\ufeff/, "").split(/\r?\n/).filter((l) => l.trim());
+  const rawLines = tidy(text.replace(/^\ufeff/, "")).split(/\r?\n/).filter((l) => l.trim());
   if (rawLines.length < 2) return [];
   const delimiter = detectDelimiter(rawLines[0]);
   const header = splitCsvLine(rawLines[0], delimiter).map(normHeader);
@@ -140,15 +156,12 @@ export function draftsFromCsv(text: string): ConcertDraft[] {
   for (const line of rawLines.slice(1)) {
     const cols = splitCsvLine(line, delimiter);
     const rowDate = parseDate(cols[dateI] ?? "");
-    const rowVenue = (cols[venueI] ?? "").trim();
-    const rowCity = (cityI >= 0 ? cols[cityI] ?? "" : "").trim();
-    const rowCountry = (countryI >= 0 ? cols[countryI] ?? "" : "").trim();
-    const rowCode = (codeI >= 0 ? cols[codeI] ?? "" : "").trim();
-    const rowFest = (festI >= 0 ? cols[festI] ?? "" : "").trim();
-    const names = (cols[artistsI] ?? "")
-      .split(/;|\||\n/)
-      .map((n) => n.trim())
-      .filter(Boolean);
+    const rowVenue = cols[venueI] ?? "";
+    const rowCity = cityI >= 0 ? cols[cityI] ?? "" : "";
+    const rowCountry = countryI >= 0 ? cols[countryI] ?? "" : "";
+    const rowCode = codeI >= 0 ? cols[codeI] ?? "" : "";
+    const rowFest = festI >= 0 ? cols[festI] ?? "" : "";
+    const names = (cols[artistsI] ?? "").split(/;|\||\n/).map(tidy).filter(Boolean);
     if (!names.length) continue;
 
     const notes = notesI >= 0 ? cols[notesI] ?? "" : "";
@@ -156,8 +169,7 @@ export function draftsFromCsv(text: string): ConcertDraft[] {
     const rating = ratingRaw ? Number(ratingRaw) : null;
     const ratingOk = rating != null && rating >= 0 && rating <= 5 ? rating : null;
 
-    const continuation = !rowDate && last;
-    if (continuation && last) {
+    if (!rowDate && last) {
       addNames(last, names);
       if (notes && !last.notes) last.notes = notes;
       if (last.rating == null && ratingOk != null) last.rating = ratingOk;
