@@ -21,7 +21,7 @@ const draftSchema = z.object({
   city: z.string().min(1).max(120),
   country: z.string().min(1).max(120),
   countryCode: z.string().max(8).default(""),
-  artists: z.array(artistMediaSchema).min(1).max(40),
+  artists: z.array(artistMediaSchema).min(1).max(200),
   notes: z.string().max(4000).default(""),
   rating: z.number().min(0).max(5).nullable(),
   favorite: z.boolean(),
