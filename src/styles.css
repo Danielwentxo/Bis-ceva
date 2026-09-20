@@ -50,6 +50,7 @@
     @apply bg-background text-foreground antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
   }
 
   body {
@@ -76,6 +77,18 @@
   ::selection {
     background: rgb(232 224 210 / 0.28);
     color: var(--color-foreground);
+  }
+
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+    filter: invert(1) brightness(1.15);
   }
 }
 
