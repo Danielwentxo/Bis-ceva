@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { assertImageDataUrl } from "@/lib/image-data";
+import { allowRequest, clientIp, RateLimitError } from "@/lib/rate-limit";
 
 function num(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -9,7 +12,19 @@ function num(value: unknown) {
 export const moderateImage = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.object({ dataUrl: z.string().min(20).max(900_000) }))
-  .handler(async ({ data }): Promise<{ ok: true } | { ok: false; reason: string }> => {
+  .handler(async ({ data, context }): Promise<{ ok: true } | { ok: false; reason: string }> => {
+    try {
+      assertImageDataUrl(data.dataUrl, "Image");
+    } catch (err) {
+      return { ok: false, reason: err instanceof Error ? err.message : "Invalid image." };
+    }
+
+    const request = getRequest();
+    const ip = request ? clientIp(request) : "unknown";
+    if (!allowRequest(`upload:${context.userId}:${ip}`, 10, 60 * 60 * 1000)) {
+      throw new RateLimitError("Too many image uploads this hour.");
+    }
+
     const user = process.env.SIGHTENGINE_API_USER?.trim();
     const secret = process.env.SIGHTENGINE_API_SECRET?.trim();
     if (!user || !secret) {
