@@ -100,7 +100,7 @@ function Home() {
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight md:text-5xl">{t("yourConcerts")}</h1>
         {hasHydrated ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            {showsLabel(stats.totalShows)} \u00b7 {artistsLabel(stats.uniqueArtists)}
+            {showsLabel(stats.totalShows)}{" · "}{artistsLabel(stats.uniqueArtists)}
           </p>
         ) : (
           <Skeleton className="mt-3 h-4 w-40" />
@@ -125,10 +125,10 @@ function Home() {
                   const yearsAgo = Number(today.slice(0, 4)) - Number(c.date.slice(0, 4));
                   return (
                     <li key={c.id} className="text-sm">
-                      <span className="text-muted-foreground">{yearsAgo}y \u00b7 {formatConcertDate(c.date)}</span>
-                      {" — "}
+                      <span className="text-muted-foreground">{yearsAgo}y{" · "}{formatConcertDate(c.date)}</span>
+                      {" \u2014 "}
                       <span className="font-medium">{name}</span>
-                      <span className="text-muted-foreground"> \u00b7 {c.city}</span>
+                      <span className="text-muted-foreground">{" · "}{c.city}</span>
                     </li>
                   );
                 })}
