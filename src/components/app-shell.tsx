@@ -3,13 +3,14 @@ import { BarChart3, Disc3, MapPin, Plus, Ticket } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AppLogo } from "@/components/app-logo";
+import { LanguageSelect } from "@/components/language-select";
 import { LoginScreen } from "@/components/login-screen";
 import { SiteFooter } from "@/components/site-footer";
 import { useEnrichArtists } from "@/components/use-enrich-artists";
 import { signOut } from "@/lib/auth/client";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { LanguageSelect, useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ function MobileSignOut() {
         setBusy(true);
         void signOut("/").catch(() => setBusy(false));
       }}
-      className="px-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-60"
+      className="max-w-[3.2rem] text-left text-[11px] leading-tight text-muted-foreground hover:text-foreground disabled:opacity-60"
     >
       {busy ? "…" : "Sign out"}
     </button>
@@ -130,21 +131,19 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="md:pl-56">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border/70 bg-background/85 px-4 py-3 backdrop-blur-md md:hidden">
-          <Link to="/" className="min-w-0">
+        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/70 bg-background/85 px-3 py-2.5 backdrop-blur-md md:hidden">
+          <Link to="/" className="min-w-0 shrink">
             <AppLogo size="sm" />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5">
             <MobileSignOut />
-            <div className="w-24">
-              <LanguageSelect />
-            </div>
+            <LanguageSelect compact />
             <Link
               to="/add"
-              className="inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
               aria-label={t("addConcert")}
             >
-              <Plus className="size-5" />
+              <Plus className="size-4" />
             </Link>
           </div>
         </header>
