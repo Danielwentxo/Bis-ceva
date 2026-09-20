@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 
 export function EmptyState({
@@ -22,21 +23,40 @@ export function EmptyState({
 }
 
 export function EmptyArchive({ onSeed }: { onSeed: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
-    <EmptyState
-      title={t("emptyTitle")}
-      body={t("emptyBody")}
-      action={
-        <>
-          <Button asChild>
-            <Link to="/add">{t("addConcert")}</Link>
-          </Button>
-          <Button variant="outline" type="button" onClick={onSeed}>
-            {t("loadExamples")}
-          </Button>
-        </>
-      }
-    />
+    <div className="space-y-6">
+      <EmptyState
+        title={t("emptyTitle")}
+        body={extraLabel(locale, "onboardBody")}
+        action={
+          <>
+            <Button asChild>
+              <Link to="/add">{extraLabel(locale, "onboardAdd")}</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/transfer">{extraLabel(locale, "importTitle")}</Link>
+            </Button>
+            <Button variant="outline" type="button" onClick={onSeed}>
+              {t("loadExamples")}
+            </Button>
+          </>
+        }
+      />
+      <ol className="grid gap-3 sm:grid-cols-3">
+        <li className="rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)]">
+          <p className="text-xs uppercase tracking-wider text-subtle">1</p>
+          <p className="mt-1 font-medium">{extraLabel(locale, "onboardAdd")}</p>
+        </li>
+        <li className="rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)]">
+          <p className="text-xs uppercase tracking-wider text-subtle">2</p>
+          <p className="mt-1 font-medium">{extraLabel(locale, "onboardImport")}</p>
+        </li>
+        <li className="rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)]">
+          <p className="text-xs uppercase tracking-wider text-subtle">3</p>
+          <p className="mt-1 font-medium">{extraLabel(locale, "onboardShare")}</p>
+        </li>
+      </ol>
+    </div>
   );
 }
