@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
-import { archiveToJson, concertsToCsv, draftsFromCsv, draftsFromJson } from "@/lib/transfer";
+import { archiveToJson, concertsToCsv, decodeImportedText, draftsFromCsv, draftsFromJson } from "@/lib/transfer";
 
 export const Route = createFileRoute("/transfer")({ component: TransferPage });
 
@@ -33,7 +33,8 @@ function TransferPage() {
     setBusy(true);
     setNote(null);
     try {
-      const text = await file.text();
+      const buffer = await file.arrayBuffer();
+      const text = decodeImportedText(buffer);
       const drafts = file.name.toLowerCase().endsWith(".json") ? draftsFromJson(text) : draftsFromCsv(text);
       if (!drafts.length) {
         setNote("No concerts found. Use date, artists, venue, city columns.");
@@ -79,7 +80,7 @@ function TransferPage() {
         <h2 className="font-medium">{extraLabel(locale, "importTitle")}</h2>
         <p className="text-sm text-muted-foreground">
           CSV header: date, artists, venue, city, country, countryCode, festival, notes, rating.
-          Artists separated by semicolon. Dates as YYYY-MM-DD.
+          Artists separated by semicolon. Dates as YYYY-MM-DD. Swedish letters (å ä ö) are kept.
         </p>
         <input
           type="file"
