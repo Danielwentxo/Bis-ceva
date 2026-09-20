@@ -6,6 +6,17 @@ import { formatConcertDate } from "@/lib/format";
 import { concertArtists } from "@/lib/stats";
 import type { Artist, Concert } from "@/lib/types";
 
+function FestivalMark({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials =
+    parts.length >= 2 ? `${parts[0]![0]}${parts[1]![0]}`.toUpperCase() : name.trim().slice(0, 2).toUpperCase();
+  return (
+    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-secondary shadow-[var(--shadow-border)]">
+      <span className="font-display text-sm font-medium text-primary">{initials}</span>
+    </div>
+  );
+}
+
 export function ConcertCard({
   concert,
   artists,
@@ -30,6 +41,8 @@ export function ConcertCard({
       <div className="flex gap-3">
         {poster ? (
           <img src={poster} alt="" className="size-12 shrink-0 rounded-lg object-cover shadow-[var(--shadow-border)]" />
+        ) : festivalName ? (
+          <FestivalMark name={festivalName} />
         ) : (
           <ArtistMark artist={headliner} size="md" />
         )}

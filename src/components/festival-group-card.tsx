@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin } from "lucide-react";
-import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
 import { concertArtists } from "@/lib/stats";
@@ -10,6 +9,17 @@ export function festivalKey(concert: Concert) {
   const name = concert.festivalName?.trim().toLowerCase();
   if (!name) return null;
   return `${name}|${concert.date.slice(0, 4)}|${concert.city.trim().toLowerCase()}`;
+}
+
+function FestivalMark({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials =
+    parts.length >= 2 ? `${parts[0]![0]}${parts[1]![0]}`.toUpperCase() : name.trim().slice(0, 2).toUpperCase();
+  return (
+    <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-lg bg-secondary px-1 text-center shadow-[var(--shadow-border)]">
+      <span className="font-display text-sm font-medium leading-none text-primary">{initials}</span>
+    </div>
+  );
 }
 
 export function FestivalGroupCard({
@@ -23,7 +33,7 @@ export function FestivalGroupCard({
   const first = days[0]!;
   const last = days[days.length - 1]!;
   const poster = days.map((c) => c.festivalPosterUrl?.trim()).find(Boolean) ?? null;
-  const firstHeadliner = concertArtists(first, artists)[0]?.artist;
+  const title = first.festivalName?.trim() || "Festival";
   const dateLabel =
     first.date === last.date
       ? formatConcertDate(first.date)
@@ -35,10 +45,10 @@ export function FestivalGroupCard({
         {poster ? (
           <img src={poster} alt="" className="size-12 shrink-0 rounded-lg object-cover" />
         ) : (
-          <ArtistMark artist={firstHeadliner} size="md" />
+          <FestivalMark name={title} />
         )}
         <div className="min-w-0 flex-1 overflow-hidden">
-          <h3 className="truncate font-medium text-foreground">{first.festivalName}</h3>
+          <h3 className="truncate font-medium text-foreground">{title}</h3>
           <p className="truncate text-sm text-muted-foreground">{dateLabel}</p>
           <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-subtle">
             <MapPin className="size-3.5 shrink-0" />
