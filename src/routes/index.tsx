@@ -5,7 +5,8 @@ import { ConcertCard } from "@/components/concert-card";
 import { FestivalGroupCard, festivalKey } from "@/components/festival-group-card";
 import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { artistsLabel, showsLabel, todayIso } from "@/lib/format";
+import { artistsLabel, formatConcertDate, showsLabel, todayIso } from "@/lib/format";
+import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
@@ -43,7 +44,7 @@ function groupList(list: Concert[]) {
 }
 
 function Home() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { q: qParam } = Route.useSearch();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
@@ -59,6 +60,12 @@ function Home() {
   );
 
   const today = todayIso();
+  const md = today.slice(5, 10);
+  const onThisDay = useMemo(
+    () => concerts.filter((c) => c.date.slice(5, 10) === md && c.date.slice(0, 10) !== today).sort((a, b) => b.date.localeCompare(a.date)),
+    [concerts, md, today],
+  );
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return concerts
@@ -93,7 +100,7 @@ function Home() {
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight md:text-5xl">{t("yourConcerts")}</h1>
         {hasHydrated ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            {showsLabel(stats.totalShows)} · {artistsLabel(stats.uniqueArtists)}
+            {showsLabel(stats.totalShows)} \u00b7 {artistsLabel(stats.uniqueArtists)}
           </p>
         ) : (
           <Skeleton className="mt-3 h-4 w-40" />
@@ -109,6 +116,26 @@ function Home() {
         <EmptyArchive onSeed={seedDemo} />
       ) : (
         <>
+          {onThisDay.length ? (
+            <section className="mb-8 rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-subtle">{extraLabel(locale, "onThisDay")}</h2>
+              <ul className="mt-3 space-y-2">
+                {onThisDay.slice(0, 4).map((c) => {
+                  const name = c.festivalName || artists[c.lineup[0]?.artistId ?? ""]?.name || c.venue;
+                  const yearsAgo = Number(today.slice(0, 4)) - Number(c.date.slice(0, 4));
+                  return (
+                    <li key={c.id} className="text-sm">
+                      <span className="text-muted-foreground">{yearsAgo}y \u00b7 {formatConcertDate(c.date)}</span>
+                      {" — "}
+                      <span className="font-medium">{name}</span>
+                      <span className="text-muted-foreground"> \u00b7 {c.city}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
+
           <div className="mb-6 space-y-3">
             <input
               value={q}
