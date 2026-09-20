@@ -27,6 +27,7 @@ const draftSchema = z.object({
   festival: z.boolean(),
   festivalName: z.string().max(200).optional().default(""),
   festivalPosterUrl: z.string().max(900_000).nullable().optional(),
+  ticketUrl: z.string().max(900_000).nullable().optional(),
 });
 
 type ConcertRow = {
@@ -43,6 +44,7 @@ type ConcertRow = {
   festival: boolean;
   festival_name?: string;
   festival_poster_url?: string | null;
+  ticket_url?: string | null;
   created_at: string | Date;
 };
 
@@ -84,6 +86,7 @@ function rowToConcert(row: ConcertRow): Concert {
     festival: Boolean(row.festival) || Boolean(festivalName),
     festivalName,
     festivalPosterUrl: row.festival_poster_url ?? null,
+    ticketUrl: row.ticket_url ?? null,
     createdAt: created,
   };
 }
@@ -135,7 +138,7 @@ export const loadArchive = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
     const sql = await getSql();
     const concertRows = await sql<ConcertRow>`
-      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, created_at
+      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, ticket_url, created_at
       from concerts where user_id = ${context.userId} order by date desc
     `;
     const artistRows = await sql<ArtistRow>`
@@ -158,23 +161,25 @@ export const upsertConcert = createServerFn({ method: "POST" })
     const festivalName = draft.festivalName?.trim() ?? "";
     const festival = Boolean(draft.festival) || Boolean(festivalName);
     const festivalPosterUrl = draft.festivalPosterUrl ?? null;
+    const ticketUrl = draft.ticketUrl ?? null;
     await upsertArtistsForUser(context.userId, draft.artists);
     const lineup: LineupEntry[] = draft.artists.map((a, index) => ({
       artistId: artistKey(a.name),
       role: index === 0 ? "headliner" : "support",
     }));
     await sql`
-      insert into concerts (id, user_id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, created_at)
+      insert into concerts (id, user_id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, ticket_url, created_at)
       values (
         ${id}, ${context.userId}, ${draft.date}, ${draft.venue.trim()}, ${draft.city.trim()}, ${draft.country},
         ${draft.countryCode ?? ""}, ${JSON.stringify(lineup)}::jsonb, ${draft.notes.trim()}, ${draft.rating},
-        ${draft.favorite}, ${festival}, ${festivalName}, ${festivalPosterUrl}, ${createdAt}
+        ${draft.favorite}, ${festival}, ${festivalName}, ${festivalPosterUrl}, ${ticketUrl}, ${createdAt}
       )
       on conflict (user_id, id) do update set
         date = excluded.date, venue = excluded.venue, city = excluded.city, country = excluded.country,
         country_code = excluded.country_code, lineup = excluded.lineup, notes = excluded.notes,
         rating = excluded.rating, favorite = excluded.favorite, festival = excluded.festival,
-        festival_name = excluded.festival_name, festival_poster_url = excluded.festival_poster_url
+        festival_name = excluded.festival_name, festival_poster_url = excluded.festival_poster_url,
+        ticket_url = excluded.ticket_url
     `;
     const artists: Artist[] = draft.artists.map((a) => ({
       id: artistKey(a.name), name: a.name, logoUrl: a.logoUrl ?? null, thumbUrl: a.thumbUrl ?? null,
@@ -183,7 +188,7 @@ export const upsertConcert = createServerFn({ method: "POST" })
     const concert: Concert = {
       id, date: draft.date, venue: draft.venue.trim(), city: draft.city.trim(), country: draft.country,
       countryCode: draft.countryCode ?? "", lineup, notes: draft.notes.trim(), rating: draft.rating,
-      favorite: draft.favorite, festival, festivalName, festivalPosterUrl, createdAt,
+      favorite: draft.favorite, festival, festivalName, festivalPosterUrl, ticketUrl, createdAt,
     };
     return { id, concert, artists };
   });
