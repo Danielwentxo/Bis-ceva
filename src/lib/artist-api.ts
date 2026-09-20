@@ -106,14 +106,6 @@ async function wikiSummary(name: string) {
   return fetchJson<WikiSummary>(url, 6000);
 }
 
-// MusicBrainz — free, open, no API key, covers every genre and is by far the
-// best source here for underground/niche acts (metal subgenres, local scenes,
-// etc.) that TheAudioDB and Deezer often don't index at all. It doesn't host
-// artist images, so it's used for NAME MATCHES and GENRE TAGS, layered under
-// TheAudioDB/Deezer rather than replacing them. Their usage policy asks for a
-// descriptive User-Agent (already set in HEADERS) and ~1 request/second, so
-// this is only called as a fallback — not on every lookup — to stay polite
-// and keep response times reasonable.
 type MbArtist = {
   name?: string;
   country?: string;
@@ -154,11 +146,15 @@ function mergeMedia(primary: ArtistMedia, extra: Partial<ArtistMedia>): ArtistMe
   return {
     name: primary.name || extra.name || "",
     logoUrl: primary.logoUrl ?? extra.logoUrl ?? null,
-    thumbUrl: primary.thumbUrl ?? extra.thumbUrl ?? null,
+    thumbUrl: primary.logoUrl ? primary.thumbUrl ?? null : primary.thumbUrl ?? extra.thumbUrl ?? null,
     genre: primary.genre ?? extra.genre ?? null,
     country: primary.country ?? extra.country ?? null,
     bio: primary.bio ?? extra.bio ?? null,
   };
+}
+
+function deezerPicture(row: DeezerArtist) {
+  return clean(row.picture_xl) ?? clean(row.picture_big) ?? clean(row.picture_medium);
 }
 
 export const searchArtists = createServerFn({ method: "POST" })
@@ -179,12 +175,16 @@ export const searchArtists = createServerFn({ method: "POST" })
       const name = clean(row.name);
       if (!name) continue;
       const key = norm(name);
-      const picture = clean(row.picture_xl) ?? clean(row.picture_big) ?? clean(row.picture_medium);
+      const picture = deezerPicture(row);
       const prev = byKey.get(key);
+      if (prev?.logoUrl) {
+        byKey.set(key, prev);
+        continue;
+      }
       const incoming: ArtistMedia = {
         name,
-        logoUrl: prev?.logoUrl ?? null,
-        thumbUrl: prev?.thumbUrl ?? picture,
+        logoUrl: null,
+        thumbUrl: picture,
         genre: prev?.genre ?? null,
         country: prev?.country ?? null,
         bio: prev?.bio ?? null,
@@ -192,10 +192,6 @@ export const searchArtists = createServerFn({ method: "POST" })
       byKey.set(key, prev ? mergeMedia(prev, incoming) : incoming);
     }
 
-    // TheAudioDB + Deezer skew toward mainstream/commercial catalogs and can
-    // come up empty (or thin) for underground metal, local hip-hop, niche
-    // electronic acts, etc. Only pay MusicBrainz's extra round-trip when that
-    // happens, so common searches stay fast.
     if (byKey.size < 3) {
       const mb = await mbSearch(query, 8);
       for (const row of mb) {
@@ -237,28 +233,25 @@ async function enrichOne(name: string, countryHint?: string): Promise<ArtistMedi
       };
   media.name = name;
 
-  if (!media.logoUrl || !media.thumbUrl || !media.bio) {
+  if (!media.logoUrl) {
     const [deezer, wiki] = await Promise.all([
       deezerSearch(name, 3),
-      media.bio && media.thumbUrl ? Promise.resolve(null) : wikiSummary(name),
+      media.bio ? Promise.resolve(null) : wikiSummary(name),
     ]);
-    const d0 = deezer[0];
-    const picture =
-      clean(d0?.picture_xl) ?? clean(d0?.picture_big) ?? clean(d0?.picture_medium);
+    const picture = deezer[0] ? deezerPicture(deezer[0]) : null;
     media = mergeMedia(media, {
       name,
       thumbUrl: picture,
       bio: clean(wiki?.extract),
     });
     if (!media.thumbUrl) {
-      media.thumbUrl =
-        clean(wiki?.originalimage?.source) ?? clean(wiki?.thumbnail?.source);
+      media.thumbUrl = clean(wiki?.originalimage?.source) ?? clean(wiki?.thumbnail?.source);
     }
+  } else if (!media.bio) {
+    const wiki = await wikiSummary(name);
+    media.bio = clean(wiki?.extract);
   }
 
-  // Last resort for genre: MusicBrainz's crowd-sourced tags cover metal
-  // subgenres (black/death/doom/etc.) and other niche scenes far better than
-  // the sources above, which mostly know mainstream acts.
   if (!media.genre) {
     const mb = await mbSearch(name, 3);
     const hit = mb.find((a) => norm(a.name ?? "") === norm(name)) ?? mb[0];
@@ -281,9 +274,7 @@ export const enrichArtists = createServerFn({ method: "POST" })
     const names = data.names;
     for (let i = 0; i < names.length; i += 4) {
       const chunk = names.slice(i, i + 4);
-      const part = await Promise.all(
-        chunk.map((name) => enrichOne(name, data.countryHint)),
-      );
+      const part = await Promise.all(chunk.map((name) => enrichOne(name, data.countryHint)));
       results.push(...part);
     }
     return results;
