@@ -42,6 +42,10 @@ function mediaToArtist(media: ArtistMedia): Artist {
     genre: media.genre,
     country: media.country,
     bio: media.bio,
+    city: media.city ?? null,
+    style: media.style ?? null,
+    formedYear: media.formedYear ?? null,
+    website: media.website ?? null,
     fetchedAt: media.logoUrl || media.thumbUrl || media.bio ? new Date().toISOString() : undefined,
   };
 }
@@ -124,6 +128,10 @@ export const useArchive = create<ArchiveState>()(
             genre: media.genre ?? prev?.genre ?? null,
             country: media.country ?? prev?.country ?? null,
             bio: media.bio ?? prev?.bio ?? null,
+            city: media.city ?? prev?.city ?? null,
+            style: media.style ?? prev?.style ?? null,
+            formedYear: media.formedYear ?? prev?.formedYear ?? null,
+            website: media.website ?? prev?.website ?? null,
             fetchedAt: media.logoUrl || media.thumbUrl || media.bio ? new Date().toISOString() : prev?.fetchedAt,
           };
           return { artists: { ...state.artists, [id]: next } };
@@ -145,6 +153,10 @@ export const useArchive = create<ArchiveState>()(
                   genre: hit.genre ?? prev.genre,
                   country: hit.country ?? prev.country,
                   bio: hit.bio ?? prev.bio,
+                  city: hit.city ?? prev.city,
+                  style: hit.style ?? prev.style,
+                  formedYear: hit.formedYear ?? prev.formedYear,
+                  website: hit.website ?? prev.website,
                   fetchedAt: new Date().toISOString(),
                 }
               : mediaToArtist(hit);
