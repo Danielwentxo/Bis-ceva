@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <AppLogo size="sm" />
           </Link>
           <div className="flex items-center gap-3">
-            <LanguageSelect compact />
+            <LanguageSelect />
             <Link to="/login" className="text-sm text-muted-foreground underline">
               Sign in
             </Link>
@@ -142,7 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="ml-auto flex items-center gap-1.5">
             <MobileSignOut />
-            <LanguageSelect compact />
+            <LanguageSelect />
             <Link
               to="/add"
               className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
@@ -154,7 +154,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <header className="sticky top-0 z-20 hidden items-center justify-end gap-3 border-b border-border/70 bg-background/85 px-6 py-3 backdrop-blur-md md:flex">
-          <LanguageSelect compact />
+          <LanguageSelect />
         </header>
 
         <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 md:pb-12 md:pt-8">
