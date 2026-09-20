@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { assertImageDataUrl } from "@/lib/image-data";
 import type { Artist, Concert, LineupEntry } from "@/lib/types";
 import { artistKey } from "@/lib/utils";
 
@@ -160,8 +161,12 @@ export const upsertConcert = createServerFn({ method: "POST" })
     const draft = data.draft;
     const festivalName = draft.festivalName?.trim() ?? "";
     const festival = Boolean(draft.festival) || Boolean(festivalName);
-    const festivalPosterUrl = draft.festivalPosterUrl ?? null;
-    const ticketUrl = draft.ticketUrl ?? null;
+    const festivalPosterUrl = assertImageDataUrl(draft.festivalPosterUrl ?? null, "Festival poster");
+    const ticketUrl = assertImageDataUrl(draft.ticketUrl ?? null, "Ticket");
+    for (const artist of draft.artists) {
+      assertImageDataUrl(artist.logoUrl ?? null, "Artist logo");
+      assertImageDataUrl(artist.thumbUrl ?? null, "Artist image");
+    }
     await upsertArtistsForUser(context.userId, draft.artists);
     const lineup: LineupEntry[] = draft.artists.map((a, index) => ({
       artistId: artistKey(a.name),
@@ -217,5 +222,17 @@ export const clearUserArchive = createServerFn({ method: "POST" })
     const sql = await getSql();
     await sql`delete from concerts where user_id = ${context.userId}`;
     await sql`delete from artists where user_id = ${context.userId}`;
+    return { ok: true as const };
+  });
+
+export const deleteAccount = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    await sql`delete from concerts where user_id = ${context.userId}`;
+    await sql`delete from artists where user_id = ${context.userId}`;
+    await sql`delete from "session" where "userId" = ${context.userId}`;
+    await sql`delete from "account" where "userId" = ${context.userId}`;
+    await sql`delete from "user" where "id" = ${context.userId}`;
     return { ok: true as const };
   });
