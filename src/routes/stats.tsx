@@ -1,9 +1,12 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Share2 } from "lucide-react";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
 import { EmptyArchive } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatConcertDate, showsLabel } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
@@ -13,6 +16,38 @@ import { useArchive } from "@/lib/store";
 
 export const Route = createFileRoute("/stats")({ component: StatsPage });
 
+function buildShareText(
+  stats: ReturnType<typeof computeStats>,
+  labels: { title: string; countries: string; venues: string; artists: string },
+) {
+  const lines = [
+    labels.title,
+    `${stats.totalShows} concerts \u00b7 ${stats.uniqueArtists} artists \u00b7 ${stats.uniqueVenues} venues \u00b7 ${stats.uniqueCountries} countries`,
+  ];
+  const artists = stats.artistCounts.slice(0, 3);
+  if (artists.length) {
+    lines.push(
+      `${labels.artists}: ${artists.map((row) => `${row.data.name} (${row.count})`).join(", ")}`,
+    );
+  }
+  const countries = stats.countryCounts.slice(0, 8);
+  if (countries.length) {
+    lines.push(`${labels.countries}: ${countries.map((row) => `${row.data.country} (${row.count})`).join(", ")}`);
+  }
+  const venues = stats.venueCounts.slice(0, 5);
+  if (venues.length) {
+    lines.push(
+      `${labels.venues}: ${venues
+        .map((row) => `${row.data.venue}, ${row.data.city}, ${row.data.country} (${row.count})`)
+        .join("; ")}`,
+    );
+  }
+  if (stats.yearCounts.length) {
+    lines.push(`Years: ${stats.yearCounts.map((row) => `${row.year} ${row.count}`).join(", ")}`);
+  }
+  return lines.join("\n");
+}
+
 function StatsPage() {
   const { t, locale } = useI18n();
   const hasHydrated = useArchive((s) => s.hasHydrated);
@@ -21,9 +56,33 @@ function StatsPage() {
   const seedDemo = useArchive((s) => s.seedDemo);
   const stats = useMemo(() => computeStats(concerts, artists), [concerts, artists]);
   const topArtists = stats.artistCounts.slice(0, 3);
-  const topCountries = stats.countryCounts.slice(0, 3);
+  const topCountries = stats.countryCounts.slice(0, 8);
+  const topVenues = stats.venueCounts.slice(0, 8);
   const topOrigins = stats.artistOriginCounts.slice(0, 8);
   const maxYear = Math.max(1, ...stats.yearCounts.map((y) => y.count));
+
+  async function shareStats() {
+    const text = buildShareText(stats, {
+      title: t("statsTitle"),
+      countries: extraLabel(locale, "topCountries"),
+      venues: extraLabel(locale, "topVenues"),
+      artists: t("mostSeen"),
+    });
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: t("statsTitle"), text });
+        return;
+      }
+    } catch {
+      /* user cancelled or share failed; fall back to copy */
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(extraLabel(locale, "statsCopied"));
+    } catch {
+      toast.error(extraLabel(locale, "statsCopied"));
+    }
+  }
 
   if (!hasHydrated) {
     return (
@@ -43,9 +102,15 @@ function StatsPage() {
 
   return (
     <AppShell>
-      <header className="mb-8">
-        <p className="text-sm font-medium text-muted-foreground">{t("statsLead")}</p>
-        <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("statsTitle")}</h1>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">{t("statsLead")}</p>
+          <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("statsTitle")}</h1>
+        </div>
+        <Button type="button" variant="outline" onClick={() => void shareStats()}>
+          <Share2 className="size-4" />
+          {extraLabel(locale, "shareStats")}
+        </Button>
       </header>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Tile label={t("tileConcerts")} value={String(stats.totalShows)} />
@@ -114,6 +179,28 @@ function StatsPage() {
         </section>
       ) : null}
 
+      {topVenues.length ? (
+        <section className="mt-8">
+          <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topVenues")}</h2>
+          <ul className="space-y-2">
+            {topVenues.map((row, index) => (
+              <li key={row.key} className="flex items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <span className="w-5 text-subtle">{index + 1}</span>
+                    {row.data.venue}
+                  </span>
+                  <span className="mt-1 block truncate pl-7 text-xs text-muted-foreground">
+                    {row.data.city}, {row.data.country}
+                  </span>
+                </span>
+                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {topOrigins.length ? (
         <section className="mt-8">
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "bandsByCountry")}</h2>
@@ -131,7 +218,6 @@ function StatsPage() {
       <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
         <Meta label={t("firstShow")} value={stats.firstShow ? formatConcertDate(stats.firstShow.date) : "\u2014"} />
         <Meta label={t("lastShow")} value={stats.lastShow ? formatConcertDate(stats.lastShow.date) : "\u2014"} />
-        <Meta label={t("favorites")} value={String(stats.favorites)} />
       </dl>
 
       <div className="mt-10">
