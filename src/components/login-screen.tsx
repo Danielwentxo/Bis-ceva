@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
@@ -46,10 +47,10 @@ export function LoginScreen() {
     }
   }
 
-  async function signInWith(provider: "google" | "apple") {
+  async function signInWithGoogle() {
     setSubmitting(true);
     try {
-      const { error } = await authClient.signIn.social({ provider, callbackURL: "/" });
+      const { error } = await authClient.signIn.social({ provider: "google", callbackURL: "/" });
       if (error) throw new Error(error.message ?? "Social sign-in failed");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -122,14 +123,9 @@ export function LoginScreen() {
                   {t("orFaster")}
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button type="button" variant="outline" disabled={submitting} onClick={() => void signInWith("google")}>
-                    Google
-                  </Button>
-                  <Button type="button" variant="outline" disabled={submitting} onClick={() => void signInWith("apple")}>
-                    Apple
-                  </Button>
-                </div>
+                <Button type="button" variant="outline" className="w-full" disabled={submitting} onClick={() => void signInWithGoogle()}>
+                  Continue with Google
+                </Button>
               </>
             ) : null}
             <button
@@ -145,6 +141,11 @@ export function LoginScreen() {
             <div className="mt-6">
               <LanguageSelect />
             </div>
+            <p className="mt-8 flex justify-center gap-4 text-xs text-muted-foreground">
+              <Link to="/about" className="hover:text-foreground">About</Link>
+              <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+              <Link to="/contact" className="hover:text-foreground">Contact</Link>
+            </p>
           </>
         ) : null}
       </div>
