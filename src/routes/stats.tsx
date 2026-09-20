@@ -8,6 +8,7 @@ import { CountryFlag } from "@/components/country-flag";
 import { EmptyArchive } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { signOut } from "@/lib/auth/client";
 import { formatConcertDate, showsLabel } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
@@ -15,6 +16,42 @@ import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
 export const Route = createFileRoute("/stats")({ component: StatsPage });
+
+async function confirmDeleteAccount(locale: string) {
+  if (!window.confirm(extraLabel(locale, "deleteAccountConfirm"))) return;
+  try {
+    await useArchive.getState().deleteAccount();
+    await signOut("/");
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : extraLabel(locale, "deleteAccount"));
+  }
+}
+
+function AccountActions({ locale, showClear }: { locale: string; showClear: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div className="mt-10 flex flex-wrap gap-4">
+      {showClear ? (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          onClick={() => {
+            if (window.confirm(t("clearArchiveConfirm"))) void useArchive.getState().clearArchive();
+          }}
+        >
+          {t("clearArchive")}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className="text-xs text-destructive underline-offset-4 hover:underline"
+        onClick={() => void confirmDeleteAccount(locale)}
+      >
+        {extraLabel(locale, "deleteAccount")}
+      </button>
+    </div>
+  );
+}
 
 function buildShareText(
   stats: ReturnType<typeof computeStats>,
@@ -98,6 +135,7 @@ function StatsPage() {
     return (
       <AppShell>
         <EmptyArchive onSeed={seedDemo} />
+        <AccountActions locale={locale} showClear={false} />
       </AppShell>
     );
   }
@@ -232,17 +270,7 @@ function StatsPage() {
         <Meta label={t("lastShow")} value={stats.lastShow ? formatConcertDate(stats.lastShow.date) : "\u2014"} />
       </dl>
 
-      <div className="mt-10">
-        <button
-          type="button"
-          className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          onClick={() => {
-            if (window.confirm(t("clearArchiveConfirm"))) void useArchive.getState().clearArchive();
-          }}
-        >
-          {t("clearArchive")}
-        </button>
-      </div>
+      <AccountActions locale={locale} showClear />
     </AppShell>
   );
 }
