@@ -10,6 +10,7 @@ function like(query: string) {
 }
 
 export const searchCatalogArtists = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
   .validator(z.object({ query: z.string().trim().min(1).max(80) }))
   .handler(async ({ data }): Promise<ArtistMedia[]> => {
     const sql = await getSql();
@@ -60,11 +61,11 @@ export const saveCatalogArtist = createServerFn({ method: "POST" })
       )
       on conflict (id) do update set
         name = excluded.name,
-        logo_url = coalesce(excluded.logo_url, catalog_artists.logo_url),
-        thumb_url = coalesce(excluded.thumb_url, catalog_artists.thumb_url),
-        genre = coalesce(excluded.genre, catalog_artists.genre),
-        country = coalesce(excluded.country, catalog_artists.country),
-        bio = coalesce(excluded.bio, catalog_artists.bio)
+        logo_url = coalesce(catalog_artists.logo_url, excluded.logo_url),
+        thumb_url = coalesce(catalog_artists.thumb_url, excluded.thumb_url),
+        genre = coalesce(catalog_artists.genre, excluded.genre),
+        country = coalesce(catalog_artists.country, excluded.country),
+        bio = coalesce(catalog_artists.bio, excluded.bio)
     `;
     return { id, name: data.name };
   });
@@ -77,6 +78,7 @@ export type CatalogVenue = {
 };
 
 export const searchCatalogVenues = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
   .validator(z.object({ query: z.string().trim().min(1).max(80) }))
   .handler(async ({ data }): Promise<CatalogVenue[]> => {
     const sql = await getSql();
@@ -117,10 +119,10 @@ export const saveCatalogVenue = createServerFn({ method: "POST" })
       insert into catalog_venues (id, venue, city, country, country_code, created_by)
       values (${id}, ${data.venue}, ${data.city}, ${data.country}, ${data.countryCode}, ${context.userId})
       on conflict (id) do update set
-        venue = excluded.venue,
-        city = excluded.city,
-        country = case when excluded.country = '' then catalog_venues.country else excluded.country end,
-        country_code = case when excluded.country_code = '' then catalog_venues.country_code else excluded.country_code end
+        venue = catalog_venues.venue,
+        city = catalog_venues.city,
+        country = case when catalog_venues.country = '' then excluded.country else catalog_venues.country end,
+        country_code = case when catalog_venues.country_code = '' then excluded.country_code else catalog_venues.country_code end
     `;
     return { id };
   });
