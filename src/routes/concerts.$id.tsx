@@ -110,15 +110,6 @@ function ConcertDetail() {
         </section>
       ) : null}
 
-      {concert.ticketUrl ? (
-        <section className="mt-8">
-          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-subtle">Ticket</h2>
-          <a href={concert.ticketUrl} target="_blank" rel="noreferrer">
-            <img src={concert.ticketUrl} alt="Ticket" className="max-h-72 w-full rounded-2xl object-contain bg-card p-2 shadow-[var(--shadow-border)]" />
-          </a>
-        </section>
-      ) : null}
-
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="flex-1">
           <Link to="/add" search={{ id: concert.id }}>
