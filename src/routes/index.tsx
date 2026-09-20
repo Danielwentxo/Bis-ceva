@@ -126,7 +126,7 @@ function Home() {
                   return (
                     <li key={c.id} className="text-sm">
                       <span className="text-muted-foreground">{yearsAgo}y{" · "}{formatConcertDate(c.date)}</span>
-                      {" \u2014 "}
+                      {" — "}
                       <span className="font-medium">{name}</span>
                       <span className="text-muted-foreground">{" · "}{c.city}</span>
                     </li>
