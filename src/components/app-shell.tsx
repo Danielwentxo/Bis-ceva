@@ -2,11 +2,11 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { BarChart3, Disc3, MapPin, Plus, Ticket } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { AppLogo } from "@/components/app-logo";
 import { LoginScreen } from "@/components/login-screen";
 import { useEnrichArtists } from "@/components/use-enrich-artists";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { APP_NAME } from "@/lib/brand";
 import { LanguageSelect, useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-dvh bg-background text-foreground">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border px-4 py-6 md:flex">
         <Link to="/" className="mb-8 px-2">
-          <p className="font-display text-3xl font-medium tracking-tight text-foreground">{APP_NAME}</p>
+          <AppLogo size="md" />
           <p className="mt-1 text-xs text-muted-foreground">{t("archiveSubtitle")}</p>
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
@@ -94,8 +94,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="md:pl-56">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border/70 bg-background/85 px-4 py-3 backdrop-blur-md md:hidden">
-          <Link to="/" className="font-display text-xl font-medium tracking-tight">
-            {APP_NAME}
+          <Link to="/" className="min-w-0">
+            <AppLogo size="sm" />
           </Link>
           <div className="flex items-center gap-2">
             <div className="w-28">
