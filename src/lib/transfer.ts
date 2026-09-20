@@ -136,35 +136,39 @@ export function draftsFromJson(text: string): ConcertDraft[] {
   const concerts = Array.isArray(parsed) ? parsed : parsed.concerts;
   const artists = Array.isArray(parsed) ? {} : parsed.artists ?? {};
   if (!Array.isArray(concerts)) return [];
-  return concerts.map((c) => ({
-    date: c.date,
-    venue: c.venue,
-    city: c.city,
-    country: c.country,
-    countryCode: c.countryCode,
-    artists: (c.lineup ?? []).map((l) => {
-      const a = artists[l.artistId];
-      return {
-        name: a?.name ?? l.artistId,
-        logoUrl: a?.logoUrl ?? null,
-        thumbUrl: a?.thumbUrl ?? null,
-        genre: a?.genre ?? null,
-        country: a?.country ?? null,
-        bio: a?.bio ?? null,
-      };
-    }).filter((a) => a.name),
-    notes: c.notes ?? "",
-    rating: c.rating ?? null,
-    favorite: Boolean(c.favorite),
-    festival: Boolean(c.festival || c.festivalName),
-    festivalName: c.festivalName ?? "",
-    festivalPosterUrl: c.festivalPosterUrl ?? null,
-    ticketUrl: c.ticketUrl ?? null,
-  })).filter((d) => d.date && d.venue && d.artists.length);
+  return concerts
+    .map((c) => ({
+      date: c.date,
+      venue: c.venue,
+      city: c.city,
+      country: c.country,
+      countryCode: c.countryCode,
+      artists: (c.lineup ?? [])
+        .map((l) => {
+          const a = artists[l.artistId];
+          return {
+            name: a?.name ?? l.artistId,
+            logoUrl: a?.logoUrl ?? null,
+            thumbUrl: a?.thumbUrl ?? null,
+            genre: a?.genre ?? null,
+            country: a?.country ?? null,
+            bio: a?.bio ?? null,
+          };
+        })
+        .filter((a) => a.name),
+      notes: c.notes ?? "",
+      rating: c.rating ?? null,
+      favorite: Boolean(c.favorite),
+      festival: Boolean(c.festival || c.festivalName),
+      festivalName: c.festivalName ?? "",
+      festivalPosterUrl: c.festivalPosterUrl ?? null,
+      ticketUrl: c.ticketUrl ?? null,
+    }))
+    .filter((d) => d.date && d.venue && d.artists.length);
 }
 
 export function ticketFiles(concerts: Concert[]) {
   return concerts
     .filter((c) => c.ticketUrl)
-    .map((c) => ({ name: `${c.date}-${artistKey(c.venue)}.jpg`, dataUrl: c.ticketUrl as string });
+    .map((c) => ({ name: `${c.date}-${artistKey(c.venue)}.jpg`, dataUrl: c.ticketUrl as string }));
 }
