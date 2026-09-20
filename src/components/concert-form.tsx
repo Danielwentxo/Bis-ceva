@@ -238,22 +238,6 @@ export function ConcertForm({
     }
   }
 
-  async function onTicket(file: File | undefined) {
-    if (!file) return;
-    try {
-      const ticket = await resizeImageFile(file);
-      const check = await moderateImage({ data: { dataUrl: ticket } });
-      if (!check.ok) {
-        setError(check.reason);
-        return;
-      }
-      setError(null);
-      setForm((f) => ({ ...f, ticketUrl: ticket }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not use this image.");
-    }
-  }
-
   async function onLogo(file: File | undefined) {
     if (!file || !manual) return;
     try {
@@ -471,11 +455,6 @@ export function ConcertForm({
       <div className="space-y-2">
         <Label>{t("rating")}</Label>
         <StarRating value={form.rating} onChange={(rating) => setForm((f) => ({ ...f, rating }))} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="ticket">Ticket</Label>
-        <Input id="ticket" type="file" accept="image/*" onChange={(e) => void onTicket(e.target.files?.[0])} />
-        {form.ticketUrl ? <img src={form.ticketUrl} alt="" className="h-24 rounded-lg object-cover" /> : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="notes">{t("notes")}</Label>
