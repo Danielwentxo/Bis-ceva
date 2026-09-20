@@ -18,7 +18,7 @@ export const Route = createFileRoute("/stats")({ component: StatsPage });
 
 function buildShareText(
   stats: ReturnType<typeof computeStats>,
-  labels: { title: string; countries: string; venues: string; artists: string },
+  labels: { title: string; countries: string; venues: string; artists: string; genres: string },
 ) {
   const lines = [
     labels.title,
@@ -26,9 +26,7 @@ function buildShareText(
   ];
   const artists = stats.artistCounts.slice(0, 3);
   if (artists.length) {
-    lines.push(
-      `${labels.artists}: ${artists.map((row) => `${row.data.name} (${row.count})`).join(", ")}`,
-    );
+    lines.push(`${labels.artists}: ${artists.map((row) => `${row.data.name} (${row.count})`).join(", ")}`);
   }
   const countries = stats.countryCounts.slice(0, 8);
   if (countries.length) {
@@ -37,10 +35,12 @@ function buildShareText(
   const venues = stats.venueCounts.slice(0, 5);
   if (venues.length) {
     lines.push(
-      `${labels.venues}: ${venues
-        .map((row) => `${row.data.venue}, ${row.data.city}, ${row.data.country} (${row.count})`)
-        .join("; ")}`,
+      `${labels.venues}: ${venues.map((row) => `${row.data.venue}, ${row.data.city}, ${row.data.country} (${row.count})`).join("; ")}`,
     );
+  }
+  const genres = stats.genreCounts.slice(0, 5);
+  if (genres.length) {
+    lines.push(`${labels.genres}: ${genres.map((row) => `${row.data.genre} (${row.count})`).join(", ")}`);
   }
   if (stats.yearCounts.length) {
     lines.push(`Years: ${stats.yearCounts.map((row) => `${row.year} ${row.count}`).join(", ")}`);
@@ -59,6 +59,7 @@ function StatsPage() {
   const topCountries = stats.countryCounts.slice(0, 8);
   const topVenues = stats.venueCounts.slice(0, 8);
   const topOrigins = stats.artistOriginCounts.slice(0, 8);
+  const topGenres = stats.genreCounts.slice(0, 8);
   const maxYear = Math.max(1, ...stats.yearCounts.map((y) => y.count));
 
   async function shareStats() {
@@ -67,6 +68,7 @@ function StatsPage() {
       countries: extraLabel(locale, "topCountries"),
       venues: extraLabel(locale, "topVenues"),
       artists: t("mostSeen"),
+      genres: extraLabel(locale, "topGenres"),
     });
     try {
       if (navigator.share) {
@@ -74,7 +76,7 @@ function StatsPage() {
         return;
       }
     } catch {
-      /* user cancelled or share failed; fall back to copy */
+      /* cancelled */
     }
     try {
       await navigator.clipboard.writeText(text);
@@ -127,10 +129,7 @@ function StatsPage() {
               <div key={row.year} className="flex min-w-0 flex-1 flex-col items-center gap-2">
                 <p className="text-xs tabular-nums text-muted-foreground">{row.count}</p>
                 <div className="flex h-28 w-full items-end justify-center">
-                  <div
-                    className="w-full max-w-10 rounded-t-md bg-primary"
-                    style={{ height: `${Math.max(8, (row.count / maxYear) * 100)}%` }}
-                  />
+                  <div className="w-full max-w-10 rounded-t-md bg-primary" style={{ height: `${Math.max(8, (row.count / maxYear) * 100)}%` }} />
                 </div>
                 <p className="text-[11px] tabular-nums text-subtle">{row.year}</p>
               </div>
@@ -145,11 +144,7 @@ function StatsPage() {
           <ul className="space-y-2">
             {topArtists.map((row, index) => (
               <li key={row.key}>
-                <Link
-                  to="/artists/$slug"
-                  params={{ slug: row.data.id }}
-                  className="flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]"
-                >
+                <Link to="/artists/$slug" params={{ slug: row.data.id }} className="flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
                   <span className="w-5 text-sm tabular-nums text-subtle">{index + 1}</span>
                   <ArtistMark artist={row.data} size="sm" />
                   <span className="min-w-0 flex-1 truncate font-medium">{row.data.name}</span>
@@ -201,6 +196,23 @@ function StatsPage() {
         </section>
       ) : null}
 
+      {topGenres.length ? (
+        <section className="mt-8">
+          <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topGenres")}</h2>
+          <ul className="space-y-2">
+            {topGenres.map((row, index) => (
+              <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <span className="w-5 text-subtle">{index + 1}</span>
+                  {row.data.genre}
+                </span>
+                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {topOrigins.length ? (
         <section className="mt-8">
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "bandsByCountry")}</h2>
@@ -225,9 +237,7 @@ function StatsPage() {
           type="button"
           className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           onClick={() => {
-            if (window.confirm(t("clearArchiveConfirm"))) {
-              void useArchive.getState().clearArchive();
-            }
+            if (window.confirm(t("clearArchiveConfirm"))) void useArchive.getState().clearArchive();
           }}
         >
           {t("clearArchive")}
