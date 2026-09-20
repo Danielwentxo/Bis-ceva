@@ -52,6 +52,14 @@ export function originCountry(raw: string | null | undefined) {
   return null;
 }
 
+function genreLabels(raw: string | null | undefined) {
+  if (!raw) return [];
+  return raw
+    .split(/[,;/|&]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 1);
+}
+
 export type ArchiveStats = {
   totalShows: number;
   pastShows: number;
@@ -72,6 +80,7 @@ export type ArchiveStats = {
   cityCounts: CountItem<{ city: string; country: string; countryCode: string }>[];
   countryCounts: CountItem<{ country: string; countryCode: string }>[];
   artistOriginCounts: CountItem<{ country: string }>[];
+  genreCounts: CountItem<{ genre: string }>[];
   yearCounts: { year: number; count: number }[];
   monthCounts: { month: number; count: number }[];
 };
@@ -108,6 +117,7 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
   const cityMap = new Map<string, CountItem<{ city: string; country: string; countryCode: string }>>();
   const countryMap = new Map<string, CountItem<{ country: string; countryCode: string }>>();
   const originMap = new Map<string, CountItem<{ country: string }>>();
+  const genreMap = new Map<string, CountItem<{ genre: string }>>();
   const yearMap = new Map<number, number>();
   const monthMap = new Map<number, number>();
   const seenArtists = new Set<string>();
@@ -143,8 +153,11 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
 
   for (const id of seenArtists) {
     const origin = originCountry(artists[id]?.country);
-    if (!origin) continue;
-    bump(originMap, origin.toLowerCase(), { country: origin });
+    if (origin) bump(originMap, origin.toLowerCase(), { country: origin });
+    for (const genre of genreLabels(artists[id]?.genre ?? artists[id]?.style)) {
+      const label = genre[0]!.toUpperCase() + genre.slice(1);
+      bump(genreMap, genre.toLowerCase(), { genre: label });
+    }
   }
 
   const sortCount = <T>(items: CountItem<T>[]) =>
@@ -184,6 +197,7 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
     cityCounts: sortCount([...cityMap.values()]),
     countryCounts: sortCount([...countryMap.values()]),
     artistOriginCounts: sortCount([...originMap.values()]),
+    genreCounts: sortCount([...genreMap.values()]),
     yearCounts,
     monthCounts,
   };
