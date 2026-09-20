@@ -16,27 +16,28 @@ const SHORT: Record<Locale, string> = {
   es: "ES",
 };
 
-export function LanguageSelect({ compact = false }: { compact?: boolean }) {
+export function LanguageSelect({ className }: { className?: string }) {
   const { locale, setLocale, t } = useI18n();
   return (
-    <label className={cn("relative flex items-center", compact ? "" : "block")}>
+    <label className={cn("relative inline-flex items-center", className)}>
       <span className="sr-only">{t("language")}</span>
-      {compact ? (
-        <span className="pointer-events-none absolute left-1.5 flex items-center">
-          <img src={flagUrl(FLAG[locale], 40)} alt="" width={16} height={11} className="h-3 w-[16px] rounded-[2px] object-cover" />
-        </span>
-      ) : null}
+      <span className="pointer-events-none absolute left-2 flex items-center">
+        <img
+          src={flagUrl(FLAG[locale], 80)}
+          alt=""
+          width={20}
+          height={14}
+          className="h-3.5 w-5 rounded-[2px] object-cover shadow-sm"
+        />
+      </span>
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
-        className={cn(
-          "rounded-lg bg-secondary text-foreground shadow-[var(--shadow-border)] outline-none",
-          compact ? "h-9 w-[4.4rem] pl-6 pr-1 text-[11px] font-medium" : "h-10 w-full px-3 text-sm",
-        )}
+        className="h-9 w-[4.75rem] rounded-lg bg-secondary pl-8 pr-1 text-[11px] font-medium text-foreground shadow-[var(--shadow-border)] outline-none"
       >
         {LOCALES.map((item) => (
           <option key={item.code} value={item.code}>
-            {compact ? SHORT[item.code] : item.label}
+            {SHORT[item.code]}
           </option>
         ))}
       </select>
