@@ -10,6 +10,7 @@ import {
   removeConcert,
   setConcertFavorite,
   clearUserArchive,
+  deleteAccount,
 } from "@/lib/archive";
 
 const demo = createDemoArchive();
@@ -31,6 +32,7 @@ type ArchiveState = {
   toggleFavorite: (id: string) => Promise<void>;
   seedDemo: () => void;
   clearArchive: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 function mediaToArtist(media: ArtistMedia): Artist {
@@ -229,6 +231,14 @@ export const useArchive = create<ArchiveState>()(
           return;
         }
         await clearUserArchive();
+        set({ concerts: [], artists: {}, seeded: true });
+      },
+      deleteAccount: async () => {
+        if (!authEnabled) {
+          set({ concerts: [], artists: {}, seeded: true });
+          return;
+        }
+        await deleteAccount();
         set({ concerts: [], artists: {}, seeded: true });
       },
     }),
