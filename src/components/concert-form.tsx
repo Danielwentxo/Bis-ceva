@@ -15,6 +15,7 @@ import { todayIso } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 import { resizeImageFile } from "@/lib/image-file";
+import { moderateImage } from "@/lib/moderate-image";
 import { useArchive } from "@/lib/store";
 import type { ArtistMedia, Concert } from "@/lib/types";
 import { artistKey, cn } from "@/lib/utils";
@@ -206,6 +207,12 @@ export function ConcertForm({
     if (!file || !manual) return;
     try {
       const logoUrl = await resizeImageFile(file);
+      const check = await moderateImage({ data: { dataUrl: logoUrl } });
+      if (!check.ok) {
+        setError(check.reason);
+        return;
+      }
+      setError(null);
       setManual({ ...manual, logoUrl });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not use this image.");
@@ -279,12 +286,10 @@ export function ConcertForm({
         <Label htmlFor="date">{t("date")}</Label>
         <Input id="date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="festival">{t("festivalBadge")}</Label>
         <Input id="festival" value={form.festivalName} onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))} placeholder="Untold, Sziget, Download…" />
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="artist-search">{t("artists")}</Label>
         <p className="text-xs text-subtle">{t("artistsHint")}</p>
@@ -343,58 +348,38 @@ export function ConcertForm({
             <p className="text-sm font-medium">{manual.name}</p>
             <div className="space-y-2">
               <Label htmlFor="artist-origin">{t("country")}</Label>
-              <select
-                id="artist-origin"
-                value={manual.country}
-                onChange={(e) => setManual({ ...manual, country: e.target.value })}
-                className="flex h-11 w-full rounded-lg bg-secondary px-3 text-sm text-foreground shadow-[var(--shadow-border)] outline-none"
-              >
+              <select id="artist-origin" value={manual.country} onChange={(e) => setManual({ ...manual, country: e.target.value })} className="flex h-11 w-full rounded-lg bg-secondary px-3 text-sm text-foreground shadow-[var(--shadow-border)] outline-none">
                 <option value="">Optional</option>
                 {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
+                  <option key={c.code} value={c.code}>{c.name}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="artist-logo">Logo</Label>
               <Input id="artist-logo" type="file" accept="image/*" onChange={(e) => void onLogo(e.target.files?.[0])} />
-              {manual.logoUrl ? (
-                <img src={manual.logoUrl} alt="" className="size-14 rounded-lg object-cover" />
-              ) : null}
+              {manual.logoUrl ? <img src={manual.logoUrl} alt="" className="size-14 rounded-lg object-cover" /> : null}
             </div>
             <div className="flex gap-2">
-              <Button type="button" onClick={confirmManualArtist}>
-                {t("save")}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setManual(null)}>
-                {t("cancel")}
-              </Button>
+              <Button type="button" onClick={confirmManualArtist}>{t("save")}</Button>
+              <Button type="button" variant="outline" onClick={() => setManual(null)}>{t("cancel")}</Button>
             </div>
           </div>
         ) : null}
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="venue">{t("venue")}</Label>
         <Input id="venue" value={form.venue} onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))} placeholder={t("venuePh")} required />
         {form.venue && venueSuggestions.length ? (
           <div className="flex flex-wrap gap-2">
             {venueSuggestions.map((v) => (
-              <button
-                key={`${v.venue}-${v.city}`}
-                type="button"
-                className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setForm((f) => ({ ...f, venue: v.venue, city: v.city, countryCode: v.countryCode || f.countryCode }))}
-              >
+              <button key={`${v.venue}-${v.city}`} type="button" className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground hover:text-foreground" onClick={() => setForm((f) => ({ ...f, venue: v.venue, city: v.city, countryCode: v.countryCode || f.countryCode }))}>
                 {v.venue} · {v.city}
               </button>
             ))}
           </div>
         ) : null}
       </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="city">{t("city")}</Label>
@@ -402,59 +387,30 @@ export function ConcertForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="country">{t("country")}</Label>
-          <select
-            id="country"
-            value={form.countryCode}
-            onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))}
-            className={
-              "flex h-11 w-full rounded-lg bg-secondary px-3 text-base shadow-[var(--shadow-border)] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm " +
-              (form.countryCode ? "text-foreground" : "text-muted-foreground")
-            }
-            required
-          >
-            <option value="" disabled>
-              {t("country")}
-            </option>
+          <select id="country" value={form.countryCode} onChange={(e) => setForm((f) => ({ ...f, countryCode: e.target.value }))} className={"flex h-11 w-full rounded-lg bg-secondary px-3 text-base shadow-[var(--shadow-border)] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm " + (form.countryCode ? "text-foreground" : "text-muted-foreground")} required>
+            <option value="" disabled>{t("country")}</option>
             {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code} className="text-foreground">
-                {c.name}
-              </option>
+              <option key={c.code} value={c.code} className="text-foreground">{c.name}</option>
             ))}
           </select>
         </div>
       </div>
-
       <label className="flex h-11 items-center gap-3 rounded-xl bg-card px-3 shadow-[var(--shadow-border)]">
         <input type="checkbox" checked={form.favorite} onChange={(e) => setForm((f) => ({ ...f, favorite: e.target.checked }))} className="size-4 accent-primary" />
         <span className="text-sm">{t("favorite")}</span>
       </label>
-
       <div className="space-y-2">
         <Label>{t("rating")}</Label>
         <StarRating value={form.rating} onChange={(rating) => setForm((f) => ({ ...f, rating }))} />
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="notes">{t("notes")}</Label>
         <Textarea id="notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={t("notesPh")} />
       </div>
-
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
       <div className="flex gap-3">
-        <Button type="submit" className="flex-1" disabled={saving}>
-          {existing ? t("save") : t("addToArchive")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            if (existing) void navigate({ to: "/concerts/$id", params: { id: existing.id } });
-            else void navigate({ to: "/" });
-          }}
-        >
-          {t("cancel")}
-        </Button>
+        <Button type="submit" className="flex-1" disabled={saving}>{existing ? t("save") : t("addToArchive")}</Button>
+        <Button type="button" variant="outline" onClick={() => { if (existing) void navigate({ to: "/concerts/$id", params: { id: existing.id } }); else void navigate({ to: "/" }); }}>{t("cancel")}</Button>
       </div>
     </form>
   );
