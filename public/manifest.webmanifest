@@ -1,0 +1,12 @@
+{
+  "name": "Gig History",
+  "short_name": "Gig History",
+  "description": "Private concert archive",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0b0a",
+  "theme_color": "#0c0b0a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
