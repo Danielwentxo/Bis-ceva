@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { splitOrigin } from "./artist-facts";
 import type { ArtistMedia } from "./types";
 
 const HEADERS = {
@@ -21,6 +22,7 @@ async function fetchJson<T>(url: string, timeoutMs = 8000): Promise<T | null> {
 }
 
 function clean(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
   if (typeof value !== "string") return null;
   const t = value.trim();
   return t.length ? t : null;
@@ -45,6 +47,8 @@ type TadbArtist = {
   strCountry?: string;
   strBiography?: string;
   strBiographyEN?: string;
+  intFormedYear?: string | number;
+  strWebsite?: string;
 };
 
 type TadbResponse = { artists: TadbArtist[] | null };
@@ -66,12 +70,17 @@ type WikiSummary = {
 };
 
 function fromTadb(a: TadbArtist): ArtistMedia {
+  const origin = splitOrigin(a.strCountry);
   return {
     name: clean(a.strArtist) ?? "",
     logoUrl: clean(a.strArtistLogo) ?? clean(a.strArtistClearart),
     thumbUrl: clean(a.strArtistThumb),
-    genre: clean(a.strGenre) ?? clean(a.strStyle),
-    country: clean(a.strCountry),
+    genre: clean(a.strGenre),
+    style: clean(a.strStyle),
+    country: origin.country ?? clean(a.strCountry),
+    city: origin.city,
+    formedYear: clean(a.intFormedYear),
+    website: clean(a.strWebsite),
     bio: clean(a.strBiography) ?? clean(a.strBiographyEN),
   };
 }
@@ -124,12 +133,14 @@ function topTag(a: MbArtist): string | null {
 }
 
 function fromMb(a: MbArtist): ArtistMedia {
+  const origin = splitOrigin(clean(a.area?.name) ?? clean(a.country));
   return {
     name: clean(a.name) ?? "",
     logoUrl: null,
     thumbUrl: null,
     genre: topTag(a),
-    country: clean(a.area?.name) ?? clean(a.country),
+    country: origin.country ?? clean(a.area?.name) ?? clean(a.country),
+    city: origin.city,
     bio: clean(a.disambiguation),
   };
 }
@@ -148,7 +159,11 @@ function mergeMedia(primary: ArtistMedia, extra: Partial<ArtistMedia>): ArtistMe
     logoUrl: primary.logoUrl ?? extra.logoUrl ?? null,
     thumbUrl: primary.logoUrl ? primary.thumbUrl ?? null : primary.thumbUrl ?? extra.thumbUrl ?? null,
     genre: primary.genre ?? extra.genre ?? null,
+    style: primary.style ?? extra.style ?? null,
     country: primary.country ?? extra.country ?? null,
+    city: primary.city ?? extra.city ?? null,
+    formedYear: primary.formedYear ?? extra.formedYear ?? null,
+    website: primary.website ?? extra.website ?? null,
     bio: primary.bio ?? extra.bio ?? null,
   };
 }
@@ -162,15 +177,12 @@ export const searchArtists = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<ArtistMedia[]> => {
     const query = data.query;
     const [tadb, deezer] = await Promise.all([tadbSearch(query), deezerSearch(query, 8)]);
-
     const byKey = new Map<string, ArtistMedia>();
-
     for (const row of tadb) {
       const media = fromTadb(row);
       if (!media.name) continue;
       byKey.set(norm(media.name), media);
     }
-
     for (const row of deezer) {
       const name = clean(row.name);
       if (!name) continue;
@@ -191,7 +203,6 @@ export const searchArtists = createServerFn({ method: "POST" })
       };
       byKey.set(key, prev ? mergeMedia(prev, incoming) : incoming);
     }
-
     if (byKey.size < 3) {
       const mb = await mbSearch(query, 8);
       for (const row of mb) {
@@ -202,7 +213,6 @@ export const searchArtists = createServerFn({ method: "POST" })
         byKey.set(key, prev ? mergeMedia(prev, media) : media);
       }
     }
-
     const ranked = [...byKey.values()].sort((a, b) => {
       const an = norm(a.name);
       const bn = norm(b.name);
@@ -210,11 +220,8 @@ export const searchArtists = createServerFn({ method: "POST" })
       const as = an === q ? 0 : an.startsWith(q) ? 1 : 2;
       const bs = bn === q ? 0 : bn.startsWith(q) ? 1 : 2;
       if (as !== bs) return as - bs;
-      const al = a.logoUrl ? 0 : 1;
-      const bl = b.logoUrl ? 0 : 1;
-      return al - bl;
+      return (a.logoUrl ? 0 : 1) - (b.logoUrl ? 0 : 1);
     });
-
     return ranked.slice(0, 8);
   });
 
@@ -223,41 +230,25 @@ async function enrichOne(name: string, countryHint?: string): Promise<ArtistMedi
   const picked = pickTadb(tadb, name, countryHint);
   let media: ArtistMedia = picked
     ? fromTadb(picked)
-    : {
-        name,
-        logoUrl: null,
-        thumbUrl: null,
-        genre: null,
-        country: null,
-        bio: null,
-      };
+    : { name, logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null };
   media.name = name;
-
   if (!media.logoUrl) {
     const [deezer, wiki] = await Promise.all([
       deezerSearch(name, 3),
       media.bio ? Promise.resolve(null) : wikiSummary(name),
     ]);
     const picture = deezer[0] ? deezerPicture(deezer[0]) : null;
-    media = mergeMedia(media, {
-      name,
-      thumbUrl: picture,
-      bio: clean(wiki?.extract),
-    });
-    if (!media.thumbUrl) {
-      media.thumbUrl = clean(wiki?.originalimage?.source) ?? clean(wiki?.thumbnail?.source);
-    }
+    media = mergeMedia(media, { name, thumbUrl: picture, bio: clean(wiki?.extract) });
+    if (!media.thumbUrl) media.thumbUrl = clean(wiki?.originalimage?.source) ?? clean(wiki?.thumbnail?.source);
   } else if (!media.bio) {
     const wiki = await wikiSummary(name);
     media.bio = clean(wiki?.extract);
   }
-
   if (!media.genre) {
     const mb = await mbSearch(name, 3);
     const hit = mb.find((a) => norm(a.name ?? "") === norm(name)) ?? mb[0];
     if (hit) media.genre = topTag(hit);
   }
-
   media.name = name;
   return media;
 }
@@ -274,8 +265,7 @@ export const enrichArtists = createServerFn({ method: "POST" })
     const names = data.names;
     for (let i = 0; i < names.length; i += 4) {
       const chunk = names.slice(i, i + 4);
-      const part = await Promise.all(chunk.map((name) => enrichOne(name, data.countryHint)));
-      results.push(...part);
+      results.push(...(await Promise.all(chunk.map((name) => enrichOne(name, data.countryHint)))));
     }
     return results;
   });
