@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
-import { APP_NAME } from "@/lib/brand";
 import { LanguageSelect, useI18n } from "@/lib/i18n";
 
 type Mode = "sign-in" | "sign-up" | "forgot";
@@ -63,8 +63,10 @@ export function LoginScreen() {
     <div className="flex min-h-dvh items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="font-display text-3xl font-medium tracking-tight text-foreground">{APP_NAME}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{title}</p>
+          <div className="flex justify-center">
+            <AppLogo size="lg" />
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">{title}</p>
         </div>
 
         {mode === "forgot" && resetSent ? (
