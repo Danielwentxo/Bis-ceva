@@ -2,11 +2,12 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppLogo } from "@/components/app-logo";
+import { LanguageSelect } from "@/components/language-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
-import { LanguageSelect, useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 
 type Mode = "sign-in" | "sign-up" | "forgot";
 
@@ -138,7 +139,7 @@ export function LoginScreen() {
             >
               {mode === "sign-in" ? t("noAccount") : mode === "sign-up" ? t("hasAccount") : t("backToSignIn")}
             </button>
-            <div className="mt-6">
+            <div className="mt-6 flex justify-center">
               <LanguageSelect />
             </div>
             <p className="mt-8 flex justify-center gap-4 text-xs text-muted-foreground">
