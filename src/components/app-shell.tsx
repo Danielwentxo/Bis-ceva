@@ -76,13 +76,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!user && isPublic) {
     return (
       <div className="min-h-dvh bg-background text-foreground">
-        <header className="flex items-center justify-between px-4 py-4">
+        <header className="flex items-center justify-between gap-3 px-4 py-4">
           <Link to="/login">
             <AppLogo size="sm" />
           </Link>
-          <Link to="/login" className="text-sm text-muted-foreground underline">
-            Sign in
-          </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSelect compact />
+            <Link to="/login" className="text-sm text-muted-foreground underline">
+              Sign in
+            </Link>
+          </div>
         </header>
         <main className="mx-auto w-full max-w-4xl px-4 pb-12 pt-4">{children}</main>
         <SiteFooter />
