@@ -64,6 +64,7 @@ function fromDraft(id: string, draft: ConcertDraft, createdAt: string): Concert 
     favorite: draft.favorite,
     festival: draft.festival || Boolean(festivalName),
     festivalName,
+    festivalPosterUrl: draft.festivalPosterUrl ?? null,
     createdAt,
   };
 }
