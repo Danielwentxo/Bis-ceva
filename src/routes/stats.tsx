@@ -12,6 +12,7 @@ import { signOut } from "@/lib/auth/client";
 import { formatConcertDate, showsLabel } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
+import { canvasToBlob, drawShareCard } from "@/lib/share-card";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
@@ -31,6 +32,9 @@ function AccountActions({ locale, showClear }: { locale: string; showClear: bool
   const { t } = useI18n();
   return (
     <div className="mt-10 flex flex-wrap gap-4">
+      <Link to="/transfer" className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+        {extraLabel(locale, "transferTitle")}
+      </Link>
       {showClear ? (
         <button
           type="button"
@@ -123,6 +127,26 @@ function StatsPage() {
     }
   }
 
+  async function shareCard() {
+    try {
+      const canvas = drawShareCard(stats);
+      const blob = await canvasToBlob(canvas);
+      const file = new File([blob], "gig-history.png", { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: t("statsTitle") });
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "gig-history.png";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : extraLabel(locale, "shareCard"));
+    }
+  }
+
   if (!hasHydrated) {
     return (
       <AppShell>
@@ -147,10 +171,15 @@ function StatsPage() {
           <p className="text-sm font-medium text-muted-foreground">{t("statsLead")}</p>
           <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("statsTitle")}</h1>
         </div>
-        <Button type="button" variant="outline" onClick={() => void shareStats()}>
-          <Share2 className="size-4" />
-          {extraLabel(locale, "shareStats")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => void shareCard()}>
+            {extraLabel(locale, "shareCard")}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => void shareStats()}>
+            <Share2 className="size-4" />
+            {extraLabel(locale, "shareStats")}
+          </Button>
+        </div>
       </header>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Tile label={t("tileConcerts")} value={String(stats.totalShows)} />
