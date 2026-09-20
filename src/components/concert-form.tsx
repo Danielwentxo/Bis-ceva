@@ -29,6 +29,7 @@ type FormState = {
   rating: number | null;
   favorite: boolean;
   festivalName: string;
+  festivalPosterUrl: string | null;
   artists: ArtistMedia[];
 };
 
@@ -42,6 +43,7 @@ function concertToForm(concert: Concert, artists: Record<string, import("@/lib/t
     rating: concert.rating,
     favorite: concert.favorite,
     festivalName: concert.festivalName ?? "",
+    festivalPosterUrl: concert.festivalPosterUrl ?? null,
     artists: concert.lineup
       .map((l) => artists[l.artistId])
       .filter(Boolean)
@@ -82,6 +84,7 @@ export function ConcertForm({
           rating: null,
           favorite: false,
           festivalName: "",
+          festivalPosterUrl: null,
           artists: presetArtist ? [presetArtist] : [],
         },
   );
@@ -203,6 +206,22 @@ export function ConcertForm({
     setForm((f) => ({ ...f, artists: f.artists.filter((a) => a.name !== name) }));
   }
 
+  async function onFestivalPoster(file: File | undefined) {
+    if (!file) return;
+    try {
+      const poster = await resizeImageFile(file);
+      const check = await moderateImage({ data: { dataUrl: poster } });
+      if (!check.ok) {
+        setError(check.reason);
+        return;
+      }
+      setError(null);
+      setForm((f) => ({ ...f, festivalPosterUrl: poster }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not use this image.");
+    }
+  }
+
   async function onLogo(file: File | undefined) {
     if (!file || !manual) return;
     try {
@@ -250,6 +269,7 @@ export function ConcertForm({
       favorite: form.favorite,
       festival: Boolean(festivalName),
       festivalName,
+      festivalPosterUrl: form.festivalPosterUrl,
     };
     setSaving(true);
     try {
@@ -289,6 +309,13 @@ export function ConcertForm({
       <div className="space-y-2">
         <Label htmlFor="festival">{t("festivalBadge")}</Label>
         <Input id="festival" value={form.festivalName} onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))} placeholder="Untold, Sziget, Download…" />
+        {form.festivalName.trim() ? (
+          <div className="space-y-2">
+            <Label htmlFor="festival-poster">Festival poster</Label>
+            <Input id="festival-poster" type="file" accept="image/*" onChange={(e) => void onFestivalPoster(e.target.files?.[0])} />
+            {form.festivalPosterUrl ? <img src={form.festivalPosterUrl} alt="" className="h-20 rounded-lg object-cover" /> : null}
+          </div>
+        ) : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="artist-search">{t("artists")}</Label>
