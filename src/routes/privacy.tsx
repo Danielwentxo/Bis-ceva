@@ -16,7 +16,7 @@ function PrivacyPage() {
         </p>
         <p className="text-sm leading-relaxed text-muted-foreground">
           We do not sell your data. Shared stats never include your email, notes, or ticket photos.
-          You can clear your archive from the Stats page. Contact us if you want the account removed.
+          You can clear your archive or permanently delete your account from the Stats page.
         </p>
       </article>
     </AppShell>
