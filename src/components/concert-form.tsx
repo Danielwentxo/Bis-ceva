@@ -94,7 +94,7 @@ export function ConcertForm({
   const [saving, setSaving] = useState(false);
   const [catalogVenues, setCatalogVenues] = useState<{ venue: string; city: string; countryCode: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [manual, setManual] = useState<{ name: string; country: string; genre: string; logoUrl: string | null } | null>(null);
+  const [manual, setManual] = useState<{ name: string; country: string; genre: string; logoUrl: string | null; thumbUrl: string | null } | null>(null);
 
   useEffect(() => {
     const q = query.trim();
@@ -178,7 +178,18 @@ export function ConcertForm({
   function startManualArtist() {
     const name = query.trim();
     if (name.length < 2) return;
-    setManual({ name, country: "", genre: "", logoUrl: null });
+    setManual({ name, country: "", genre: "", logoUrl: null, thumbUrl: null });
+  }
+
+  function startDetails(hit: ArtistMedia) {
+    setManual({
+      name: hit.name,
+      country: "",
+      genre: hit.genre ?? "",
+      logoUrl: hit.logoUrl,
+      thumbUrl: hit.thumbUrl,
+    });
+    setHits([]);
   }
 
   function confirmManualArtist() {
@@ -188,7 +199,7 @@ export function ConcertForm({
     addArtist({
       name: manual.name,
       logoUrl: manual.logoUrl,
-      thumbUrl: manual.logoUrl,
+      thumbUrl: manual.thumbUrl ?? manual.logoUrl,
       genre,
       country: origin,
       bio: null,
@@ -197,7 +208,7 @@ export function ConcertForm({
       data: {
         name: manual.name,
         logoUrl: manual.logoUrl,
-        thumbUrl: manual.logoUrl,
+        thumbUrl: manual.thumbUrl ?? manual.logoUrl,
         country: origin,
         genre,
       },
@@ -360,6 +371,11 @@ export function ConcertForm({
                       <span className="block truncate text-xs text-muted-foreground">{[hit.genre, hit.country].filter(Boolean).join(" · ") || t("noExtra")}</span>
                     </span>
                   </button>
+                  {!hit.genre && !hit.country ? (
+                    <button type="button" onClick={() => startDetails(hit)} className="w-full px-3 pb-2 text-left text-xs text-primary hover:underline">
+                      Add details
+                    </button>
+                  ) : null}
                 </li>
               );
             })}
