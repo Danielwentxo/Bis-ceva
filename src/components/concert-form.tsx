@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ArtistMark } from "@/components/artist-mark";
+import { DateInput } from "@/components/date-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -317,7 +318,7 @@ export function ConcertForm({
     <form onSubmit={(e) => void submit(e)} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="date">{t("date")}</Label>
-        <Input id="date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
+        <DateInput id="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="festival">{t("festivalBadge")}</Label>
