@@ -15,9 +15,13 @@ function csvEscape(value: string) {
 }
 
 function detectDelimiter(headerLine: string) {
-  const commas = (headerLine.match(/,/g) ?? []).length;
-  const semis = (headerLine.match(/;/g) ?? []).length;
-  return semis > commas ? ";" : ",";
+  const counts: Array<{ d: string; n: number }> = [
+    { d: "\t", n: (headerLine.match(/\t/g) ?? []).length },
+    { d: ";", n: (headerLine.match(/;/g) ?? []).length },
+    { d: ",", n: (headerLine.match(/,/g) ?? []).length },
+  ];
+  counts.sort((a, b) => b.n - a.n);
+  return counts[0].n > 0 ? counts[0].d : ",";
 }
 
 function splitCsvLine(line: string, delimiter = ","): string[] {
@@ -95,6 +99,24 @@ function blankArtist(name: string) {
   return { name, logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null };
 }
 
+function addNames(draft: ConcertDraft, names: string[]) {
+  const seen = new Set(draft.artists.map((a) => artistKey(a.name)));
+  for (const name of names) {
+    if (!seen.has(artistKey(name))) {
+      draft.artists.push(blankArtist(name));
+      seen.add(artistKey(name));
+    }
+  }
+}
+
+function sameShow(draft: ConcertDraft, date: string, venue: string, festivalName: string) {
+  return (
+    draft.date === date &&
+    draft.venue.toLowerCase() === venue.toLowerCase() &&
+    (draft.festivalName || "").toLowerCase() === (festivalName || "").toLowerCase()
+  );
+}
+
 export function draftsFromCsv(text: string): ConcertDraft[] {
   const rawLines = text.replace(/^\ufeff/, "").split(/\r?\n/).filter((l) => l.trim());
   if (rawLines.length < 2) return [];
@@ -112,55 +134,50 @@ export function draftsFromCsv(text: string): ConcertDraft[] {
   const ratingI = idx("rating", "score");
   if (dateI < 0 || artistsI < 0 || venueI < 0) return [];
 
-  type Acc = ConcertDraft & { key: string };
-  const order: Acc[] = [];
-  const byKey = new Map<string, Acc>();
-  let prevDate = "";
-  let prevVenue = "";
-  let prevCity = "";
-  let prevCountry = "";
-  let prevCode = "";
-  let prevFest = "";
+  const drafts: ConcertDraft[] = [];
+  let last: ConcertDraft | null = null;
 
   for (const line of rawLines.slice(1)) {
     const cols = splitCsvLine(line, delimiter);
-    const date = parseDate(cols[dateI] ?? "") || prevDate;
-    const venue = (cols[venueI] ?? "").trim() || prevVenue;
-    const city = (cityI >= 0 ? cols[cityI] ?? "" : "").trim() || prevCity || venue;
-    const countryRaw = (countryI >= 0 ? cols[countryI] ?? "" : "").trim() || prevCountry;
-    const codeRaw = (codeI >= 0 ? cols[codeI] ?? "" : "").trim() || prevCode;
-    const festivalName = (festI >= 0 ? cols[festI] ?? "" : "").trim() || prevFest;
+    const rowDate = parseDate(cols[dateI] ?? "");
+    const rowVenue = (cols[venueI] ?? "").trim();
+    const rowCity = (cityI >= 0 ? cols[cityI] ?? "" : "").trim();
+    const rowCountry = (countryI >= 0 ? cols[countryI] ?? "" : "").trim();
+    const rowCode = (codeI >= 0 ? cols[codeI] ?? "" : "").trim();
+    const rowFest = (festI >= 0 ? cols[festI] ?? "" : "").trim();
     const names = (cols[artistsI] ?? "")
       .split(/;|\||\n/)
       .map((n) => n.trim())
       .filter(Boolean);
-    if (!date || !venue || !names.length) continue;
-    prevDate = date;
-    prevVenue = venue;
-    prevCity = city;
-    prevCountry = countryRaw;
-    prevCode = codeRaw;
-    prevFest = festivalName;
-    const place = resolveCountry(countryRaw, codeRaw);
-    const key = `${date}|${venue.toLowerCase()}|${city.toLowerCase()}|${festivalName.toLowerCase()}`;
+    if (!names.length) continue;
+
+    const notes = notesI >= 0 ? cols[notesI] ?? "" : "";
     const ratingRaw = ratingI >= 0 ? cols[ratingI] ?? "" : "";
     const rating = ratingRaw ? Number(ratingRaw) : null;
-    const notes = notesI >= 0 ? cols[notesI] ?? "" : "";
-    const existing = byKey.get(key);
-    if (existing) {
-      const seen = new Set(existing.artists.map((a) => artistKey(a.name)));
-      for (const name of names) {
-        if (!seen.has(artistKey(name))) {
-          existing.artists.push(blankArtist(name));
-          seen.add(artistKey(name));
-        }
-      }
-      if (notes && !existing.notes) existing.notes = notes;
-      if (existing.rating == null && rating != null && rating >= 0 && rating <= 5) existing.rating = rating;
+    const ratingOk = rating != null && rating >= 0 && rating <= 5 ? rating : null;
+
+    const continuation = !rowDate && last;
+    if (continuation && last) {
+      addNames(last, names);
+      if (notes && !last.notes) last.notes = notes;
+      if (last.rating == null && ratingOk != null) last.rating = ratingOk;
       continue;
     }
-    const draft: Acc = {
-      key,
+
+    const date = rowDate;
+    const venue = rowVenue;
+    if (!date || !venue) continue;
+    const festivalName = rowFest;
+    if (last && sameShow(last, date, venue, festivalName)) {
+      addNames(last, names);
+      if (notes && !last.notes) last.notes = notes;
+      if (last.rating == null && ratingOk != null) last.rating = ratingOk;
+      continue;
+    }
+
+    const city = rowCity || venue;
+    const place = resolveCountry(rowCountry, rowCode);
+    last = {
       date,
       venue,
       city,
@@ -168,17 +185,16 @@ export function draftsFromCsv(text: string): ConcertDraft[] {
       countryCode: place.code,
       artists: names.map(blankArtist),
       notes,
-      rating: rating != null && rating >= 0 && rating <= 5 ? rating : null,
+      rating: ratingOk,
       favorite: false,
       festival: Boolean(festivalName),
       festivalName,
       festivalPosterUrl: null,
       ticketUrl: null,
     };
-    byKey.set(key, draft);
-    order.push(draft);
+    drafts.push(last);
   }
-  return order.map(({ key: _k, ...draft }) => draft);
+  return drafts;
 }
 
 export function draftsFromJson(text: string): ConcertDraft[] {
