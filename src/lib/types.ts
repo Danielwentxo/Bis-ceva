@@ -5,6 +5,10 @@ export type ArtistMedia = {
   genre: string | null;
   country: string | null;
   bio: string | null;
+  city?: string | null;
+  style?: string | null;
+  formedYear?: string | null;
+  website?: string | null;
 };
 
 export type Artist = ArtistMedia & {
