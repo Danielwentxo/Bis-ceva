@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import { enrichArtists } from "@/lib/artist-api";
+import { saveCatalogArtist } from "@/lib/catalog";
+import { persistArtistMedia } from "@/lib/persist-artists";
 import { useArchive } from "@/lib/store";
 
 export function useEnrichArtists() {
@@ -10,32 +12,23 @@ export function useEnrichArtists() {
 
   useEffect(() => {
     if (!hasHydrated || running.current) return;
-    const missing = Object.values(artists).filter((a) => !a.fetchedAt);
+    const missing = Object.values(artists).filter((a) => !a.logoUrl && !a.thumbUrl && !a.fetchedAt);
     if (!missing.length) return;
 
     running.current = true;
-    const batch = missing.slice(0, 12);
+    const batch = missing.slice(0, 8);
     void enrichArtists({
-      data: {
-        names: batch.map((a) => a.name),
-        countryHint: "Romania",
-      },
+      data: { names: batch.map((a) => a.name) },
     })
-      .then((hits) => {
+      .then(async (hits) => {
         applyArtistMedia(hits);
-        const leftover = missing.slice(12);
-        if (leftover.length) {
-          running.current = false;
+        await persistArtistMedia({ data: { artists: hits } }).catch(() => undefined);
+        for (const hit of hits) {
+          void saveCatalogArtist({ data: hit }).catch(() => undefined);
         }
       })
       .catch(() => {
-        applyArtistMedia(
-          batch.map((a) => ({
-            ...a,
-            logoUrl: a.logoUrl,
-            thumbUrl: a.thumbUrl,
-          })),
-        );
+        applyArtistMedia(batch.map((a) => ({ ...a, logoUrl: a.logoUrl, thumbUrl: a.thumbUrl })));
       })
       .finally(() => {
         running.current = false;
