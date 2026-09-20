@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { BarChart3, Disc3, MapPin, Plus, Ticket } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AppLogo } from "@/components/app-logo";
 import { LoginScreen } from "@/components/login-screen";
 import { SiteFooter } from "@/components/site-footer";
 import { useEnrichArtists } from "@/components/use-enrich-artists";
+import { signOut } from "@/lib/auth/client";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { LanguageSelect, useI18n } from "@/lib/i18n";
@@ -25,6 +26,23 @@ const PUBLIC_PATHS = new Set([
   "/privacy",
   "/contact",
 ]);
+
+function MobileSignOut() {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => {
+        setBusy(true);
+        void signOut("/").catch(() => setBusy(false));
+      }}
+      className="px-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-60"
+    >
+      {busy ? "…" : "Sign out"}
+    </button>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
@@ -117,7 +135,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <AppLogo size="sm" />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-28">
+            <MobileSignOut />
+            <div className="w-24">
               <LanguageSelect />
             </div>
             <Link
