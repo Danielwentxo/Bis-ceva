@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
@@ -57,16 +58,19 @@ function ArtistDetail() {
 
   return (
     <AppShell>
+      <div className="mb-6">
+        <Button asChild variant="outline">
+          <Link to="/artists">
+            <ArrowLeft className="size-4" />
+            {t("navArtists")}
+          </Link>
+        </Button>
+      </div>
       <div className="flex flex-col items-center text-center">
         <ArtistMark artist={artist} size="hero" />
         <h1 className="mt-5 font-display text-4xl font-medium tracking-tight">{name}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{[artist?.genre, city, country].filter(Boolean).join(" \u00b7 ")}</p>
         <p className="mt-1 text-sm text-subtle">{showsLabel(shows.length)}</p>
-        <Button asChild className="mt-5">
-          <Link to="/add" search={{ artist: artist?.id ?? slug }}>
-            {t("addConcert")}
-          </Link>
-        </Button>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
