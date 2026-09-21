@@ -94,9 +94,14 @@ export function FestivalGroupCard({
               {open ? (
                 <div className="mb-2 ml-1 space-y-1 border-l border-border/60 pl-3">
                   {lineup.map((slot) => (
-                    <p key={slot.artistId} className="truncate text-sm text-muted-foreground">
+                    <Link
+                      key={slot.artistId}
+                      to="/artists/$slug"
+                      params={{ slug: slot.artist.id || slot.artistId }}
+                      className="block truncate text-sm text-muted-foreground hover:text-foreground"
+                    >
                       {slot.artist.name}
-                    </p>
+                    </Link>
                   ))}
                 </div>
               ) : null}
