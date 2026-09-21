@@ -9,6 +9,8 @@ import { originCountry } from "@/lib/stats";
 import { showsLabel } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
+import { artistKey } from "@/lib/utils";
+import type { Artist } from "@/lib/types";
 
 export const Route = createFileRoute("/artists/$slug")({ component: ArtistDetail });
 
@@ -28,57 +30,51 @@ function ArtistDetail() {
   const artists = useArchive((s) => s.artists);
   const concerts = useArchive((s) => s.concerts);
   const applyArtistMedia = useArchive((s) => s.applyArtistMedia);
-  const artist = artists[slug];
+
+  const artist: Artist | undefined =
+    artists[slug] ?? Object.values(artists).find((a) => a.id === slug || artistKey(a.name) === slug);
+
   const shows = concerts
-    .filter((c) => c.lineup.some((l) => l.artistId === slug))
+    .filter((c) =>
+      c.lineup.some((l) => l.artistId === slug || l.artistId === artist?.id || artistKey(l.artistId) === slug),
+    )
     .sort((a, b) => b.date.localeCompare(a.date));
 
+  const name = artist?.name ?? slug.replace(/-/g, " ");
+
   useEffect(() => {
-    if (!artist?.name) return;
-    void enrichArtists({ data: { names: [artist.name] } })
+    if (!name) return;
+    void enrichArtists({ data: { names: [name] } })
       .then((hits) => {
         if (hits.length) applyArtistMedia(hits);
       })
       .catch(() => undefined);
-  }, [artist?.name, applyArtistMedia]);
+  }, [name, applyArtistMedia]);
 
-  if (!artist) {
-    return (
-      <AppShell>
-        <p className="text-muted-foreground">{t("noMatches")}</p>
-        <Button asChild variant="outline" className="mt-4">
-          <Link to="/artists">{t("navArtists")}</Link>
-        </Button>
-      </AppShell>
-    );
-  }
-
-  const country = originCountry(artist.country) ?? artist.country;
-  const city = artist.city?.trim() || null;
-  const website = artist.website?.trim() || null;
+  const country = originCountry(artist?.country) ?? artist?.country;
+  const city = artist?.city?.trim() || null;
+  const website = artist?.website?.trim() || null;
 
   return (
     <AppShell>
       <div className="flex flex-col items-center text-center">
         <ArtistMark artist={artist} size="hero" />
-        <h1 className="mt-5 font-display text-4xl font-medium tracking-tight">{artist.name}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {[artist.genre, city, country].filter(Boolean).join(" \u00b7 ")}
-        </p>
+        <h1 className="mt-5 font-display text-4xl font-medium tracking-tight">{name}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{[artist?.genre, city, country].filter(Boolean).join(" \u00b7 ")}</p>
         <p className="mt-1 text-sm text-subtle">{showsLabel(shows.length)}</p>
         <Button asChild className="mt-5">
-          <Link to="/add" search={{ artist: artist.id }}>
+          <Link to="/add" search={{ artist: artist?.id ?? slug }}>
             {t("addConcert")}
           </Link>
         </Button>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        <Fact label={t("genre") || "Genre"} value={artist.genre} />
-        <Fact label="Style" value={artist.style} />
+        <Fact label="Genre" value={artist?.genre} />
+        <Fact label="Style" value={artist?.style} />
         <Fact label="City" value={city} />
         <Fact label={t("country")} value={country} />
-        <Fact label="Formed" value={artist.formedYear} />
+        <Fact label="Formed" value={artist?.formedYear} />
         {website ? (
           <div className="rounded-xl bg-card px-4 py-3 text-left shadow-[var(--shadow-border)]">
             <p className="text-xs uppercase tracking-wider text-subtle">Website</p>
@@ -89,15 +85,15 @@ function ArtistDetail() {
         ) : null}
       </div>
 
-      {artist.bio ? (
-        <p className="mt-8 text-sm leading-relaxed text-muted-foreground">{artist.bio}</p>
-      ) : null}
+      {artist?.bio ? <p className="mt-8 text-sm leading-relaxed text-muted-foreground">{artist.bio}</p> : null}
 
       <section className="mt-10 space-y-3">
-        <h2 className="font-display text-2xl font-medium">{t("navConcerts")}</h2>
-        {shows.map((c) => (
-          <ConcertCard key={c.id} concert={c} artists={artists} />
-        ))}
+        <h2 className="font-display text-2xl font-medium">{t("seenLive")}</h2>
+        {shows.length ? (
+          shows.map((c) => <ConcertCard key={c.id} concert={c} artists={artists} />)
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("noMatches")}</p>
+        )}
       </section>
     </AppShell>
   );
