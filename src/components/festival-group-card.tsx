@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, MapPin } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { useState } from "react";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
@@ -69,18 +69,28 @@ export function FestivalGroupCard({
           const extra = lineup.length > 1 ? lineup.length - 1 : 0;
           return (
             <li key={concert.id} className="rounded-xl">
-              <button
-                type="button"
-                onClick={() => setOpenId(open ? null : concert.id)}
-                className="flex w-full min-w-0 items-center gap-2 rounded-lg px-1 py-1.5 text-left text-sm hover:bg-secondary"
-              >
-                <span className="shrink-0 tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {lineup[0]?.artist.name ?? "Day"}
-                  {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
-                </span>
-                <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", open && "rotate-180")} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(open ? null : concert.id)}
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-1.5 text-left text-sm hover:bg-secondary"
+                >
+                  <span className="shrink-0 tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {lineup[0]?.artist.name ?? "Day"}
+                    {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
+                  </span>
+                  <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", open && "rotate-180")} />
+                </button>
+                <Link
+                  to="/concerts/$id"
+                  params={{ id: concert.id }}
+                  aria-label={formatConcertDate(concert.date)}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <ChevronRight className="size-4" />
+                </Link>
+              </div>
               {open ? (
                 <div className="mb-2 ml-1 space-y-1 border-l border-border/60 pl-3">
                   {lineup.map((slot) => (
@@ -88,13 +98,6 @@ export function FestivalGroupCard({
                       {slot.artist.name}
                     </p>
                   ))}
-                  <Link
-                    to="/concerts/$id"
-                    params={{ id: concert.id }}
-                    className="inline-block pt-1 text-sm font-medium text-primary hover:underline"
-                  >
-                    Open this day
-                  </Link>
                 </div>
               ) : null}
             </li>
