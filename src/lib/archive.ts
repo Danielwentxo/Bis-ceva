@@ -134,7 +134,7 @@ async function upsertArtistsForUser(userId: string, artists: z.infer<typeof arti
   }
 }
 
-export const loadArchive = createServerFn({ method: "GET" })
+export const loadArchive = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
     const sql = await getSql();
@@ -196,6 +196,36 @@ export const upsertConcert = createServerFn({ method: "POST" })
       favorite: draft.favorite, festival, festivalName, festivalPosterUrl, ticketUrl, createdAt,
     };
     return { id, concert, artists };
+  });
+
+export const patchFestivalShared = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      ids: z.array(z.string().min(1).max(80)).min(1).max(40),
+      venue: z.string().min(1).max(200),
+      city: z.string().min(1).max(120),
+      country: z.string().min(1).max(120),
+      countryCode: z.string().max(8).default(""),
+      festivalName: z.string().max(200),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    const festival = Boolean(data.festivalName.trim());
+    for (const id of data.ids) {
+      await sql`
+        update concerts set
+          venue = ${data.venue},
+          city = ${data.city},
+          country = ${data.country},
+          country_code = ${data.countryCode},
+          festival = ${festival},
+          festival_name = ${data.festivalName.trim()}
+        where user_id = ${context.userId} and id = ${id}
+      `;
+    }
+    return { ok: true as const };
   });
 
 export const removeConcert = createServerFn({ method: "POST" })
