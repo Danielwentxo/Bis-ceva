@@ -9,20 +9,21 @@ export type ArchiveDump = {
   artists: Record<string, Artist>;
 };
 
-const NORDIC = /[\u00C5\u00E5\u00C4\u00E4\u00D6\u00F6\u00C6\u00E6\u00D8\u00F8\u00DC\u00FC\u00C9\u00E9\u00C1\u00E1]/g;
+const LETTERS = /[\u00C5\u00E5\u00C4\u00E4\u00D6\u00F6\u00C2\u00E2\u00CE\u00EE\u0102\u0103\u0218\u0219\u021A\u021B\u015E\u015F\u0162\u0163\u00C6\u00E6\u00D8\u00F8\u00DC\u00FC\u00C9\u00E9\u00C1\u00E1]/g;
 
 function tidy(value: string) {
   return value.normalize("NFC").replace(/\uFFFD/g, "").trim();
 }
 
 function scoreText(text: string) {
-  return (text.match(NORDIC) ?? []).length - (text.split("\uFFFD").length - 1) * 8;
+  return (text.match(LETTERS) ?? []).length - (text.split("\uFFFD").length - 1) * 8;
 }
 
 export function decodeImportedText(buffer: ArrayBuffer) {
   const utf8 = new TextDecoder("utf-8").decode(buffer);
-  const windows = new TextDecoder("windows-1252").decode(buffer);
-  return scoreText(windows) > scoreText(utf8) ? windows : utf8;
+  const latin = new TextDecoder("windows-1252").decode(buffer);
+  const east = new TextDecoder("iso-8859-2").decode(buffer);
+  return [utf8, latin, east].sort((a, b) => scoreText(b) - scoreText(a))[0] ?? utf8;
 }
 
 function csvEscape(value: string) {
@@ -128,8 +129,8 @@ function addNames(draft: ConcertDraft, names: string[]) {
 function sameShow(draft: ConcertDraft, date: string, venue: string, festivalName: string) {
   return (
     draft.date === date &&
-    draft.venue.toLocaleLowerCase("sv") === venue.toLocaleLowerCase("sv") &&
-    (draft.festivalName || "").toLocaleLowerCase("sv") === (festivalName || "").toLocaleLowerCase("sv")
+    draft.venue.toLocaleLowerCase("ro") === venue.toLocaleLowerCase("ro") &&
+    (draft.festivalName || "").toLocaleLowerCase("ro") === (festivalName || "").toLocaleLowerCase("ro")
   );
 }
 
