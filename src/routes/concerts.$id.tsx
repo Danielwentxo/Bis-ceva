@@ -12,7 +12,9 @@ import { useI18n } from "@/lib/i18n";
 import { concertArtists } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
-export const Route = createFileRoute("/concerts/$id")({ component: ConcertDetail });
+export const Route = createFileRoute("/concerts/$id")({
+  component: ConcertDetail,
+});
 
 function ConcertDetail() {
   const { t, locale } = useI18n();
@@ -87,7 +89,6 @@ function ConcertDetail() {
                 >
                   <ArtistMark artist={slot.artist} size="sm" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{slot.artist.name}</span>
-                  <span className="text-xs text-subtle">{slot.role === "headliner" ? t("headliner") : t("support")}</span>
                 </Link>
               </li>
             ))}
