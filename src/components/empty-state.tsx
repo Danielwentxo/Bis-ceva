@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { authEnabled } from "@/lib/auth/enabled";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 
@@ -37,9 +38,11 @@ export function EmptyArchive({ onSeed }: { onSeed: () => void }) {
             <Button asChild variant="outline">
               <Link to="/transfer">{extraLabel(locale, "importTitle")}</Link>
             </Button>
-            <Button variant="outline" type="button" onClick={onSeed}>
-              {t("loadExamples")}
-            </Button>
+            {authEnabled ? null : (
+              <Button variant="outline" type="button" onClick={onSeed}>
+                {t("loadExamples")}
+              </Button>
+            )}
           </>
         }
       />

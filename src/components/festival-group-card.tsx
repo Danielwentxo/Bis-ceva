@@ -66,6 +66,7 @@ export function FestivalGroupCard({
         {days.map((concert) => {
           const lineup = concertArtists(concert, artists);
           const open = openId === concert.id;
+          const extra = lineup.length > 1 ? lineup.length - 1 : 0;
           return (
             <li key={concert.id} className="rounded-xl">
               <button
@@ -76,7 +77,7 @@ export function FestivalGroupCard({
                 <span className="shrink-0 tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {lineup[0]?.artist.name ?? "Day"}
-                  {lineup.length > 1 ? ` · ${lineup.length} acts` : ""}
+                  {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
                 </span>
                 <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", open && "rotate-180")} />
               </button>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,14 @@ function TransferPage() {
   const addConcert = useArchive((s) => s.addConcert);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
     setBusy(true);
     setNote(null);
+    setFileName(file.name);
     try {
       const buffer = await file.arrayBuffer();
       const text = decodeImportedText(buffer);
@@ -81,15 +84,23 @@ function TransferPage() {
       <section className="mt-6 space-y-3 rounded-2xl bg-card p-5 shadow-[var(--shadow-border)]">
         <h2 className="font-medium">{extraLabel(locale, "importTitle")}</h2>
         <p className="text-sm text-muted-foreground">
-          CSV header: date, artists, venue, city, country, countryCode, festival, notes, rating.
-          Artists separated by semicolon. Dates as YYYY-MM-DD. Swedish letters (å ä ö) are kept.
+          Accepted files: .csv and .json. Columns: date, artists, venue, city, country, countryCode, festival, notes, rating.
+          Several artists on one row: separate with a semicolon. Dates as YYYY-MM-DD.
         </p>
         <input
+          ref={inputRef}
           type="file"
           accept=".csv,.json,text/csv,application/json"
           disabled={busy}
+          className="sr-only"
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
+            Choose file
+          </Button>
+          <span className="text-sm text-muted-foreground">{fileName ?? "No file chosen"}</span>
+        </div>
         {note ? <p className="text-sm text-foreground">{note}</p> : null}
       </section>
     </AppShell>
