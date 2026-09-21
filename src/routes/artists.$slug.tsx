@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -27,6 +27,7 @@ function Fact({ label, value }: { label: string; value?: string | null }) {
 
 function ArtistDetail() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { slug } = Route.useParams();
   const artists = useArchive((s) => s.artists);
   const concerts = useArchive((s) => s.concerts);
@@ -56,14 +57,20 @@ function ArtistDetail() {
   const city = artist?.city?.trim() || null;
   const website = artist?.website?.trim() || null;
 
+  function goBack() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    void navigate({ to: "/artists" });
+  }
+
   return (
     <AppShell>
       <div className="mb-6">
-        <Button asChild variant="outline">
-          <Link to="/artists">
-            <ArrowLeft className="size-4" />
-            {t("navArtists")}
-          </Link>
+        <Button type="button" variant="outline" onClick={goBack}>
+          <ArrowLeft className="size-4" />
+          {t("back")}
         </Button>
       </div>
       <div className="flex flex-col items-center text-center">
