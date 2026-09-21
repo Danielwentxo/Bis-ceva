@@ -9,10 +9,17 @@ export type ArchiveDump = {
   artists: Record<string, Artist>;
 };
 
-const LETTERS = /[\u00C5\u00E5\u00C4\u00E4\u00D6\u00F6\u00C2\u00E2\u00CE\u00EE\u0102\u0103\u0218\u0219\u021A\u021B\u015E\u015F\u0162\u0163\u00C6\u00E6\u00D8\u00F8\u00DC\u00FC\u00C9\u00E9\u00C1\u00E1]/g;
+const LETTERS = /[\u00C5\u00E5\u00C4\u00E4\u00D6\u00F6\u00C2\u00E2\u00CE\u00EE\u0102\u0103\u0218\u0219\u021A\u021B\u015E\u015F\u0162\u0163]/g;
 
 function tidy(value: string) {
-  return value.normalize("NFC").replace(/\uFFFD/g, "").trim();
+  return value
+    .normalize("NFC")
+    .replace(/\uFFFD/g, "")
+    .replace(/\u015E/g, "\u0218")
+    .replace(/\u015F/g, "\u0219")
+    .replace(/\u0162/g, "\u021A")
+    .replace(/\u0163/g, "\u021B")
+    .trim();
 }
 
 function scoreText(text: string) {
@@ -21,9 +28,10 @@ function scoreText(text: string) {
 
 export function decodeImportedText(buffer: ArrayBuffer) {
   const utf8 = new TextDecoder("utf-8").decode(buffer);
+  if (!utf8.includes("\uFFFD")) return utf8;
   const latin = new TextDecoder("windows-1252").decode(buffer);
   const east = new TextDecoder("iso-8859-2").decode(buffer);
-  return [utf8, latin, east].sort((a, b) => scoreText(b) - scoreText(a))[0] ?? utf8;
+  return scoreText(east) >= scoreText(latin) ? east : latin;
 }
 
 function csvEscape(value: string) {
