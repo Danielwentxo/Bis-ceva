@@ -35,6 +35,28 @@ type ArchiveState = {
   deleteAccount: () => Promise<void>;
 };
 
+function festivalGroupKey(concert: Concert) {
+  const name = concert.festivalName?.trim().toLowerCase();
+  if (!name) return null;
+  return `${name}|${concert.date.slice(0, 4)}|${concert.city.trim().toLowerCase()}|${concert.venue.trim().toLowerCase()}`;
+}
+
+function lineupDraft(concert: Concert, artists: Record<string, Artist>): ArtistMedia[] {
+  return concert.lineup
+    .map((l) => {
+      const a = artists[l.artistId];
+      return {
+        name: a?.name ?? l.artistId,
+        logoUrl: a?.logoUrl ?? null,
+        thumbUrl: a?.thumbUrl ?? null,
+        genre: a?.genre ?? null,
+        country: a?.country ?? null,
+        bio: a?.bio ?? null,
+      };
+    })
+    .filter((a) => a.name);
+}
+
 function mediaToArtist(media: ArtistMedia): Artist {
   return {
     id: artistKey(media.name),
@@ -182,19 +204,72 @@ export const useArchive = create<ArchiveState>()(
         return result.id;
       },
       updateConcert: async (id, draft) => {
+        const existing = get().concerts.find((c) => c.id === id);
+        const oldKey = existing ? festivalGroupKey(existing) : null;
+        const festivalName = draft.festivalName?.trim() ?? "";
+        const shared = {
+          venue: draft.venue.trim(),
+          city: draft.city.trim(),
+          country: draft.country,
+          countryCode: draft.countryCode,
+          festivalName,
+          festivalPosterUrl: draft.festivalPosterUrl ?? null,
+        };
+        const siblings =
+          oldKey && festivalName
+            ? get().concerts.filter((c) => c.id !== id && festivalGroupKey(c) === oldKey)
+            : [];
+
         if (!authEnabled) {
           for (const a of draft.artists) get().upsertArtist(a);
           set((state) => ({
-            concerts: state.concerts.map((c) => (c.id === id ? fromDraft(id, draft, c.createdAt) : c)),
+            concerts: state.concerts.map((c) => {
+              if (c.id === id) return fromDraft(id, draft, c.createdAt);
+              if (!siblings.some((s) => s.id === c.id)) return c;
+              return {
+                ...c,
+                venue: shared.venue,
+                city: shared.city,
+                country: shared.country,
+                countryCode: shared.countryCode,
+                festivalName: shared.festivalName,
+                festival: Boolean(shared.festivalName),
+                festivalPosterUrl: shared.festivalPosterUrl,
+              };
+            }),
           }));
           return;
         }
-        const existing = get().concerts.find((c) => c.id === id);
+
         const result = await upsertConcert({ data: { id, draft, createdAt: existing?.createdAt } });
         set((state) => ({
           concerts: state.concerts.map((c) => (c.id === id ? result.concert : c)),
           artists: mergeArtists(state.artists, result.artists),
         }));
+
+        const artists = get().artists;
+        for (const sib of siblings) {
+          const sibDraft: ConcertDraft = {
+            date: sib.date,
+            venue: shared.venue,
+            city: shared.city,
+            country: shared.country,
+            countryCode: shared.countryCode,
+            artists: lineupDraft(sib, artists),
+            notes: sib.notes,
+            rating: sib.rating,
+            favorite: sib.favorite,
+            festival: Boolean(shared.festivalName),
+            festivalName: shared.festivalName,
+            festivalPosterUrl: shared.festivalPosterUrl,
+            ticketUrl: sib.ticketUrl,
+          };
+          const saved = await upsertConcert({ data: { id: sib.id, draft: sibDraft, createdAt: sib.createdAt } });
+          set((state) => ({
+            concerts: state.concerts.map((c) => (c.id === sib.id ? saved.concert : c)),
+            artists: mergeArtists(state.artists, saved.artists),
+          }));
+        }
       },
       deleteConcert: async (id) => {
         if (!authEnabled) {
