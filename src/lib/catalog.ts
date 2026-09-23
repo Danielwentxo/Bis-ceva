@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { assertImageDataUrl } from "@/lib/image-data";
 import type { ArtistMedia } from "@/lib/types";
 import { artistKey, venueKey } from "@/lib/utils";
 
@@ -48,26 +49,38 @@ export const saveCatalogArtist = createServerFn({ method: "POST" })
       genre: z.string().nullable().optional(),
       country: z.string().nullable().optional(),
       bio: z.string().nullable().optional(),
+      overwrite: z.boolean().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     const sql = await getSql();
     const id = artistKey(data.name);
+    const logoUrl = assertImageDataUrl(data.logoUrl ?? null, "Artist logo");
+    const thumbUrl = assertImageDataUrl(data.thumbUrl ?? null, "Artist image") ?? logoUrl;
+    const overwrite = Boolean(data.overwrite);
     await sql`
       insert into catalog_artists (id, name, logo_url, thumb_url, genre, country, bio, created_by)
       values (
-        ${id}, ${data.name}, ${data.logoUrl ?? null}, ${data.thumbUrl ?? null},
+        ${id}, ${data.name}, ${logoUrl}, ${thumbUrl},
         ${data.genre ?? null}, ${data.country ?? null}, ${data.bio ?? null}, ${context.userId}
       )
       on conflict (id) do update set
         name = excluded.name,
-        logo_url = coalesce(catalog_artists.logo_url, excluded.logo_url),
-        thumb_url = coalesce(catalog_artists.thumb_url, excluded.thumb_url),
-        genre = coalesce(catalog_artists.genre, excluded.genre),
-        country = coalesce(catalog_artists.country, excluded.country),
-        bio = coalesce(catalog_artists.bio, excluded.bio)
+        logo_url = case when ${overwrite} then coalesce(excluded.logo_url, catalog_artists.logo_url) else coalesce(catalog_artists.logo_url, excluded.logo_url) end,
+        thumb_url = case when ${overwrite} then coalesce(excluded.thumb_url, catalog_artists.thumb_url) else coalesce(catalog_artists.thumb_url, excluded.thumb_url) end,
+        genre = case when ${overwrite} then coalesce(excluded.genre, catalog_artists.genre) else coalesce(catalog_artists.genre, excluded.genre) end,
+        country = case when ${overwrite} then coalesce(excluded.country, catalog_artists.country) else coalesce(catalog_artists.country, excluded.country) end,
+        bio = case when ${overwrite} then coalesce(excluded.bio, catalog_artists.bio) else coalesce(catalog_artists.bio, excluded.bio) end
     `;
-    return { id, name: data.name };
+    return {
+      id,
+      name: data.name,
+      logoUrl,
+      thumbUrl,
+      genre: data.genre ?? null,
+      country: data.country ?? null,
+      bio: data.bio ?? null,
+    };
   });
 
 export type CatalogVenue = {
