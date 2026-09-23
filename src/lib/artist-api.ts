@@ -37,6 +37,10 @@ function norm(name: string) {
     .trim();
 }
 
+function namesMatch(a: string, b: string) {
+  return norm(a) === norm(b);
+}
+
 type TadbArtist = {
   strArtist?: string;
   strArtistLogo?: string;
@@ -64,10 +68,26 @@ type DeezerResponse = { data?: DeezerArtist[] };
 
 type WikiSummary = {
   title?: string;
+  description?: string;
+  type?: string;
   extract?: string;
   originalimage?: { source?: string };
   thumbnail?: { source?: string };
 };
+
+const MUSIC_HINT =
+  /\b(band|singer|musician|rapper|dj|duo|trio|quartet|ensemble|orchestra|composer|songwriter|vocalist|guitarist|drummer|musical group|music group|recording artist|pop group|rock group)\b/i;
+const NOT_MUSIC =
+  /\b(theology|theological|christian belief|holy spirit|religion|doctrine|film|movie|novel|book|television|tv series|video game|species|plant|city|village)\b/i;
+
+function wikiIsBand(wiki: WikiSummary, query: string) {
+  if (!wiki.title || wiki.type === "disambiguation") return false;
+  const title = norm(wiki.title).replace(/ band$| musician$| singer$| group$/, "");
+  if (title !== norm(query)) return false;
+  const blob = `${wiki.description ?? ""} ${wiki.extract ?? ""}`;
+  if (NOT_MUSIC.test(blob) && !MUSIC_HINT.test(blob)) return false;
+  return MUSIC_HINT.test(blob);
+}
 
 function fromTadb(a: TadbArtist): ArtistMedia {
   const origin = splitOrigin(a.strCountry);
@@ -86,16 +106,14 @@ function fromTadb(a: TadbArtist): ArtistMedia {
 }
 
 function pickTadb(list: TadbArtist[], query: string, countryHint?: string | null) {
-  if (!list.length) return null;
-  const nq = norm(query);
-  const exact = list.filter((a) => norm(a.strArtist ?? "") === nq);
-  const pool = exact.length ? exact : list;
+  const exact = list.filter((a) => namesMatch(a.strArtist ?? "", query));
+  if (!exact.length) return null;
   if (countryHint) {
     const hint = countryHint.toLowerCase();
-    const hinted = pool.find((a) => (a.strCountry ?? "").toLowerCase().includes(hint));
+    const hinted = exact.find((a) => (a.strCountry ?? "").toLowerCase().includes(hint));
     if (hinted) return hinted;
   }
-  return pool[0] ?? null;
+  return exact[0] ?? null;
 }
 
 async function tadbSearch(query: string) {
@@ -110,9 +128,18 @@ async function deezerSearch(query: string, limit = 8) {
   return data?.data ?? [];
 }
 
-async function wikiSummary(name: string) {
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
+async function wikiSummary(title: string) {
+  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
   return fetchJson<WikiSummary>(url, 6000);
+}
+
+async function wikiBand(name: string) {
+  const pages = [`${name} (band)`, `${name} (musician)`, `${name} (singer)`, name];
+  for (const title of pages) {
+    const wiki = await wikiSummary(title);
+    if (wiki && wikiIsBand(wiki, name)) return wiki;
+  }
+  return null;
 }
 
 type MbArtist = {
@@ -141,13 +168,13 @@ function fromMb(a: MbArtist): ArtistMedia {
     genre: topTag(a),
     country: origin.country ?? clean(a.area?.name) ?? clean(a.country),
     city: origin.city,
-    bio: clean(a.disambiguation),
+    bio: null,
   };
 }
 
 async function mbSearch(query: string, limit = 8) {
   const url = `https://musicbrainz.org/ws/2/artist/?query=${encodeURIComponent(
-    `artist:${query}`,
+    `artist:"${query}"`,
   )}&fmt=json&limit=${limit}`;
   const data = await fetchJson<MbSearchResponse>(url, 6000);
   return data?.artists ?? [];
@@ -164,12 +191,23 @@ function mergeMedia(primary: ArtistMedia, extra: Partial<ArtistMedia>): ArtistMe
     city: primary.city ?? extra.city ?? null,
     formedYear: primary.formedYear ?? extra.formedYear ?? null,
     website: primary.website ?? extra.website ?? null,
-    bio: primary.bio ?? extra.bio ?? null,
+    bio: primary.bio || extra.bio || null,
   };
 }
 
 function deezerPicture(row: DeezerArtist) {
   return clean(row.picture_xl) ?? clean(row.picture_big) ?? clean(row.picture_medium);
+}
+
+function blank(name: string): ArtistMedia {
+  return {
+    name,
+    logoUrl: null,
+    thumbUrl: null,
+    genre: null,
+    country: null,
+    bio: "",
+  };
 }
 
 export const searchArtists = createServerFn({ method: "POST" })
@@ -228,27 +266,33 @@ export const searchArtists = createServerFn({ method: "POST" })
 async function enrichOne(name: string, countryHint?: string): Promise<ArtistMedia> {
   const tadb = await tadbSearch(name);
   const picked = pickTadb(tadb, name, countryHint);
-  let media: ArtistMedia = picked
-    ? fromTadb(picked)
-    : { name, logoUrl: null, thumbUrl: null, genre: null, country: null, bio: null };
+  let media: ArtistMedia = picked ? fromTadb(picked) : blank(name);
   media.name = name;
-  if (!media.logoUrl) {
-    const [deezer, wiki] = await Promise.all([
-      deezerSearch(name, 3),
-      media.bio ? Promise.resolve(null) : wikiSummary(name),
-    ]);
-    const picture = deezer[0] ? deezerPicture(deezer[0]) : null;
-    media = mergeMedia(media, { name, thumbUrl: picture, bio: clean(wiki?.extract) });
-    if (!media.thumbUrl) media.thumbUrl = clean(wiki?.originalimage?.source) ?? clean(wiki?.thumbnail?.source);
-  } else if (!media.bio) {
-    const wiki = await wikiSummary(name);
-    media.bio = clean(wiki?.extract);
+
+  const deezer = await deezerSearch(name, 5);
+  const deezerHit = deezer.find((row) => namesMatch(row.name ?? "", name));
+  if (deezerHit) {
+    media = mergeMedia(media, { thumbUrl: deezerPicture(deezerHit) });
   }
+
+  if (!media.bio) {
+    const wiki = await wikiBand(name);
+    if (wiki) {
+      media = mergeMedia(media, {
+        bio: clean(wiki.extract),
+        thumbUrl: media.thumbUrl ?? clean(wiki.originalimage?.source) ?? clean(wiki.thumbnail?.source),
+      });
+    } else {
+      media.bio = "";
+    }
+  }
+
   if (!media.genre) {
-    const mb = await mbSearch(name, 3);
-    const hit = mb.find((a) => norm(a.name ?? "") === norm(name)) ?? mb[0];
+    const mb = await mbSearch(name, 5);
+    const hit = mb.find((a) => namesMatch(a.name ?? "", name));
     if (hit) media.genre = topTag(hit);
   }
+
   media.name = name;
   return media;
 }
@@ -265,7 +309,7 @@ export const enrichArtists = createServerFn({ method: "POST" })
     const names = data.names;
     for (let i = 0; i < names.length; i += 4) {
       const chunk = names.slice(i, i + 4);
-      results.push(...(await Promise.all(chunk.map((name) => enrichOne(name, data.countryHint)))));
+      results.push(...(await Promise.all(chunk.map((n) => enrichOne(n, data.countryHint)))));
     }
     return results;
   });
