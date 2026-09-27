@@ -1,3 +1,4 @@
+import { SHARE_TICKET_BG } from "@/lib/share-ticket-bg";
 import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import type { computeStats } from "@/lib/stats";
 
@@ -8,7 +9,7 @@ if (typeof Image !== "undefined") {
   img.onload = () => {
     ticketPhoto = img;
   };
-  img.src = "/share-ticket.svg?v=2";
+  img.src = SHARE_TICKET_BG;
 }
 
 function torn(ctx: CanvasRenderingContext2D, y: number, left: number, right: number) {
@@ -61,9 +62,14 @@ export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: str
   else ctx.rect(x, y, w, h);
   ctx.clip();
 
-  if (ticketPhoto) ctx.drawImage(ticketPhoto, x, y, w, split - y);
-  else {
-    ctx.fillStyle = "#3a220c";
+  if (ticketPhoto) {
+    const photo = ticketPhoto;
+    const scale = Math.max(w / photo.width, (split - y) / photo.height);
+    const dw = photo.width * scale;
+    const dh = photo.height * scale;
+    ctx.drawImage(photo, x + (w - dw) / 2, y + (split - y - dh) / 2, dw, dh);
+  } else {
+    ctx.fillStyle = "#2a1a0c";
     ctx.fillRect(x, y, w, split - y);
   }
 
