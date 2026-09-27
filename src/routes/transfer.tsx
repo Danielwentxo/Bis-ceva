@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
+import { pageLabel } from "@/lib/i18n-pages";
 import { useArchive } from "@/lib/store";
 import { archiveToJson, concertsToCsv, decodeImportedText, draftsFromCsv, draftsFromJson } from "@/lib/transfer";
 
@@ -40,20 +41,20 @@ function TransferPage() {
       const text = decodeImportedText(buffer);
       const drafts = file.name.toLowerCase().endsWith(".json") ? draftsFromJson(text) : draftsFromCsv(text);
       if (!drafts.length) {
-        setNote("No concerts found. Use date, artists, venue, city columns.");
+        setNote(pageLabel(locale, "noConcertsFound"));
         return;
       }
       let ok = 0;
       for (const draft of drafts) {
         await addConcert(draft);
         ok += 1;
-        setNote(`Importing ${ok} / ${drafts.length}…`);
+        setNote(pageLabel(locale, "importing", { ok: String(ok), total: String(drafts.length) }));
       }
-      const done = `Done. ${ok} concerts are in your archive.`;
+      const done = pageLabel(locale, "importDone", { ok: String(ok) });
       toast.success(done);
-      setNote(`${done} Logos will fill in over the next minute.`);
+      setNote(`${done} ${pageLabel(locale, "logosSoon")}`);
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Could not import this file.");
+      setNote(err instanceof Error ? err.message : pageLabel(locale, "importFail"));
     } finally {
       setBusy(false);
     }
@@ -66,40 +67,26 @@ function TransferPage() {
 
       <section className="mt-8 space-y-3 rounded-2xl bg-card p-5 shadow-[var(--shadow-border)]">
         <h2 className="font-medium">{extraLabel(locale, "exportTitle")}</h2>
-        <p className="text-sm text-muted-foreground">CSV for spreadsheets. JSON keeps lineups and notes.</p>
+        <p className="text-sm text-muted-foreground">{pageLabel(locale, "exportHint")}</p>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" onClick={() => download("gig-history.csv", concertsToCsv(concerts, artists), "text/csv")}>
-            Download CSV
+            {pageLabel(locale, "downloadCsv")}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => download("gig-history.json", JSON.stringify(archiveToJson(concerts, artists), null, 2), "application/json")}
-          >
-            Download JSON
+          <Button type="button" variant="outline" onClick={() => download("gig-history.json", JSON.stringify(archiveToJson(concerts, artists), null, 2), "application/json")}>
+            {pageLabel(locale, "downloadJson")}
           </Button>
         </div>
       </section>
 
       <section className="mt-6 space-y-3 rounded-2xl bg-card p-5 shadow-[var(--shadow-border)]">
         <h2 className="font-medium">{extraLabel(locale, "importTitle")}</h2>
-        <p className="text-sm text-muted-foreground">
-          Accepted files: .csv and .json. Columns: date, artists, venue, city, country, countryCode, festival, notes, rating.
-          Several artists on one row: separate with a semicolon. Dates as YYYY-MM-DD.
-        </p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,.json,text/csv,application/json"
-          disabled={busy}
-          className="sr-only"
-          onChange={(e) => void onFile(e.target.files?.[0])}
-        />
+        <p className="text-sm text-muted-foreground">{pageLabel(locale, "importHint")}</p>
+        <input ref={inputRef} type="file" accept=".csv,.json,text/csv,application/json" disabled={busy} className="sr-only" onChange={(e) => void onFile(e.target.files?.[0])} />
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
-            Choose file
+            {pageLabel(locale, "chooseFile")}
           </Button>
-          <span className="text-sm text-muted-foreground">{fileName ?? "No file chosen"}</span>
+          <span className="text-sm text-muted-foreground">{fileName ?? pageLabel(locale, "noFile")}</span>
         </div>
         {note ? <p className="text-sm text-foreground">{note}</p> : null}
       </section>
