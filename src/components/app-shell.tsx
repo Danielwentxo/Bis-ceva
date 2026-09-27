@@ -12,6 +12,7 @@ import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { APP_TAGLINE } from "@/lib/brand";
 import { useI18n } from "@/lib/i18n";
+import { pageLabel } from "@/lib/i18n-pages";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 function MobileSignOut() {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   return (
     <button
@@ -41,13 +43,13 @@ function MobileSignOut() {
       }}
       className="max-w-[3.2rem] text-left text-[11px] leading-tight text-muted-foreground hover:text-foreground disabled:opacity-60"
     >
-      {busy ? "…" : "Sign out"}
+      {busy ? t("signingOut") : t("signOut")}
     </button>
   );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   useEnrichArtists();
@@ -84,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <LanguageSelect />
             <Link to="/login" className="text-sm text-muted-foreground underline">
-              Sign in
+              {pageLabel(locale, "signInLink")}
             </Link>
           </div>
         </header>
