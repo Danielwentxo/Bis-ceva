@@ -34,9 +34,17 @@ const TEXT: Record<Size, string> = {
 function initial(name: string) {
   const trimmed = name.trim();
   if (!trimmed) return "?";
-  const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) return parts[0]!.slice(0, 1).toUpperCase();
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (parts[0]!.slice(0, 1) + parts[1]!.slice(0, 1)).toUpperCase();
+}
+
+function usableSrc(url: string | null | undefined) {
+  if (!url) return null;
+  const t = url.trim();
+  if (!t) return null;
+  if (/deezer\.com|dzcdn\.net|wikipedia\.org|wikimedia\.org/i.test(t)) return null;
+  return t;
 }
 
 export function ArtistMark({
@@ -50,10 +58,12 @@ export function ArtistMark({
 }) {
   const [failed, setFailed] = useState<Record<string, true>>({});
   const name = artist?.name ?? "";
-  const logo = artist?.logoUrl && !failed[artist.logoUrl] ? artist.logoUrl : null;
-  const thumb = artist?.thumbUrl && !failed[artist.thumbUrl] ? artist.thumbUrl : null;
-  const src = logo ?? thumb;
-  const isLogo = Boolean(logo) && src === logo;
+  const logo = usableSrc(artist?.logoUrl);
+  const thumb = usableSrc(artist?.thumbUrl);
+  const logoOk = logo && !failed[logo] ? logo : null;
+  const thumbOk = thumb && !failed[thumb] ? thumb : null;
+  const src = logoOk ?? thumbOk;
+  const isLogo = Boolean(logoOk) && src === logoOk;
 
   return (
     <div
@@ -64,15 +74,13 @@ export function ArtistMark({
         className,
       )}
       aria-hidden={!name}
+      title={name}
     >
       {src ? (
         <img
           src={src}
           alt=""
-          className={cn(
-            "size-full",
-            isLogo ? "object-contain p-1.5" : "object-cover",
-          )}
+          className={cn("size-full", isLogo ? "object-contain p-1.5" : "object-cover")}
           onError={() => {
             if (src) setFailed((prev) => ({ ...prev, [src]: true }));
           }}
@@ -102,11 +110,7 @@ export function ArtistStack({
   return (
     <div className="flex items-center">
       {shown.map((artist, i) => (
-        <div
-          key={`${artist!.name}-${i}`}
-          className={cn(i > 0 && "-ml-2")}
-          style={{ zIndex: shown.length - i }}
-        >
+        <div key={`${artist!.name}-${i}`} className={cn(i > 0 && "-ml-2")} style={{ zIndex: shown.length - i }}>
           <ArtistMark artist={artist} size={size} className="ring-2 ring-background" />
         </div>
       ))}
