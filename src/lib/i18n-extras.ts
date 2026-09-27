@@ -22,7 +22,7 @@ export const I18N_EXTRA: Record<string, Record<string, string>> = {
     onboardShare: "Share a stats card",
     onThisDay: "On this day",
     plannedHint: "A future date is saved under Upcoming.",
-    installApp: "Add to Home Screen from the browser menu to use Gig History like an app.",
+    installApp: "Add to Home Screen from the browser menu to use My Gig History like an app.",
   },
   fr: {
     concertsPerYear: "Concerts par ann\u00e9e",
@@ -47,7 +47,7 @@ export const I18N_EXTRA: Record<string, Record<string, string>> = {
     onboardShare: "Partager une carte",
     onThisDay: "Un jour comme aujourd\u2019hui",
     plannedHint: "Une date future va dans Upcoming.",
-    installApp: "Ajoutez l\u2019app \u00e0 l\u2019\u00e9cran d\u2019accueil depuis le menu du navigateur.",
+    installApp: "Ajoutez My Gig History \u00e0 l\u2019\u00e9cran d\u2019accueil depuis le menu du navigateur.",
   },
   de: {
     concertsPerYear: "Konzerte pro Jahr",
@@ -72,7 +72,7 @@ export const I18N_EXTRA: Record<string, Record<string, string>> = {
     onboardShare: "Statistik-Karte teilen",
     onThisDay: "An diesem Tag",
     plannedHint: "Ein Datum in der Zukunft landet unter Upcoming.",
-    installApp: "\u00dcber das Browser-Men\u00fc auf den Home-Bildschirm legen.",
+    installApp: "My Gig History \u00fcber das Browser-Men\u00fc auf den Home-Bildschirm legen.",
   },
   es: {
     concertsPerYear: "Conciertos por a\u00f1o",
@@ -97,7 +97,7 @@ export const I18N_EXTRA: Record<string, Record<string, string>> = {
     onboardShare: "Compartir tarjeta",
     onThisDay: "Un d\u00eda como hoy",
     plannedHint: "Una fecha futura va a Upcoming.",
-    installApp: "A\u00f1ade Gig History a la pantalla de inicio desde el men\u00fa del navegador.",
+    installApp: "A\u00f1ade My Gig History a la pantalla de inicio desde el men\u00fa del navegador.",
   },
 };
 
