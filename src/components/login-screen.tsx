@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
 import { useI18n } from "@/lib/i18n";
+import { pageLabel } from "@/lib/i18n-pages";
 
 type Mode = "sign-in" | "sign-up" | "forgot";
 
 export function LoginScreen() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,10 +26,7 @@ export function LoginScreen() {
     setSubmitting(true);
     try {
       if (mode === "forgot") {
-        const { error } = await authClient.requestPasswordReset({
-          email,
-          redirectTo: "/reset-password",
-        });
+        const { error } = await authClient.requestPasswordReset({ email, redirectTo: "/reset-password" });
         if (error) throw new Error(error.message ?? "Request failed");
         setResetSent(true);
         return;
@@ -70,7 +68,6 @@ export function LoginScreen() {
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{title}</p>
         </div>
-
         {mode === "forgot" && resetSent ? (
           <div className="flex flex-col gap-4 text-center">
             <p className="text-sm text-foreground">{t("resetSent", { email })}</p>
@@ -93,15 +90,7 @@ export function LoginScreen() {
             {mode !== "forgot" ? (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="password">{t("password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-                  minLength={8}
-                  required
-                />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} minLength={8} required />
               </div>
             ) : null}
             {mode === "sign-in" ? (
@@ -114,7 +103,6 @@ export function LoginScreen() {
             </Button>
           </form>
         )}
-
         {mode !== "forgot" || !resetSent ? (
           <>
             {mode !== "forgot" ? (
@@ -125,27 +113,20 @@ export function LoginScreen() {
                   <span className="h-px flex-1 bg-border" />
                 </div>
                 <Button type="button" variant="outline" className="w-full" disabled={submitting} onClick={() => void signInWithGoogle()}>
-                  Continue with Google
+                  {pageLabel(locale, "continueGoogle")}
                 </Button>
               </>
             ) : null}
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-                setResetSent(false);
-              }}
-              className="mt-4 w-full text-center text-sm text-muted-foreground underline"
-            >
+            <button type="button" onClick={() => { setMode(mode === "sign-in" ? "sign-up" : "sign-in"); setResetSent(false); }} className="mt-4 w-full text-center text-sm text-muted-foreground underline">
               {mode === "sign-in" ? t("noAccount") : mode === "sign-up" ? t("hasAccount") : t("backToSignIn")}
             </button>
             <div className="mt-6 flex justify-center">
               <LanguageSelect />
             </div>
             <p className="mt-8 flex justify-center gap-4 text-xs text-muted-foreground">
-              <Link to="/about" className="hover:text-foreground">About</Link>
-              <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-              <Link to="/contact" className="hover:text-foreground">Contact</Link>
+              <Link to="/about" className="hover:text-foreground">{pageLabel(locale, "footerAbout")}</Link>
+              <Link to="/privacy" className="hover:text-foreground">{pageLabel(locale, "footerPrivacy")}</Link>
+              <Link to="/contact" className="hover:text-foreground">{pageLabel(locale, "footerContact")}</Link>
             </p>
           </>
         ) : null}
