@@ -6,6 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
 import { EmptyArchive } from "@/components/empty-state";
+import { YearBars } from "@/components/year-bars";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "@/lib/auth/client";
@@ -101,7 +102,6 @@ function StatsPage() {
   const topVenues = stats.venueCounts.slice(0, 8);
   const topOrigins = stats.artistOriginCounts.slice(0, 8);
   const topGenres = stats.genreCounts.slice(0, 8);
-  const maxYear = Math.max(1, ...stats.yearCounts.map((y) => y.count));
 
   async function shareStats() {
     const text = buildShareText(stats, {
@@ -131,7 +131,7 @@ function StatsPage() {
     try {
       const canvas = drawShareCard(stats);
       const blob = await canvasToBlob(canvas);
-      const file = new File([blob], "gig-history.png", { type: "image/png" });
+      const file = new File([blob], "my-gig-history.png", { type: "image/png" });
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: t("statsTitle") });
         return;
@@ -139,7 +139,7 @@ function StatsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "gig-history.png";
+      a.download = "my-gig-history.png";
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -191,17 +191,7 @@ function StatsPage() {
       {stats.yearCounts.length ? (
         <section className="mt-8">
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "concertsPerYear")}</h2>
-          <div className="flex items-end gap-2 rounded-2xl bg-card px-4 py-5 shadow-[var(--shadow-border)]">
-            {stats.yearCounts.map((row) => (
-              <div key={row.year} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                <p className="text-xs tabular-nums text-muted-foreground">{row.count}</p>
-                <div className="flex h-28 w-full items-end justify-center">
-                  <div className="w-full max-w-10 rounded-t-md bg-primary" style={{ height: `${Math.max(8, (row.count / maxYear) * 100)}%` }} />
-                </div>
-                <p className="text-[11px] tabular-nums text-subtle">{row.year}</p>
-              </div>
-            ))}
-          </div>
+          <YearBars years={stats.yearCounts} />
         </section>
       ) : null}
 
