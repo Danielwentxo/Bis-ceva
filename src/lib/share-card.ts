@@ -4,14 +4,15 @@ import type { computeStats } from "@/lib/stats";
 const PHOTO =
   "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=1400&q=75";
 
-function loadPhoto(): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = PHOTO;
-  });
+let cachedPhoto: HTMLImageElement | null = null;
+
+if (typeof Image !== "undefined") {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    cachedPhoto = img;
+  };
+  img.src = PHOTO;
 }
 
 function paintFallback(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
@@ -48,13 +49,12 @@ function barcode(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
   }
 }
 
-export async function drawShareCard(stats: ReturnType<typeof computeStats>, year?: string): Promise<HTMLCanvasElement> {
+export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: string): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1350;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not draw card.");
-  const photo = await loadPhoto();
 
   ctx.fillStyle = "#d9cbb6";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -71,7 +71,8 @@ export async function drawShareCard(stats: ReturnType<typeof computeStats>, year
   ctx.roundRect(cardX, cardY, cardW, cardH, 22);
   ctx.clip();
 
-  if (photo) {
+  if (cachedPhoto) {
+    const photo = cachedPhoto;
     const scale = Math.max(cardW / photo.width, (split - cardY) / photo.height);
     const dw = photo.width * scale;
     const dh = photo.height * scale;
