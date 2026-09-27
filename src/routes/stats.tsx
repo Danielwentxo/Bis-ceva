@@ -14,7 +14,7 @@ import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import { formatConcertDate, showsLabel } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
-import { canvasToBlob, drawShareCard, drawStatsPosterReady } from "@/lib/share-card";
+import { canvasToBlob, drawShareCardReady, drawStatsPosterReady } from "@/lib/share-card";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
@@ -84,7 +84,7 @@ function StatsPage() {
 
   async function shareImage(kind: "ticket" | "poster") {
     try {
-      const canvas = kind === "poster" ? await drawStatsPosterReady(stats) : drawShareCard(stats);
+      const canvas = kind === "poster" ? await drawStatsPosterReady(stats) : await drawShareCardReady(stats);
       const blob = await canvasToBlob(canvas);
       const file = new File([blob], kind === "poster" ? "my-gig-history-stats.png" : "my-gig-history.png", { type: "image/png" });
       const text = kind === "poster" ? buildShareText(stats) : undefined;
