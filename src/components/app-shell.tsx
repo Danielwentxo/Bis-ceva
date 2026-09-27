@@ -10,6 +10,7 @@ import { useEnrichArtists } from "@/components/use-enrich-artists";
 import { signOut } from "@/lib/auth/client";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { APP_TAGLINE } from "@/lib/brand";
 import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -99,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border px-4 py-6 md:flex">
         <Link to="/" className="mb-4 px-2">
           <AppLogo size="md" />
-          <p className="mt-1 text-xs text-muted-foreground">{t("archiveSubtitle")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{APP_TAGLINE}</p>
         </Link>
         <div className="mb-6 px-2">
           <LanguageSelect />
