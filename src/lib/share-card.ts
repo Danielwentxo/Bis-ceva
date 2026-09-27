@@ -146,9 +146,122 @@ export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: str
   return canvas;
 }
 
+export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not draw stats.");
+
+  const bg = ctx.createLinearGradient(0, 0, 0, 1350);
+  bg.addColorStop(0, "#140e0a");
+  bg.addColorStop(0.55, "#1c1410");
+  bg.addColorStop(1, "#0c0907");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 1080, 1350);
+
+  if (ticketPhoto && ticketPhoto.naturalWidth) {
+    ctx.globalAlpha = 0.28;
+    const iw = ticketPhoto.naturalWidth;
+    const ih = ticketPhoto.naturalHeight;
+    const scale = Math.max(1080 / iw, 620 / ih);
+    ctx.drawImage(ticketPhoto, 0, 0, iw, Math.floor(ih * 0.5), 0, 0, iw * scale, Math.floor(ih * 0.5) * scale);
+    ctx.globalAlpha = 1;
+    const fade = ctx.createLinearGradient(0, 280, 0, 720);
+    fade.addColorStop(0, "rgba(20,14,10,0)");
+    fade.addColorStop(1, "#140e0a");
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 280, 1080, 440);
+  }
+
+  ctx.strokeStyle = "#c4a574";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(48, 48, 984, 1254);
+  ctx.strokeRect(60, 60, 960, 1230);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#c4a574";
+  ctx.font = "bold 22px Arial, Helvetica, sans-serif";
+  ctx.fillText(APP_NAME.toUpperCase(), 540, 130);
+
+  ctx.fillStyle = "rgba(196,165,116,0.55)";
+  ctx.font = "16px Arial, Helvetica, sans-serif";
+  ctx.fillText("LIVE ARCHIVE", 540, 162);
+
+  ctx.fillStyle = "#f3e6d0";
+  ctx.font = "bold 168px Georgia, Times New Roman, serif";
+  ctx.fillText(String(stats.totalShows ?? 0), 540, 360);
+  ctx.fillStyle = "#c4a574";
+  ctx.font = "bold 28px Arial, Helvetica, sans-serif";
+  ctx.fillText("CONCERTS LOGGED", 540, 412);
+
+  const pills = [
+    [String(stats.uniqueArtists ?? 0), "ARTISTS"],
+    [String(stats.uniqueVenues ?? 0), "VENUES"],
+    [String(stats.uniqueCountries ?? 0), "COUNTRIES"],
+  ];
+  pills.forEach((pill, i) => {
+    const cx = 220 + i * 320;
+    ctx.fillStyle = "rgba(196,165,116,0.08)";
+    if (typeof ctx.roundRect === "function") {
+      ctx.beginPath();
+      ctx.roundRect(cx - 130, 470, 260, 120, 16);
+      ctx.fill();
+    } else ctx.fillRect(cx - 130, 470, 260, 120);
+    ctx.fillStyle = "#f3e6d0";
+    ctx.font = "bold 52px Georgia, Times New Roman, serif";
+    ctx.fillText(pill[0], cx, 540);
+    ctx.fillStyle = "#c4a574";
+    ctx.font = "bold 16px Arial, Helvetica, sans-serif";
+    ctx.fillText(pill[1], cx, 572);
+  });
+
+  ctx.fillStyle = "#c4a574";
+  ctx.font = "bold 16px Arial, Helvetica, sans-serif";
+  ctx.fillText("MOST SEEN", 540, 680);
+
+  const top = (stats.artistCounts ?? []).slice(0, 3);
+  top.forEach((row, i) => {
+    const yy = 750 + i * 88;
+    ctx.fillStyle = "rgba(243,230,208,0.06)";
+    if (typeof ctx.roundRect === "function") {
+      ctx.beginPath();
+      ctx.roundRect(120, yy - 52, 840, 76, 14);
+      ctx.fill();
+    } else ctx.fillRect(120, yy - 52, 840, 76);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#c4a574";
+    ctx.font = "bold 22px Arial, Helvetica, sans-serif";
+    ctx.fillText(String(i + 1).padStart(2, "0"), 150, yy);
+    ctx.fillStyle = "#f3e6d0";
+    ctx.font = "bold 32px Georgia, Times New Roman, serif";
+    ctx.fillText(row.data.name, 210, yy);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#c4a574";
+    ctx.font = "bold 28px Arial, Helvetica, sans-serif";
+    ctx.fillText(String(row.count), 930, yy);
+    ctx.textAlign = "center";
+  });
+
+  ctx.fillStyle = "#c4a574";
+  ctx.font = "bold 18px Arial, Helvetica, sans-serif";
+  ctx.fillText(APP_DOMAIN.toUpperCase(), 540, 1228);
+  ctx.fillStyle = "rgba(243,230,208,0.45)";
+  ctx.font = "16px Arial, Helvetica, sans-serif";
+  ctx.fillText("Keep every show you have seen.", 540, 1262);
+
+  return canvas;
+}
+
 export async function drawShareCardReady(stats: ReturnType<typeof computeStats>, year?: string) {
   await loadTicketPhoto();
   return drawShareCard(stats, year);
+}
+
+export async function drawStatsPosterReady(stats: ReturnType<typeof computeStats>) {
+  await loadTicketPhoto();
+  return drawStatsPoster(stats);
 }
 
 export function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
