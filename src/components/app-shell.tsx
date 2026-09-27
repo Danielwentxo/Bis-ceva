@@ -102,9 +102,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <AppLogo size="md" />
           <p className="mt-1 text-xs text-muted-foreground">{APP_TAGLINE}</p>
         </Link>
-        <div className="mb-6 px-2">
-          <LanguageSelect />
-        </div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((item) => {
             const Icon = item.icon;
