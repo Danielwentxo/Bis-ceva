@@ -52,13 +52,18 @@ function barcode(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
 }
 
 function paintPhoto(ctx: CanvasRenderingContext2D, photo: HTMLImageElement | null, x: number, y: number, w: number, photoH: number) {
-  ctx.fillStyle = "#1a1008";
+  ctx.fillStyle = "#120c08";
   ctx.fillRect(x, y, w, photoH);
   if (!photo || !photo.naturalWidth) return;
   const iw = photo.naturalWidth;
   const ih = photo.naturalHeight;
-  const srcH = Math.max(1, Math.floor(ih * 0.55));
+  const srcH = Math.max(8, Math.floor(ih * 0.22));
   ctx.drawImage(photo, 0, 0, iw, srcH, x, y, w, photoH);
+  const shade = ctx.createLinearGradient(0, y + photoH - 90, 0, y + photoH);
+  shade.addColorStop(0, "rgba(18,12,8,0)");
+  shade.addColorStop(1, "rgba(18,12,8,0.35)");
+  ctx.fillStyle = shade;
+  ctx.fillRect(x, y + photoH - 90, w, 90);
 }
 
 export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: string): HTMLCanvasElement {
@@ -75,7 +80,7 @@ export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: str
   const y = 28;
   const w = 1024;
   const h = 1294;
-  const split = 548;
+  const split = 560;
 
   ctx.save();
   ctx.beginPath();
@@ -161,17 +166,17 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   ctx.fillRect(0, 0, 1080, 1350);
 
   if (ticketPhoto && ticketPhoto.naturalWidth) {
-    ctx.globalAlpha = 0.28;
+    ctx.globalAlpha = 0.34;
     const iw = ticketPhoto.naturalWidth;
     const ih = ticketPhoto.naturalHeight;
-    const scale = Math.max(1080 / iw, 620 / ih);
-    ctx.drawImage(ticketPhoto, 0, 0, iw, Math.floor(ih * 0.5), 0, 0, iw * scale, Math.floor(ih * 0.5) * scale);
+    const srcH = Math.max(8, Math.floor(ih * 0.22));
+    ctx.drawImage(ticketPhoto, 0, 0, iw, srcH, 0, 0, 1080, 560);
     ctx.globalAlpha = 1;
-    const fade = ctx.createLinearGradient(0, 280, 0, 720);
+    const fade = ctx.createLinearGradient(0, 280, 0, 640);
     fade.addColorStop(0, "rgba(20,14,10,0)");
     fade.addColorStop(1, "#140e0a");
     ctx.fillStyle = fade;
-    ctx.fillRect(0, 280, 1080, 440);
+    ctx.fillRect(0, 280, 1080, 360);
   }
 
   ctx.strokeStyle = "#c4a574";
