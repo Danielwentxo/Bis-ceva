@@ -4,7 +4,7 @@ import { splitOrigin } from "./artist-facts";
 import type { ArtistMedia } from "./types";
 
 const HEADERS = {
-  "User-Agent": "BisConcertArchive/1.0 (concert diary)",
+  "User-Agent": "MyGigHistory/1.0 (concert diary)",
   Accept: "application/json",
 };
 
@@ -57,15 +57,6 @@ type TadbArtist = {
 
 type TadbResponse = { artists: TadbArtist[] | null };
 
-type DeezerArtist = {
-  name?: string;
-  picture_xl?: string;
-  picture_big?: string;
-  picture_medium?: string;
-};
-
-type DeezerResponse = { data?: DeezerArtist[] };
-
 function fromTadb(a: TadbArtist): ArtistMedia {
   const origin = splitOrigin(a.strCountry);
   return {
@@ -97,12 +88,6 @@ async function tadbSearch(query: string) {
   const url = `https://www.theaudiodb.com/api/v1/json/2/search.php?s=${encodeURIComponent(query)}`;
   const data = await fetchJson<TadbResponse>(url);
   return data?.artists ?? [];
-}
-
-async function deezerSearch(query: string, limit = 8) {
-  const url = `https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=${limit}`;
-  const data = await fetchJson<DeezerResponse>(url);
-  return data?.data ?? [];
 }
 
 type MbArtist = {
@@ -146,7 +131,7 @@ function mergeMedia(primary: ArtistMedia, extra: Partial<ArtistMedia>): ArtistMe
   return {
     name: primary.name || extra.name || "",
     logoUrl: primary.logoUrl ?? extra.logoUrl ?? null,
-    thumbUrl: primary.logoUrl ? primary.thumbUrl ?? null : primary.thumbUrl ?? extra.thumbUrl ?? null,
+    thumbUrl: primary.thumbUrl ?? extra.thumbUrl ?? null,
     genre: primary.genre ?? extra.genre ?? null,
     style: primary.style ?? extra.style ?? null,
     country: primary.country ?? extra.country ?? null,
@@ -155,10 +140,6 @@ function mergeMedia(primary: ArtistMedia, extra: Partial<ArtistMedia>): ArtistMe
     website: primary.website ?? extra.website ?? null,
     bio: primary.bio || extra.bio || null,
   };
-}
-
-function deezerPicture(row: DeezerArtist) {
-  return clean(row.picture_xl) ?? clean(row.picture_big) ?? clean(row.picture_medium);
 }
 
 function blank(name: string): ArtistMedia {
@@ -176,32 +157,12 @@ export const searchArtists = createServerFn({ method: "POST" })
   .validator(z.object({ query: z.string().trim().min(1).max(80) }))
   .handler(async ({ data }): Promise<ArtistMedia[]> => {
     const query = data.query;
-    const [tadb, deezer] = await Promise.all([tadbSearch(query), deezerSearch(query, 8)]);
+    const tadb = await tadbSearch(query);
     const byKey = new Map<string, ArtistMedia>();
     for (const row of tadb) {
       const media = fromTadb(row);
       if (!media.name) continue;
       byKey.set(norm(media.name), media);
-    }
-    for (const row of deezer) {
-      const name = clean(row.name);
-      if (!name) continue;
-      const key = norm(name);
-      const picture = deezerPicture(row);
-      const prev = byKey.get(key);
-      if (prev?.logoUrl) {
-        byKey.set(key, prev);
-        continue;
-      }
-      const incoming: ArtistMedia = {
-        name,
-        logoUrl: null,
-        thumbUrl: picture,
-        genre: prev?.genre ?? null,
-        country: prev?.country ?? null,
-        bio: prev?.bio ?? null,
-      };
-      byKey.set(key, prev ? mergeMedia(prev, incoming) : incoming);
     }
     if (byKey.size < 3) {
       const mb = await mbSearch(query, 8);
@@ -231,16 +192,10 @@ async function enrichOne(name: string, countryHint?: string): Promise<ArtistMedi
   let media: ArtistMedia = picked ? fromTadb(picked) : blank(name);
   media.name = name;
 
-  if (!media.logoUrl && !media.thumbUrl) {
-    const deezer = await deezerSearch(name, 5);
-    const deezerHit = deezer.find((row) => namesMatch(row.name ?? "", name));
-    if (deezerHit) media = mergeMedia(media, { thumbUrl: deezerPicture(deezerHit) });
-  }
-
-  if (!media.genre) {
+  if (!media.genre || !media.country) {
     const mb = await mbSearch(name, 5);
     const hit = mb.find((a) => namesMatch(a.name ?? "", name));
-    if (hit) media.genre = topTag(hit);
+    if (hit) media = mergeMedia(media, fromMb(hit));
   }
 
   media.name = name;
