@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!user && isPublic) {
     return (
       <div className="min-h-dvh bg-background text-foreground">
-        <header className="flex items-center justify-between gap-3 px-4 py-4">
+        <header dir="ltr" className="flex items-center justify-between gap-3 px-4 py-4">
           <Link to="/login">
             <AppLogo size="sm" />
           </Link>
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border px-4 py-6 md:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border px-4 py-6 md:flex" dir="ltr">
         <Link to="/" className="mb-4 px-2">
           <AppLogo size="md" />
           <p className="mt-1 text-xs text-muted-foreground">{APP_TAGLINE}</p>
@@ -136,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="md:pl-56">
-        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/70 bg-background/85 px-3 py-2.5 backdrop-blur-md md:hidden">
+        <header dir="ltr" className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/70 bg-background/85 px-3 py-2.5 backdrop-blur-md md:hidden">
           <Link to="/" className="min-w-0 shrink">
             <AppLogo size="sm" />
           </Link>
@@ -153,7 +153,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <header className="sticky top-0 z-20 hidden items-center justify-end gap-3 border-b border-border/70 bg-background/85 px-6 py-3 backdrop-blur-md md:flex">
+        <header dir="ltr" className="sticky top-0 z-20 hidden items-center justify-end gap-3 border-b border-border/70 bg-background/85 px-6 py-3 backdrop-blur-md md:flex">
           <LanguageSelect />
         </header>
 

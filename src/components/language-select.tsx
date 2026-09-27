@@ -18,7 +18,7 @@ export function LanguageSelect({ className }: { className?: string }) {
   const { locale, setLocale, t } = useI18n();
   const current = OPTIONS.find((item) => item.code === locale) ?? OPTIONS[0];
   return (
-    <label className={cn("relative inline-flex items-center", className)}>
+    <label dir="ltr" className={cn("relative inline-flex items-center", className)}>
       <span className="sr-only">{t("language")}</span>
       <span className="pointer-events-none absolute left-2 flex items-center">
         <img
