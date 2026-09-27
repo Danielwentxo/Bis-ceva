@@ -73,6 +73,8 @@ export function ConcertForm({
   const concerts = useArchive((s) => s.concerts);
   const addConcert = useArchive((s) => s.addConcert);
   const updateConcert = useArchive((s) => s.updateConcert);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const posterInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<FormState>(() =>
     existing
@@ -98,7 +100,6 @@ export function ConcertForm({
   const [catalogVenues, setCatalogVenues] = useState<{ venue: string; city: string; countryCode: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState<{ name: string; country: string; genre: string; logoUrl: string | null; thumbUrl: string | null } | null>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const q = query.trim();
@@ -329,9 +330,12 @@ export function ConcertForm({
         <Input id="festival" value={form.festivalName} onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))} placeholder="Untold, Sziget, Download…" />
         {form.festivalName.trim() ? (
           <div className="space-y-2">
-            <Label htmlFor="festival-poster">Festival poster</Label>
-            <Input id="festival-poster" type="file" accept="image/*" onChange={(e) => void onFestivalPoster(e.target.files?.[0])} />
-            {form.festivalPosterUrl ? <img src={form.festivalPosterUrl} alt="" className="h-20 rounded-lg object-cover" /> : null}
+            <Label>Festival poster</Label>
+            <input ref={posterInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => { void onFestivalPoster(e.target.files?.[0]); e.target.value = ""; }} />
+            <div className="flex items-center gap-3">
+              {form.festivalPosterUrl ? <img src={form.festivalPosterUrl} alt="" className="h-14 w-14 rounded-lg object-cover" /> : null}
+              <Button type="button" variant="outline" onClick={() => posterInputRef.current?.click()}>Upload poster</Button>
+            </div>
           </div>
         ) : null}
       </div>
@@ -347,8 +351,8 @@ export function ConcertForm({
                   <p className="truncate text-sm font-medium">{a.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {i === 0 ? t("headliner") : t("support")}
-                    {a.country ? ` \u00b7 ${a.country}` : ""}
-                    {a.genre ? ` \u00b7 ${a.genre}` : ""}
+                    {a.country ? ` · ${a.country}` : ""}
+                    {a.genre ? ` · ${a.genre}` : ""}
                   </p>
                 </div>
                 <button type="button" className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground" onClick={() => removeArtist(a.name)}>
@@ -373,13 +377,11 @@ export function ConcertForm({
                     <ArtistMark artist={hit} size="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{hit.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{[hit.genre, hit.country].filter(Boolean).join(" \u00b7 ") || t("noExtra")}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{[hit.genre, hit.country].filter(Boolean).join(" · ") || t("noExtra")}</span>
                     </span>
                   </button>
                   {!hit.genre && !hit.country ? (
-                    <button type="button" onClick={() => startDetails(hit)} className="w-full px-3 pb-2 text-left text-xs text-primary hover:underline">
-                      Add details
-                    </button>
+                    <button type="button" onClick={() => startDetails(hit)} className="w-full px-3 pb-2 text-left text-xs text-primary hover:underline">Add details</button>
                   ) : null}
                 </li>
               );
@@ -411,21 +413,10 @@ export function ConcertForm({
             </div>
             <div className="space-y-2">
               <Label>Logo</Label>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  void onLogo(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
+              <input ref={logoInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => { void onLogo(e.target.files?.[0]); e.target.value = ""; }} />
               <div className="flex items-center gap-3">
                 <ArtistMark artist={{ name: manual.name, logoUrl: manual.logoUrl, thumbUrl: manual.thumbUrl }} size="md" />
-                <Button type="button" variant="outline" onClick={() => logoInputRef.current?.click()}>
-                  Upload logo
-                </Button>
+                <Button type="button" variant="outline" onClick={() => logoInputRef.current?.click()}>Upload logo</Button>
               </div>
             </div>
             <div className="flex gap-2">
@@ -442,7 +433,7 @@ export function ConcertForm({
           <div className="flex flex-wrap gap-2">
             {venueSuggestions.map((v) => (
               <button key={`${v.venue}-${v.city}`} type="button" className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground hover:text-foreground" onClick={() => setForm((f) => ({ ...f, venue: v.venue, city: v.city, countryCode: v.countryCode || f.countryCode }))}>
-                {v.venue} \u00b7 {v.city}
+                {v.venue} · {v.city}
               </button>
             ))}
           </div>
