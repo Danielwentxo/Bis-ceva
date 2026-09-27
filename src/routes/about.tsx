@@ -18,7 +18,7 @@ function AboutPage() {
         </header>
         <section className="space-y-3">
           <h2 className="font-display text-2xl font-medium">FAQ</h2>
-          <Faq q="Is it free?" a="Yes. Sign in with email or Google. Your archive is included. There is no App Store fee." />
+          <Faq q="Is it free?" a="Yes. Sign in with email or Google. Your archive is included." />
           <Faq
             q="Where is my archive stored?"
             a="In your account, in our database. Log in on another phone and the same concerts are there."
@@ -37,7 +37,7 @@ function AboutPage() {
           />
           <Faq
             q="Where do artist logos come from?"
-            a="TheAudioDB, when the name matches exactly. If there is no logo, you see the band initials. You can add a band by hand and upload a logo. That logo is saved so other users can find it later. We do not take pictures from Deezer."
+            a="TheAudioDB, when the name matches exactly. If there is no logo, you see the band initials. You can add a band by hand and upload a logo. That logo is saved so other users can find it later."
           />
           <Faq
             q="A band is missing from search. What do I do?"
@@ -54,10 +54,6 @@ function AboutPage() {
           <Faq
             q="How do festivals work?"
             a="Put the festival name on each day. Days stay grouped. Open a day with the arrow to see the lineup. Shared details (venue, city) can apply to every day of that festival."
-          />
-          <Faq
-            q="Can I use it like an app on my phone?"
-            a="Yes. In the browser menu choose Add to Home Screen. No App Store."
           />
           <Faq
             q="What does Share send?"
