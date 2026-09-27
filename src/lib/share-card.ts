@@ -3,14 +3,25 @@ import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import type { computeStats } from "@/lib/stats";
 
 let ticketPhoto: HTMLImageElement | null = null;
+let ticketPhotoReady: Promise<HTMLImageElement | null> | null = null;
 
-if (typeof Image !== "undefined") {
-  const img = new Image();
-  img.onload = () => {
-    ticketPhoto = img;
-  };
-  img.src = SHARE_TICKET_BG;
+function loadTicketPhoto(): Promise<HTMLImageElement | null> {
+  if (ticketPhoto && ticketPhoto.naturalWidth) return Promise.resolve(ticketPhoto);
+  if (ticketPhotoReady) return ticketPhotoReady;
+  if (typeof Image === "undefined") return Promise.resolve(null);
+  ticketPhotoReady = new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      ticketPhoto = img;
+      resolve(img);
+    };
+    img.onerror = () => resolve(null);
+    img.src = SHARE_TICKET_BG;
+  });
+  return ticketPhotoReady;
 }
+
+if (typeof Image !== "undefined") void loadTicketPhoto();
 
 function torn(ctx: CanvasRenderingContext2D, y: number, left: number, right: number) {
   ctx.beginPath();
@@ -40,6 +51,16 @@ function barcode(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
   }
 }
 
+function paintPhoto(ctx: CanvasRenderingContext2D, photo: HTMLImageElement | null, x: number, y: number, w: number, photoH: number) {
+  ctx.fillStyle = "#1a1008";
+  ctx.fillRect(x, y, w, photoH);
+  if (!photo || !photo.naturalWidth) return;
+  const iw = photo.naturalWidth;
+  const ih = photo.naturalHeight;
+  const srcH = Math.max(1, Math.floor(ih * 0.55));
+  ctx.drawImage(photo, 0, 0, iw, srcH, x, y, w, photoH);
+}
+
 export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: string): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
@@ -54,7 +75,7 @@ export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: str
   const y = 28;
   const w = 1024;
   const h = 1294;
-  const split = 500;
+  const split = 548;
 
   ctx.save();
   ctx.beginPath();
@@ -62,16 +83,7 @@ export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: str
   else ctx.rect(x, y, w, h);
   ctx.clip();
 
-  if (ticketPhoto) {
-    const photo = ticketPhoto;
-    const scale = Math.max(w / photo.width, (split - y) / photo.height);
-    const dw = photo.width * scale;
-    const dh = photo.height * scale;
-    ctx.drawImage(photo, x + (w - dw) / 2, y + (split - y - dh) / 2, dw, dh);
-  } else {
-    ctx.fillStyle = "#2a1a0c";
-    ctx.fillRect(x, y, w, split - y);
-  }
+  paintPhoto(ctx, ticketPhoto, x, y, w, split - y);
 
   ctx.fillStyle = "#efe4d0";
   ctx.fillRect(x, split, w, y + h - split);
@@ -132,6 +144,11 @@ export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: str
 
   ctx.restore();
   return canvas;
+}
+
+export async function drawShareCardReady(stats: ReturnType<typeof computeStats>, year?: string) {
+  await loadTicketPhoto();
+  return drawShareCard(stats, year);
 }
 
 export function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
