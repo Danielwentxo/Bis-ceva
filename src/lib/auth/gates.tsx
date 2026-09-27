@@ -41,7 +41,6 @@ export function SignInGate({
 }
 
 export function SignInButtons() {
-  const { locale } = useI18n();
   return (
     <div className="flex w-full max-w-sm flex-col gap-2">
       {GROK_PROVIDERS.map((p) => (
