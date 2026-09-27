@@ -66,29 +66,6 @@ type DeezerArtist = {
 
 type DeezerResponse = { data?: DeezerArtist[] };
 
-type WikiSummary = {
-  title?: string;
-  description?: string;
-  type?: string;
-  extract?: string;
-  originalimage?: { source?: string };
-  thumbnail?: { source?: string };
-};
-
-const MUSIC_HINT =
-  /\b(band|singer|musician|rapper|dj|duo|trio|quartet|ensemble|orchestra|composer|songwriter|vocalist|guitarist|drummer|musical group|music group|recording artist|pop group|rock group)\b/i;
-const NOT_MUSIC =
-  /\b(theology|theological|christian belief|holy spirit|religion|doctrine|film|movie|novel|book|television|tv series|video game|species|plant|city|village)\b/i;
-
-function wikiIsBand(wiki: WikiSummary, query: string) {
-  if (!wiki.title || wiki.type === "disambiguation") return false;
-  const title = norm(wiki.title).replace(/ band$| musician$| singer$| group$/, "");
-  if (title !== norm(query)) return false;
-  const blob = `${wiki.description ?? ""} ${wiki.extract ?? ""}`;
-  if (NOT_MUSIC.test(blob) && !MUSIC_HINT.test(blob)) return false;
-  return MUSIC_HINT.test(blob);
-}
-
 function fromTadb(a: TadbArtist): ArtistMedia {
   const origin = splitOrigin(a.strCountry);
   return {
@@ -128,27 +105,12 @@ async function deezerSearch(query: string, limit = 8) {
   return data?.data ?? [];
 }
 
-async function wikiSummary(title: string) {
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-  return fetchJson<WikiSummary>(url, 6000);
-}
-
-async function wikiBand(name: string) {
-  const pages = [`${name} (band)`, `${name} (musician)`, `${name} (singer)`, name];
-  for (const title of pages) {
-    const wiki = await wikiSummary(title);
-    if (wiki && wikiIsBand(wiki, name)) return wiki;
-  }
-  return null;
-}
-
 type MbArtist = {
   name?: string;
   country?: string;
   area?: { name?: string };
   tags?: { name?: string; count?: number }[];
   genres?: { name?: string; count?: number }[];
-  disambiguation?: string;
 };
 type MbSearchResponse = { artists?: MbArtist[] };
 
@@ -269,22 +231,10 @@ async function enrichOne(name: string, countryHint?: string): Promise<ArtistMedi
   let media: ArtistMedia = picked ? fromTadb(picked) : blank(name);
   media.name = name;
 
-  const deezer = await deezerSearch(name, 5);
-  const deezerHit = deezer.find((row) => namesMatch(row.name ?? "", name));
-  if (deezerHit) {
-    media = mergeMedia(media, { thumbUrl: deezerPicture(deezerHit) });
-  }
-
-  if (!media.bio) {
-    const wiki = await wikiBand(name);
-    if (wiki) {
-      media = mergeMedia(media, {
-        bio: clean(wiki.extract),
-        thumbUrl: media.thumbUrl ?? clean(wiki.originalimage?.source) ?? clean(wiki.thumbnail?.source),
-      });
-    } else {
-      media.bio = "";
-    }
+  if (!media.logoUrl && !media.thumbUrl) {
+    const deezer = await deezerSearch(name, 5);
+    const deezerHit = deezer.find((row) => namesMatch(row.name ?? "", name));
+    if (deezerHit) media = mergeMedia(media, { thumbUrl: deezerPicture(deezerHit) });
   }
 
   if (!media.genre) {
