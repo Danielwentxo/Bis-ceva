@@ -1,13 +1,14 @@
 import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import type { computeStats } from "@/lib/stats";
 
-function loadTicketPhoto(): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = `/share-ticket.svg?v=2`;
-  });
+let ticketPhoto: HTMLImageElement | null = null;
+
+if (typeof Image !== "undefined") {
+  const img = new Image();
+  img.onload = () => {
+    ticketPhoto = img;
+  };
+  img.src = "/share-ticket.svg?v=2";
 }
 
 function torn(ctx: CanvasRenderingContext2D, y: number, left: number, right: number) {
@@ -38,11 +39,7 @@ function barcode(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
   }
 }
 
-export async function drawShareCard(
-  stats: ReturnType<typeof computeStats>,
-  year?: string,
-): Promise<HTMLCanvasElement> {
-  const photo = await loadTicketPhoto();
+export function drawShareCard(stats: ReturnType<typeof computeStats>, year?: string): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1350;
@@ -64,7 +61,7 @@ export async function drawShareCard(
   else ctx.rect(x, y, w, h);
   ctx.clip();
 
-  if (photo) ctx.drawImage(photo, x, y, w, split - y);
+  if (ticketPhoto) ctx.drawImage(ticketPhoto, x, y, w, split - y);
   else {
     ctx.fillStyle = "#3a220c";
     ctx.fillRect(x, y, w, split - y);
