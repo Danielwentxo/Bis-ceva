@@ -1,6 +1,6 @@
 {
-  "name": "Gig History",
-  "short_name": "Gig History",
+  "name": "My Gig History",
+  "short_name": "MyGigHistory",
   "description": "Private concert archive",
   "start_url": "/",
   "display": "standalone",
