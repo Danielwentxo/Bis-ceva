@@ -10,10 +10,11 @@ import { YearBars } from "@/components/year-bars";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "@/lib/auth/client";
+import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import { formatConcertDate, showsLabel } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
-import { canvasToBlob, drawShareCard } from "@/lib/share-card";
+import { canvasToBlob, drawShareCard, drawStatsPosterReady } from "@/lib/share-card";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
@@ -58,35 +59,13 @@ function AccountActions({ locale, showClear }: { locale: string; showClear: bool
   );
 }
 
-function buildShareText(
-  stats: ReturnType<typeof computeStats>,
-  labels: { title: string; countries: string; venues: string; artists: string; genres: string },
-) {
+function buildShareText(stats: ReturnType<typeof computeStats>) {
+  const top = stats.artistCounts.slice(0, 3).map((row) => row.data.name).join(", ");
   const lines = [
-    labels.title,
-    `${stats.totalShows} concerts \u00b7 ${stats.uniqueArtists} artists \u00b7 ${stats.uniqueVenues} venues \u00b7 ${stats.uniqueCountries} countries`,
-  ];
-  const artists = stats.artistCounts.slice(0, 3);
-  if (artists.length) {
-    lines.push(`${labels.artists}: ${artists.map((row) => `${row.data.name} (${row.count})`).join(", ")}`);
-  }
-  const countries = stats.countryCounts.slice(0, 8);
-  if (countries.length) {
-    lines.push(`${labels.countries}: ${countries.map((row) => `${row.data.country} (${row.count})`).join(", ")}`);
-  }
-  const venues = stats.venueCounts.slice(0, 5);
-  if (venues.length) {
-    lines.push(
-      `${labels.venues}: ${venues.map((row) => `${row.data.venue}, ${row.data.city}, ${row.data.country} (${row.count})`).join("; ")}`,
-    );
-  }
-  const genres = stats.genreCounts.slice(0, 5);
-  if (genres.length) {
-    lines.push(`${labels.genres}: ${genres.map((row) => `${row.data.genre} (${row.count})`).join(", ")}`);
-  }
-  if (stats.yearCounts.length) {
-    lines.push(`Years: ${stats.yearCounts.map((row) => `${row.year} ${row.count}`).join(", ")}`);
-  }
+    `${stats.totalShows} concerts. ${stats.uniqueArtists} artists. ${stats.uniqueCountries} countries.`,
+    top ? `Most seen: ${top}.` : "",
+    `Logged on ${APP_NAME} — ${APP_DOMAIN}`,
+  ].filter(Boolean);
   return lines.join("\n");
 }
 
@@ -103,47 +82,24 @@ function StatsPage() {
   const topOrigins = stats.artistOriginCounts.slice(0, 8);
   const topGenres = stats.genreCounts.slice(0, 8);
 
-  async function shareStats() {
-    const text = buildShareText(stats, {
-      title: t("statsTitle"),
-      countries: extraLabel(locale, "topCountries"),
-      venues: extraLabel(locale, "topVenues"),
-      artists: t("mostSeen"),
-      genres: extraLabel(locale, "topGenres"),
-    });
+  async function shareImage(kind: "ticket" | "poster") {
     try {
-      if (navigator.share) {
-        await navigator.share({ title: t("statsTitle"), text });
-        return;
-      }
-    } catch {
-      /* cancelled */
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(extraLabel(locale, "statsCopied"));
-    } catch {
-      toast.error(extraLabel(locale, "statsCopied"));
-    }
-  }
-
-  async function shareCard() {
-    try {
-      const canvas = drawShareCard(stats);
+      const canvas = kind === "poster" ? await drawStatsPosterReady(stats) : drawShareCard(stats);
       const blob = await canvasToBlob(canvas);
-      const file = new File([blob], "my-gig-history.png", { type: "image/png" });
+      const file = new File([blob], kind === "poster" ? "my-gig-history-stats.png" : "my-gig-history.png", { type: "image/png" });
+      const text = kind === "poster" ? buildShareText(stats) : undefined;
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: t("statsTitle") });
+        await navigator.share({ files: [file], title: t("statsTitle"), text });
         return;
       }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "my-gig-history.png";
+      a.download = file.name;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : extraLabel(locale, "shareCard"));
+      toast.error(err instanceof Error ? err.message : extraLabel(locale, kind === "poster" ? "shareStats" : "shareCard"));
     }
   }
 
@@ -172,10 +128,10 @@ function StatsPage() {
           <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("statsTitle")}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => void shareCard()}>
+          <Button type="button" variant="outline" onClick={() => void shareImage("ticket")}>
             {extraLabel(locale, "shareCard")}
           </Button>
-          <Button type="button" variant="outline" onClick={() => void shareStats()}>
+          <Button type="button" variant="outline" onClick={() => void shareImage("poster")}>
             <Share2 className="size-4" />
             {extraLabel(locale, "shareStats")}
           </Button>
