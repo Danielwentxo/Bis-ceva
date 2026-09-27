@@ -3,25 +3,78 @@ import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import type { computeStats } from "@/lib/stats";
 
 let ticketPhoto: HTMLImageElement | null = null;
-let ticketPhotoReady: Promise<HTMLImageElement | null> | null = null;
 
-function loadTicketPhoto(): Promise<HTMLImageElement | null> {
-  if (ticketPhoto && ticketPhoto.naturalWidth) return Promise.resolve(ticketPhoto);
-  if (ticketPhotoReady) return ticketPhotoReady;
-  if (typeof Image === "undefined") return Promise.resolve(null);
-  ticketPhotoReady = new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      ticketPhoto = img;
-      resolve(img);
-    };
-    img.onerror = () => resolve(null);
-    img.src = SHARE_TICKET_BG;
-  });
-  return ticketPhotoReady;
+async function loadTicketPhoto(): Promise<HTMLImageElement | null> {
+  if (ticketPhoto && ticketPhoto.naturalWidth > 10) return ticketPhoto;
+  if (typeof Image === "undefined") return null;
+  const img = new Image();
+  img.src = SHARE_TICKET_BG;
+  try {
+    if (typeof img.decode === "function") await img.decode();
+    else {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("photo"));
+        if (img.complete && img.naturalWidth) resolve();
+      });
+    }
+  } catch {
+    return null;
+  }
+  if (!img.naturalWidth) return null;
+  ticketPhoto = img;
+  return img;
 }
 
-if (typeof Image !== "undefined") void loadTicketPhoto();
+function paintStage(ctx: CanvasRenderingContext2D) {
+  const sky = ctx.createLinearGradient(0, 0, 0, 620);
+  sky.addColorStop(0, "#1a1030");
+  sky.addColorStop(0.45, "#3a1840");
+  sky.addColorStop(1, "#100c09");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, 1080, 620);
+
+  const beams: [number, number, string][] = [
+    [180, 40, "rgba(255,140,40,0.55)"],
+    [360, 20, "rgba(255,200,80,0.45)"],
+    [540, 10, "rgba(180,80,255,0.35)"],
+    [720, 25, "rgba(255,160,50,0.5)"],
+    [900, 45, "rgba(120,80,255,0.4)"],
+  ];
+  beams.forEach(([x, tilt, color]) => {
+    ctx.save();
+    ctx.translate(x, 30);
+    ctx.rotate((tilt * Math.PI) / 180);
+    const beam = ctx.createLinearGradient(0, 0, 0, 520);
+    beam.addColorStop(0, color);
+    beam.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(-18, 0);
+    ctx.lineTo(18, 0);
+    ctx.lineTo(160, 520);
+    ctx.lineTo(-160, 520);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = "#f4e0a8";
+    ctx.beginPath();
+    ctx.arc(x, 28, 8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.fillStyle = "#050304";
+  ctx.beginPath();
+  ctx.moveTo(0, 620);
+  for (let i = 0; i <= 24; i += 1) {
+    const x = (1080 / 24) * i;
+    const h = 90 + ((i * 17) % 70);
+    ctx.lineTo(x, 620 - h);
+  }
+  ctx.lineTo(1080, 620);
+  ctx.closePath();
+  ctx.fill();
+}
 
 function coverPhoto(
   ctx: CanvasRenderingContext2D,
@@ -34,9 +87,7 @@ function coverPhoto(
   const iw = photo.naturalWidth;
   const ih = photo.naturalHeight;
   const scale = Math.max(w / iw, h / ih);
-  const dw = iw * scale;
-  const dh = ih * scale;
-  ctx.drawImage(photo, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  ctx.drawImage(photo, x + (w - iw * scale) / 2, y + (h - ih * scale) / 2, iw * scale, ih * scale);
 }
 
 export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCanvasElement {
@@ -48,10 +99,11 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
 
   ctx.fillStyle = "#100c09";
   ctx.fillRect(0, 0, 1080, 1350);
-
-  if (ticketPhoto && ticketPhoto.naturalWidth) {
+  paintStage(ctx);
+  if (ticketPhoto && ticketPhoto.naturalWidth > 10) {
     coverPhoto(ctx, ticketPhoto, 0, 0, 1080, 620);
   }
+
   const fade = ctx.createLinearGradient(0, 360, 0, 680);
   fade.addColorStop(0, "rgba(16,12,9,0)");
   fade.addColorStop(1, "#100c09");
@@ -64,7 +116,6 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
 
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-
   ctx.fillStyle = "#f3e6d0";
   ctx.font = "bold 20px Arial, Helvetica, sans-serif";
   ctx.fillText(APP_NAME.toUpperCase(), 540, 80);
@@ -112,7 +163,6 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   ctx.fillStyle = "#c4a574";
   ctx.font = "bold 16px Arial, Helvetica, sans-serif";
   ctx.fillText(APP_DOMAIN.toUpperCase(), 540, 1278);
-
   return canvas;
 }
 
