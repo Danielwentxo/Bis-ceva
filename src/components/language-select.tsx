@@ -7,6 +7,11 @@ const FLAG: Record<Locale, string> = {
   fr: "FR",
   de: "DE",
   es: "ES",
+  pt: "PT",
+  it: "IT",
+  pl: "PL",
+  ja: "JP",
+  ar: "SA",
 };
 
 const SHORT: Record<Locale, string> = {
@@ -14,6 +19,11 @@ const SHORT: Record<Locale, string> = {
   fr: "FR",
   de: "DE",
   es: "ES",
+  pt: "PT",
+  it: "IT",
+  pl: "PL",
+  ja: "JA",
+  ar: "AR",
 };
 
 export function LanguageSelect({ className }: { className?: string }) {
@@ -33,7 +43,7 @@ export function LanguageSelect({ className }: { className?: string }) {
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
-        className="h-9 w-[4.75rem] rounded-lg bg-secondary pl-8 pr-1 text-[11px] font-medium text-foreground shadow-[var(--shadow-border)] outline-none"
+        className="h-9 w-[5.1rem] rounded-lg bg-secondary pl-8 pr-1 text-[11px] font-medium text-foreground shadow-[var(--shadow-border)] outline-none"
       >
         {LOCALES.map((item) => (
           <option key={item.code} value={item.code}>
