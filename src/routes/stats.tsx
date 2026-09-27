@@ -14,7 +14,7 @@ import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import { formatConcertDate, showsLabel } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
-import { canvasToBlob, drawShareCardReady, drawStatsPosterReady } from "@/lib/share-card";
+import { canvasToBlob, drawStatsPosterReady } from "@/lib/share-card";
 import { computeStats } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
@@ -61,12 +61,13 @@ function AccountActions({ locale, showClear }: { locale: string; showClear: bool
 
 function buildShareText(stats: ReturnType<typeof computeStats>) {
   const top = stats.artistCounts.slice(0, 3).map((row) => row.data.name).join(", ");
-  const lines = [
+  return [
     `${stats.totalShows} concerts. ${stats.uniqueArtists} artists. ${stats.uniqueCountries} countries.`,
     top ? `Most seen: ${top}.` : "",
-    `Logged on ${APP_NAME} — ${APP_DOMAIN}`,
-  ].filter(Boolean);
-  return lines.join("\n");
+    `${APP_NAME} — ${APP_DOMAIN}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function StatsPage() {
@@ -82,12 +83,12 @@ function StatsPage() {
   const topOrigins = stats.artistOriginCounts.slice(0, 8);
   const topGenres = stats.genreCounts.slice(0, 8);
 
-  async function shareImage(kind: "ticket" | "poster") {
+  async function shareStats() {
     try {
-      const canvas = kind === "poster" ? await drawStatsPosterReady(stats) : await drawShareCardReady(stats);
+      const canvas = await drawStatsPosterReady(stats);
       const blob = await canvasToBlob(canvas);
-      const file = new File([blob], kind === "poster" ? "my-gig-history-stats.png" : "my-gig-history.png", { type: "image/png" });
-      const text = kind === "poster" ? buildShareText(stats) : undefined;
+      const file = new File([blob], "my-gig-history-stats.png", { type: "image/png" });
+      const text = buildShareText(stats);
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: t("statsTitle"), text });
         return;
@@ -99,7 +100,7 @@ function StatsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : extraLabel(locale, kind === "poster" ? "shareStats" : "shareCard"));
+      toast.error(err instanceof Error ? err.message : extraLabel(locale, "shareStats"));
     }
   }
 
@@ -127,15 +128,10 @@ function StatsPage() {
           <p className="text-sm font-medium text-muted-foreground">{t("statsLead")}</p>
           <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">{t("statsTitle")}</h1>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => void shareImage("ticket")}>
-            {extraLabel(locale, "shareCard")}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => void shareImage("poster")}>
-            <Share2 className="size-4" />
-            {extraLabel(locale, "shareStats")}
-          </Button>
-        </div>
+        <Button type="button" variant="outline" onClick={() => void shareStats()}>
+          <Share2 className="size-4" />
+          {extraLabel(locale, "shareStats")}
+        </Button>
       </header>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Tile label={t("tileConcerts")} value={String(stats.totalShows)} />
