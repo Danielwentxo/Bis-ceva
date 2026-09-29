@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,17 +25,17 @@ function ResetPasswordPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!token) {
-      toast.error("Link de resetare invalid sau expirat.");
+      toast.error("This reset link is invalid or expired.");
       return;
     }
     setSubmitting(true);
     try {
       const { error } = await authClient.resetPassword({ newPassword: password, token });
-      if (error) throw new Error(error.message ?? "Resetarea a eșuat");
-      toast.success("Parola a fost schimbată. Te poți autentifica acum.");
+      if (error) throw new Error(error.message ?? "Reset failed");
+      toast.success("Password updated. You can sign in now.");
       await navigate({ to: "/login" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "A apărut o eroare");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -44,23 +45,23 @@ function ResetPasswordPage() {
     <div className="flex min-h-dvh items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="font-display text-3xl font-medium tracking-tight text-foreground">Bis</p>
-          <p className="mt-1 text-sm text-muted-foreground">Alege o parolă nouă</p>
+          <div className="flex justify-center">
+            <AppLogo size="lg" />
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">Choose a new password</p>
         </div>
 
         {!token ? (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-sm text-foreground">
-              Acest link de resetare lipsește sau nu mai este valid.
-            </p>
+            <p className="text-sm text-foreground">This reset link is missing or no longer valid.</p>
             <Link to="/forgot-password" className="text-sm text-muted-foreground underline">
-              Cere un link nou
+              Request a new link
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Parolă nouă</Label>
+              <Label htmlFor="password">New password</Label>
               <Input
                 id="password"
                 type="password"
@@ -72,7 +73,7 @@ function ResetPasswordPage() {
               />
             </div>
             <Button type="submit" disabled={submitting}>
-              Salvează parola nouă
+              Save new password
             </Button>
           </form>
         )}
