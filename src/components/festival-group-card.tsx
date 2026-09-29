@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
+import { ChevronDown, MapPin } from "lucide-react";
 import { useState } from "react";
 import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
@@ -75,14 +75,18 @@ export function FestivalGroupCard({
           return (
             <li key={concert.id} className="rounded-xl">
               <div className="flex items-center gap-1">
-                <span className="min-w-0 flex-1 truncate px-1 py-1.5 text-sm">
+                <Link
+                  to="/concerts/$id"
+                  params={{ id: concert.id }}
+                  className="min-w-0 flex-1 truncate rounded-lg px-1 py-1.5 text-sm hover:bg-secondary/50"
+                >
                   <span className="shrink-0 tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
                   {" "}
                   <span className="font-medium">
                     {lineup[0]?.artist.name ?? "Day"}
                     {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
                   </span>
-                </span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => setOpenId(open ? null : concert.id)}
@@ -91,14 +95,6 @@ export function FestivalGroupCard({
                 >
                   <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
                 </button>
-                <Link
-                  to="/concerts/$id"
-                  params={{ id: concert.id }}
-                  aria-label={formatConcertDate(concert.date)}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <ChevronRight className="size-4" />
-                </Link>
               </div>
               {open ? (
                 <ul className="mb-2 space-y-2 pt-1">
