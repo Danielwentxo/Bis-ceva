@@ -13,7 +13,6 @@ import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
 import { GROK_PROVIDERS } from "./providers";
 import { pgliteDialect } from "./pglite-dialect";
 import {
-  emailProviderConfigured,
   sendResetPasswordEmail,
   sendVerificationEmail,
 } from "./reset-email.server";
@@ -106,8 +105,6 @@ const grokOAuthPlugin = authConfigured
     })
   : null;
 
-const requireEmailVerification = emailAndPasswordEnabled && emailProviderConfigured();
-
 export const auth = betterAuth({
   baseURL,
   secret: env("BETTER_AUTH_SECRET") ?? previewAuthSecret(),
@@ -131,7 +128,7 @@ export const auth = betterAuth({
     ? {
         emailAndPassword: {
           enabled: true,
-          requireEmailVerification,
+          requireEmailVerification: false,
           sendResetPassword: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
             await sendResetPasswordEmail({
               to: user.email,
