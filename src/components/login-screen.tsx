@@ -12,6 +12,24 @@ import { pageLabel } from "@/lib/i18n-pages";
 
 type Mode = "sign-in" | "sign-up" | "forgot";
 
+const WRONG_LOGIN: Record<string, string> = {
+  en: "Email or password is incorrect.",
+  ro: "Adresa de email sau parola sunt greșite.",
+  sv: "E-postadressen eller lösenordet är felaktigt.",
+  de: "E-Mail oder Passwort ist falsch.",
+  fr: "L’e-mail ou le mot de passe est incorrect.",
+  es: "El correo o la contraseña no son correctos.",
+  pt: "O e-mail ou a senha estão incorretos.",
+  it: "Email o password non corretti.",
+  pl: "E-mail lub hasło jest niepoprawne.",
+  ja: "メールアドレスまたはパスワードが違います。",
+  ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+};
+
+function isWrongLogin(message: string) {
+  return /invalid|incorrect|wrong|credentials|password|email/i.test(message);
+}
+
 export function LoginScreen() {
   const { t, locale } = useI18n();
   const [mode, setMode] = useState<Mode>("sign-in");
@@ -20,9 +38,17 @@ export function LoginScreen() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  function changeMode(next: Mode) {
+    setMode(next);
+    setResetSent(false);
+    setFormError("");
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setFormError("");
     setSubmitting(true);
     try {
       if (mode === "forgot") {
@@ -40,18 +66,24 @@ export function LoginScreen() {
       }
       window.location.assign("/");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const raw = err instanceof Error ? err.message : "Something went wrong";
+      if (mode === "sign-in" && isWrongLogin(raw)) {
+        setFormError(WRONG_LOGIN[locale] ?? WRONG_LOGIN.en);
+      } else {
+        setFormError(raw);
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   async function signInWithGoogle() {
+    setFormError("");
     setSubmitting(true);
     try {
       await signIn("grok-google", { callbackURL: "/", errorCallbackURL: "/" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+      setFormError(err instanceof Error ? err.message : "Google sign-in failed");
       setSubmitting(false);
     }
   }
@@ -70,7 +102,7 @@ export function LoginScreen() {
         {mode === "forgot" && resetSent ? (
           <div className="flex flex-col gap-4 text-center">
             <p className="text-sm text-foreground">{t("resetSent", { email })}</p>
-            <button type="button" onClick={() => { setMode("sign-in"); setResetSent(false); }} className="text-sm text-muted-foreground underline">
+            <button type="button" onClick={() => changeMode("sign-in")} className="text-sm text-muted-foreground underline">
               {t("backToSignIn")}
             </button>
           </div>
@@ -84,16 +116,42 @@ export function LoginScreen() {
             ) : null}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setFormError("");
+                }}
+                autoComplete="email"
+                required
+              />
             </div>
             {mode !== "forgot" ? (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="password">{t("password")}</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} minLength={8} required />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setFormError("");
+                  }}
+                  autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                  minLength={8}
+                  required
+                />
               </div>
             ) : null}
+            {formError ? (
+              <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+                {formError}
+              </p>
+            ) : null}
             {mode === "sign-in" ? (
-              <button type="button" onClick={() => { setMode("forgot"); setResetSent(false); }} className="self-end text-sm text-muted-foreground underline">
+              <button type="button" onClick={() => changeMode("forgot")} className="self-end text-sm text-muted-foreground underline">
                 {t("forgotPassword")}
               </button>
             ) : null}
@@ -116,7 +174,7 @@ export function LoginScreen() {
                 </Button>
               </>
             ) : null}
-            <button type="button" onClick={() => { setMode(mode === "sign-in" ? "sign-up" : "sign-in"); setResetSent(false); }} className="mt-4 w-full text-center text-sm text-muted-foreground underline">
+            <button type="button" onClick={() => changeMode(mode === "sign-in" ? "sign-up" : "sign-in")} className="mt-4 w-full text-center text-sm text-muted-foreground underline">
               {mode === "sign-in" ? t("noAccount") : mode === "sign-up" ? t("hasAccount") : t("backToSignIn")}
             </button>
             <div className="mt-6 flex justify-center">
