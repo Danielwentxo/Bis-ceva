@@ -48,13 +48,19 @@ const MISMATCH: Record<string, string> = {
   es: "Las contraseñas no coinciden.",
   pt: "As senhas não coincidem.",
   it: "Le password non coincidono.",
-  pl: "Hasła nie są takie same.",
+  pl: "Hasła nie są astfel same.",
   ja: "パスワードが一致しません。",
   ar: "كلمتا المرور غير متطابقتين.",
 };
 
 function isWrongLogin(message: string) {
   return /invalid email or password|invalid_email_or_password|incorrect email or password/i.test(message);
+}
+
+function useGrokBroker() {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host.endsWith(".vercel.app") || host.endsWith(".grok-sandbox.com") || host === "localhost";
 }
 
 export function LoginScreen() {
@@ -114,7 +120,21 @@ export function LoginScreen() {
     setFormError("");
     setSubmitting(true);
     try {
-      await signIn("grok-google", { callbackURL: "/", errorCallbackURL: "/" });
+      if (useGrokBroker()) {
+        await signIn("grok-google", { callbackURL: "/", errorCallbackURL: "/" });
+        return;
+      }
+      const { data, error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+        errorCallbackURL: "/",
+      });
+      if (error) throw new Error(error.message ?? "Google sign-in failed");
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error("Google sign-in failed");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Google sign-in failed");
       setSubmitting(false);
