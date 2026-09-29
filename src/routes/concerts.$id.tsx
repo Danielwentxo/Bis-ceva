@@ -53,7 +53,9 @@ function ConcertDetail() {
       </div>
       <div className="flex flex-col items-center text-center">
         {concert.festivalPosterUrl ? (
-          <img src={concert.festivalPosterUrl} alt="" className="mb-5 max-h-80 w-full max-w-sm rounded-2xl object-cover shadow-[var(--shadow-border)]" />
+          <div className="mb-5 flex h-80 w-full max-w-sm items-center justify-center overflow-hidden rounded-2xl bg-secondary shadow-[var(--shadow-border)]">
+            <img src={concert.festivalPosterUrl} alt="" className="max-h-full max-w-full object-contain" />
+          </div>
         ) : (
           <ArtistMark artist={headliner} size="hero" />
         )}
