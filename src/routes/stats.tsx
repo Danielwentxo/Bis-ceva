@@ -215,7 +215,7 @@ function StatsPage() {
           <ul className="space-y-2">
             {topGenres.map((row, index) => (
               <li key={row.key}>
-                <Link to="/" search={{ genre: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <Link to="/artists" search={{ genre: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
                   <span className="flex items-center gap-2 text-sm font-medium">
                     <span className="w-5 text-subtle">{index + 1}</span>
                     {row.data.genre}
@@ -234,7 +234,7 @@ function StatsPage() {
           <ul className="space-y-2">
             {topOrigins.map((row) => (
               <li key={row.key}>
-                <Link to="/" search={{ origin: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <Link to="/artists" search={{ origin: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
                   <span className="text-sm font-medium">{row.data.country}</span>
                   <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
                 </Link>
