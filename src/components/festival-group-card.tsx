@@ -45,7 +45,11 @@ export function FestivalGroupCard({
 
   return (
     <article className="rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
-      <div className="flex gap-3">
+      <Link
+        to="/add"
+        search={{ id: newest.id }}
+        className="flex gap-3 rounded-xl outline-none transition-[opacity] hover:opacity-90"
+      >
         {poster ? (
           <img src={poster} alt="" className="size-12 shrink-0 rounded-lg object-cover" />
         ) : (
@@ -62,7 +66,7 @@ export function FestivalGroupCard({
             </span>
           </p>
         </div>
-      </div>
+      </Link>
       <ul className="mt-3 space-y-1 border-t border-border/60 pt-3">
         {days.map((concert) => {
           const lineup = concertArtists(concert, artists);
