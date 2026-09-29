@@ -170,13 +170,15 @@ function StatsPage() {
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topCountries")}</h2>
           <ul className="space-y-2">
             {topCountries.map((row, index) => (
-              <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <span className="w-5 text-subtle">{index + 1}</span>
-                  <CountryFlag code={row.data.countryCode} />
-                  {row.data.country}
-                </span>
-                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+              <li key={row.key}>
+                <Link to="/" search={{ country: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <span className="w-5 text-subtle">{index + 1}</span>
+                    <CountryFlag code={row.data.countryCode} />
+                    {row.data.country}
+                  </span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -188,17 +190,19 @@ function StatsPage() {
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topVenues")}</h2>
           <ul className="space-y-2">
             {topVenues.map((row, index) => (
-              <li key={row.key} className="flex items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-                <span className="min-w-0">
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <span className="w-5 text-subtle">{index + 1}</span>
-                    {row.data.venue}
+              <li key={row.key}>
+                <Link to="/" search={{ venue: row.key }} className="flex items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      <span className="w-5 text-subtle">{index + 1}</span>
+                      {row.data.venue}
+                    </span>
+                    <span className="mt-1 block truncate pl-7 text-xs text-muted-foreground">
+                      {row.data.city}, {row.data.country}
+                    </span>
                   </span>
-                  <span className="mt-1 block truncate pl-7 text-xs text-muted-foreground">
-                    {row.data.city}, {row.data.country}
-                  </span>
-                </span>
-                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -210,12 +214,14 @@ function StatsPage() {
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topGenres")}</h2>
           <ul className="space-y-2">
             {topGenres.map((row, index) => (
-              <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <span className="w-5 text-subtle">{index + 1}</span>
-                  {row.data.genre}
-                </span>
-                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+              <li key={row.key}>
+                <Link to="/" search={{ genre: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <span className="w-5 text-subtle">{index + 1}</span>
+                    {row.data.genre}
+                  </span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -227,9 +233,11 @@ function StatsPage() {
           <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "bandsByCountry")}</h2>
           <ul className="space-y-2">
             {topOrigins.map((row) => (
-              <li key={row.key} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-                <span className="text-sm font-medium">{row.data.country}</span>
-                <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+              <li key={row.key}>
+                <Link to="/" search={{ origin: row.key }} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                  <span className="text-sm font-medium">{row.data.country}</span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+                </Link>
               </li>
             ))}
           </ul>
