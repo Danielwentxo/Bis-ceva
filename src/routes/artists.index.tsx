@@ -1,8 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
 import { EmptyArchive } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { artistsLabel, showsLabel } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -10,13 +12,14 @@ import { computeStats, originCountry } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 import type { Artist } from "@/lib/types";
 
-type ArtistSearch = { genre?: string; origin?: string };
+type ArtistSearch = { genre?: string; origin?: string; from?: string };
 
 export const Route = createFileRoute("/artists/")({
   validateSearch: (search: Record<string, unknown>): ArtistSearch => {
     const next: ArtistSearch = {};
     if (typeof search.genre === "string" && search.genre) next.genre = search.genre;
     if (typeof search.origin === "string" && search.origin) next.origin = search.origin;
+    if (typeof search.from === "string" && search.from) next.from = search.from;
     return next;
   },
   component: ArtistsPage,
@@ -76,11 +79,25 @@ function ArtistsPage() {
       ) : (
         <>
           {filterTitle ? (
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-              <p className="text-sm font-medium">{filterTitle}</p>
-              <Link to="/artists" className="text-xs text-muted-foreground underline">
-                {t("navArtists")}
-              </Link>
+            <div className="mb-5">
+              {search.from === "stats" ? (
+                <Button asChild variant="outline" className="mb-3">
+                  <Link to="/stats">
+                    <ArrowLeft className="size-4" />
+                    {t("statsTitle")}
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline" className="mb-3">
+                  <Link to="/artists">
+                    <ArrowLeft className="size-4" />
+                    {t("navArtists")}
+                  </Link>
+                </Button>
+              )}
+              <div className="rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <p className="text-sm font-medium">{filterTitle}</p>
+              </div>
             </div>
           ) : null}
           <input
