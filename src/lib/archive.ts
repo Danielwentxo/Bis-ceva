@@ -208,11 +208,13 @@ export const patchFestivalShared = createServerFn({ method: "POST" })
       country: z.string().min(1).max(120),
       countryCode: z.string().max(8).default(""),
       festivalName: z.string().max(200),
+      festivalPosterUrl: z.string().max(900_000).nullable().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     const sql = await getSql();
     const festival = Boolean(data.festivalName.trim());
+    const festivalPosterUrl = assertImageDataUrl(data.festivalPosterUrl ?? null, "Festival poster");
     for (const id of data.ids) {
       await sql`
         update concerts set
@@ -221,7 +223,8 @@ export const patchFestivalShared = createServerFn({ method: "POST" })
           country = ${data.country},
           country_code = ${data.countryCode},
           festival = ${festival},
-          festival_name = ${data.festivalName.trim()}
+          festival_name = ${data.festivalName.trim()},
+          festival_poster_url = ${festivalPosterUrl}
         where user_id = ${context.userId} and id = ${id}
       `;
     }
