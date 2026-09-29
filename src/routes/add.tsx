@@ -8,6 +8,7 @@ type AddSearch = {
   id?: string;
   artist?: string;
   festival?: string;
+  fromFestival?: string;
 };
 
 export const Route = createFileRoute("/add")({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/add")({
     if (typeof search.id === "string") next.id = search.id;
     if (typeof search.artist === "string") next.artist = search.artist;
     if (typeof search.festival === "string") next.festival = search.festival;
+    if (typeof search.fromFestival === "string") next.fromFestival = search.fromFestival;
     return next;
   },
   component: AddPage,
@@ -23,12 +25,18 @@ export const Route = createFileRoute("/add")({
 
 function AddPage() {
   const { t } = useI18n();
-  const { id, artist: artistId, festival } = Route.useSearch();
+  const { id, artist: artistId, festival, fromFestival } = Route.useSearch();
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
   const existing = id ? concerts.find((c) => c.id === id) : undefined;
+  const presetDay = !existing && fromFestival ? concerts.find((c) => c.id === fromFestival) : undefined;
   const preset = artistId ? artists[artistId] : undefined;
-  const mode = festival === "1" && existing ? "festival" : existing?.festivalName?.trim() ? "day" : "full";
+  const mode =
+    festival === "1" && existing
+      ? "festival"
+      : existing?.festivalName?.trim() || presetDay
+        ? "day"
+        : "full";
 
   return (
     <AppShell>
@@ -43,6 +51,7 @@ function AddPage() {
       <ConcertForm
         existing={existing}
         mode={mode}
+        presetDay={presetDay}
         presetArtist={
           preset
             ? {
