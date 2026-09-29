@@ -54,7 +54,7 @@ const MISMATCH: Record<string, string> = {
 };
 
 function isWrongLogin(message: string) {
-  return /invalid|incorrect|wrong|credentials|password|email/i.test(message);
+  return /invalid email or password|invalid_email_or_password|incorrect email or password/i.test(message);
 }
 
 export function LoginScreen() {
