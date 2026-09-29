@@ -37,7 +37,6 @@ function ArtistDetail() {
   const { slug } = Route.useParams();
   const artists = useArchive((s) => s.artists);
   const concerts = useArchive((s) => s.concerts);
-  const upsertArtist = useArchive((s) => s.upsertArtist);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   const artist: Artist | undefined =
@@ -90,14 +89,15 @@ function ArtistDetail() {
     if (!artist) return;
     setSaving(true);
     const originName = COUNTRIES.find((c) => c.code === origin)?.name ?? artist.country;
-    upsertArtist({
-      name: artist.name,
+    const next: Artist = {
+      ...artist,
       logoUrl,
       thumbUrl: logoUrl ?? artist.thumbUrl,
       genre: genre.trim() || null,
       country: originName,
       bio: bio.trim() || null,
-    });
+    };
+    useArchive.setState((s) => ({ artists: { ...s.artists, [artist.id]: next } }));
     try {
       await saveCatalogArtist({
         data: {
