@@ -60,7 +60,7 @@ function VenuesPage() {
                   <li key={row.key}>
                     <Link
                       to="/"
-                      search={{ q: row.data.venue }}
+                      search={{ venue: row.key, from: "venues" }}
                       className="flex items-center justify-between rounded-2xl bg-card px-4 py-4 shadow-[var(--shadow-border)] transition-[box-shadow] duration-150 hover:shadow-[var(--shadow-border-hover)]"
                     >
                       <div className="min-w-0">
