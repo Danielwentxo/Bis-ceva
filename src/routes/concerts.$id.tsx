@@ -52,7 +52,11 @@ function ConcertDetail() {
         </Button>
       </div>
       <div className="flex flex-col items-center text-center">
-        <ArtistMark artist={headliner} size="hero" />
+        {concert.festivalPosterUrl ? (
+          <img src={concert.festivalPosterUrl} alt="" className="mb-5 max-h-80 w-full max-w-sm rounded-2xl object-cover shadow-[var(--shadow-border)]" />
+        ) : (
+          <ArtistMark artist={headliner} size="hero" />
+        )}
         <p className="mt-5 text-sm text-muted-foreground">{formatConcertDate(concert.date)}</p>
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">
           {festivalName || headliner?.name || t("navConcerts")}
