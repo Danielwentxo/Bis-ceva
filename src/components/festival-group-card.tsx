@@ -1,12 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, MapPin } from "lucide-react";
-import { useState } from "react";
-import { ArtistMark } from "@/components/artist-mark";
+import { MapPin } from "lucide-react";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
 import { concertArtists } from "@/lib/stats";
 import type { Artist, Concert } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 export function festivalKey(concert: Concert) {
   const name = concert.festivalName?.trim().toLowerCase();
@@ -41,7 +38,6 @@ export function FestivalGroupCard({
     newest.date === oldest.date
       ? formatConcertDate(newest.date)
       : `${formatConcertDate(newest.date)} – ${formatConcertDate(oldest.date)}`;
-  const [openId, setOpenId] = useState<string | null>(null);
 
   return (
     <article className="rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
@@ -70,48 +66,21 @@ export function FestivalGroupCard({
       <ul className="mt-3 space-y-1 border-t border-border/60 pt-3">
         {days.map((concert) => {
           const lineup = concertArtists(concert, artists);
-          const open = openId === concert.id;
           const extra = lineup.length > 1 ? lineup.length - 1 : 0;
           return (
-            <li key={concert.id} className="rounded-xl">
-              <div className="flex items-center gap-1">
-                <Link
-                  to="/concerts/$id"
-                  params={{ id: concert.id }}
-                  className="min-w-0 flex-1 truncate rounded-lg px-1 py-1.5 text-sm hover:bg-secondary/50"
-                >
-                  <span className="shrink-0 tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
-                  {" "}
-                  <span className="font-medium">
-                    {lineup[0]?.artist.name ?? "Day"}
-                    {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
-                  </span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setOpenId(open ? null : concert.id)}
-                  aria-expanded={open}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
-                </button>
-              </div>
-              {open ? (
-                <ul className="mb-2 space-y-2 pt-1">
-                  {lineup.map((slot) => (
-                    <li key={slot.artistId}>
-                      <Link
-                        to="/artists/$slug"
-                        params={{ slug: slot.artist.id || slot.artistId }}
-                        className="flex items-center gap-3 rounded-xl bg-secondary/60 px-3 py-2.5"
-                      >
-                        <ArtistMark artist={slot.artist} size="sm" />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{slot.artist.name}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+            <li key={concert.id}>
+              <Link
+                to="/concerts/$id"
+                params={{ id: concert.id }}
+                className="block truncate rounded-lg px-1 py-1.5 text-sm hover:bg-secondary/50"
+              >
+                <span className="tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
+                {" "}
+                <span className="font-medium">
+                  {lineup[0]?.artist.name ?? "Day"}
+                  {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
+                </span>
+              </Link>
             </li>
           );
         })}
