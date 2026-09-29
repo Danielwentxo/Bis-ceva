@@ -37,7 +37,7 @@ export function FestivalGroupCard({
   const dateLabel =
     newest.date === oldest.date
       ? formatConcertDate(newest.date)
-      : `${formatConcertDate(newest.date)} – ${formatConcertDate(oldest.date)}`;
+      : `${formatConcertDate(oldest.date)} – ${formatConcertDate(newest.date)}`;
 
   return (
     <article className="rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
