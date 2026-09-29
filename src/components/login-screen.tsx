@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { AppLogo } from "@/components/app-logo";
 import { LanguageSelect } from "@/components/language-select";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,34 @@ const WRONG_LOGIN: Record<string, string> = {
   ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
 };
 
+const CONFIRM_LABEL: Record<string, string> = {
+  en: "Confirm password",
+  ro: "Confirmă parola",
+  sv: "Bekräfta lösenord",
+  de: "Passwort bestätigen",
+  fr: "Confirmer le mot de passe",
+  es: "Confirmar contraseña",
+  pt: "Confirmar senha",
+  it: "Conferma password",
+  pl: "Potwierdź hasło",
+  ja: "パスワードを確認",
+  ar: "تأكيد كلمة المرور",
+};
+
+const MISMATCH: Record<string, string> = {
+  en: "Passwords do not match.",
+  ro: "Parolele nu coincid.",
+  sv: "Lösenorden överensstämmer inte.",
+  de: "Die Passwörter stimmen nicht überein.",
+  fr: "Les mots de passe ne correspondent pas.",
+  es: "Las contraseñas no coinciden.",
+  pt: "As senhas não coincidem.",
+  it: "Le password non coincidono.",
+  pl: "Hasła nie są takie same.",
+  ja: "パスワードが一致しません。",
+  ar: "كلمتا المرور غير متطابقتين.",
+};
+
 function isWrongLogin(message: string) {
   return /invalid|incorrect|wrong|credentials|password|email/i.test(message);
 }
@@ -36,6 +63,7 @@ export function LoginScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [formError, setFormError] = useState("");
@@ -44,11 +72,16 @@ export function LoginScreen() {
     setMode(next);
     setResetSent(false);
     setFormError("");
+    setConfirmPassword("");
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError("");
+    if (mode === "sign-up" && password !== confirmPassword) {
+      setFormError(MISMATCH[locale] ?? MISMATCH.en);
+      return;
+    }
     setSubmitting(true);
     try {
       if (mode === "forgot") {
@@ -140,6 +173,23 @@ export function LoginScreen() {
                     setFormError("");
                   }}
                   autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                  minLength={8}
+                  required
+                />
+              </div>
+            ) : null}
+            {mode === "sign-up" ? (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirmPassword">{CONFIRM_LABEL[locale] ?? CONFIRM_LABEL.en}</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setFormError("");
+                  }}
+                  autoComplete="new-password"
                   minLength={8}
                   required
                 />
