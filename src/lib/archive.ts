@@ -114,7 +114,7 @@ function rowToArtist(row: ArtistRow): Artist {
 async function upsertArtistsForUser(userId: string, artists: z.infer<typeof artistMediaSchema>[]) {
   const sql = await getSql();
   for (const a of artists) {
-    const id = artistKey(a.name);
+    const id = artistKey(a.name, a.country);
     await sql`
       insert into artists (id, user_id, name, logo_url, thumb_url, genre, country, bio, fetched_at)
       values (
@@ -169,7 +169,7 @@ export const upsertConcert = createServerFn({ method: "POST" })
     }
     await upsertArtistsForUser(context.userId, draft.artists);
     const lineup: LineupEntry[] = draft.artists.map((a, index) => ({
-      artistId: artistKey(a.name),
+      artistId: artistKey(a.name, a.country),
       role: index === 0 ? "headliner" : "support",
     }));
     await sql`
@@ -187,7 +187,7 @@ export const upsertConcert = createServerFn({ method: "POST" })
         ticket_url = excluded.ticket_url
     `;
     const artists: Artist[] = draft.artists.map((a) => ({
-      id: artistKey(a.name), name: a.name, logoUrl: a.logoUrl ?? null, thumbUrl: a.thumbUrl ?? null,
+      id: artistKey(a.name, a.country), name: a.name, logoUrl: a.logoUrl ?? null, thumbUrl: a.thumbUrl ?? null,
       genre: a.genre ?? null, country: a.country ?? null, bio: a.bio ?? null,
     }));
     const concert: Concert = {
