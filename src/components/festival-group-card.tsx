@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, MapPin, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { useState } from "react";
+import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
 import { concertArtists } from "@/lib/stats";
@@ -61,14 +62,6 @@ export function FestivalGroupCard({
             </span>
           </p>
         </div>
-        <Link
-          to="/add"
-          search={{ id: newest.id }}
-          aria-label="Edit festival"
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
-        >
-          <Pencil className="size-4" />
-        </Link>
       </div>
       <ul className="mt-3 space-y-1 border-t border-border/60 pt-3">
         {days.map((concert) => {
@@ -95,14 +88,6 @@ export function FestivalGroupCard({
                   <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
                 </button>
                 <Link
-                  to="/add"
-                  search={{ id: concert.id }}
-                  aria-label={`Edit ${formatConcertDate(concert.date)}`}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <Pencil className="size-4" />
-                </Link>
-                <Link
                   to="/concerts/$id"
                   params={{ id: concert.id }}
                   aria-label={formatConcertDate(concert.date)}
@@ -112,18 +97,20 @@ export function FestivalGroupCard({
                 </Link>
               </div>
               {open ? (
-                <div className="mb-2 ml-1 space-y-1 border-l border-border/60 pl-3">
+                <ul className="mb-2 space-y-2 pt-1">
                   {lineup.map((slot) => (
-                    <Link
-                      key={slot.artistId}
-                      to="/artists/$slug"
-                      params={{ slug: slot.artist.id || slot.artistId }}
-                      className="block truncate text-sm text-muted-foreground hover:text-foreground"
-                    >
-                      {slot.artist.name}
-                    </Link>
+                    <li key={slot.artistId}>
+                      <Link
+                        to="/artists/$slug"
+                        params={{ slug: slot.artist.id || slot.artistId }}
+                        className="flex items-center gap-3 rounded-xl bg-secondary/60 px-3 py-2.5"
+                      >
+                        <ArtistMark artist={slot.artist} size="sm" />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{slot.artist.name}</span>
+                      </Link>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : null}
             </li>
           );
