@@ -7,6 +7,7 @@ import { useArchive } from "@/lib/store";
 type AddSearch = {
   id?: string;
   artist?: string;
+  festival?: string;
 };
 
 export const Route = createFileRoute("/add")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/add")({
     const next: AddSearch = {};
     if (typeof search.id === "string") next.id = search.id;
     if (typeof search.artist === "string") next.artist = search.artist;
+    if (typeof search.festival === "string") next.festival = search.festival;
     return next;
   },
   component: AddPage,
@@ -21,11 +23,12 @@ export const Route = createFileRoute("/add")({
 
 function AddPage() {
   const { t } = useI18n();
-  const { id, artist: artistId } = Route.useSearch();
+  const { id, artist: artistId, festival } = Route.useSearch();
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
   const existing = id ? concerts.find((c) => c.id === id) : undefined;
   const preset = artistId ? artists[artistId] : undefined;
+  const mode = festival === "1" && existing ? "festival" : existing?.festivalName?.trim() ? "day" : "full";
 
   return (
     <AppShell>
@@ -34,11 +37,12 @@ function AddPage() {
           {existing ? t("edit") : t("newEntry")}
         </p>
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight">
-          {existing ? t("editConcert") : t("addConcert")}
+          {mode === "festival" ? t("festivalBadge") : existing ? t("editConcert") : t("addConcert")}
         </h1>
       </header>
       <ConcertForm
         existing={existing}
+        mode={mode}
         presetArtist={
           preset
             ? {
