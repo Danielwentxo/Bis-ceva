@@ -6,13 +6,32 @@ import { EmptyArchive } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { artistsLabel, showsLabel } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
-import { computeStats } from "@/lib/stats";
+import { computeStats, originCountry } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
+import type { Artist } from "@/lib/types";
 
-export const Route = createFileRoute("/artists/")({ component: ArtistsPage });
+type ArtistSearch = { genre?: string; origin?: string };
+
+export const Route = createFileRoute("/artists/")({
+  validateSearch: (search: Record<string, unknown>): ArtistSearch => {
+    const next: ArtistSearch = {};
+    if (typeof search.genre === "string" && search.genre) next.genre = search.genre;
+    if (typeof search.origin === "string" && search.origin) next.origin = search.origin;
+    return next;
+  },
+  component: ArtistsPage,
+});
+
+function artistGenres(artist: Artist) {
+  return `${artist.genre ?? ""} ${artist.style ?? ""}`
+    .split(/[,;/|&]+/)
+    .map((part) => part.trim().toLowerCase())
+    .filter((part) => part.length > 1);
+}
 
 function ArtistsPage() {
   const { t } = useI18n();
+  const search = Route.useSearch();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
@@ -20,12 +39,21 @@ function ArtistsPage() {
   const [q, setQ] = useState("");
 
   const stats = useMemo(() => computeStats(concerts, artists), [concerts, artists]);
+  const filterTitle = search.genre
+    ? stats.genreCounts.find((row) => row.key === search.genre)?.data.genre ?? search.genre
+    : search.origin
+      ? stats.artistOriginCounts.find((row) => row.key === search.origin)?.data.country ?? search.origin
+      : "";
+
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return stats.artistCounts.filter((row) =>
-      needle ? row.data.name.toLowerCase().includes(needle) : true,
-    );
-  }, [stats.artistCounts, q]);
+    return stats.artistCounts.filter((row) => {
+      if (search.genre && !artistGenres(row.data).includes(search.genre.toLowerCase())) return false;
+      if (search.origin && originCountry(row.data.country)?.toLowerCase() !== search.origin.toLowerCase()) return false;
+      if (needle && !row.data.name.toLowerCase().includes(needle)) return false;
+      return true;
+    });
+  }, [stats.artistCounts, q, search.genre, search.origin]);
 
   return (
     <AppShell>
@@ -47,6 +75,14 @@ function ArtistsPage() {
         <EmptyArchive onSeed={seedDemo} />
       ) : (
         <>
+          {filterTitle ? (
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+              <p className="text-sm font-medium">{filterTitle}</p>
+              <Link to="/artists" className="text-xs text-muted-foreground underline">
+                {t("navArtists")}
+              </Link>
+            </div>
+          ) : null}
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -67,6 +103,7 @@ function ArtistsPage() {
               </Link>
             ))}
           </div>
+          {!rows.length ? <p className="py-10 text-center text-sm text-muted-foreground">{t("noMatches")}</p> : null}
         </>
       )}
     </AppShell>
