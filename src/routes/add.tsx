@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ConcertForm } from "@/components/concert-form";
+import { festivalKey } from "@/components/festival-group-card";
 import { useI18n } from "@/lib/i18n";
 import { useArchive } from "@/lib/store";
 
@@ -31,12 +32,17 @@ function AddPage() {
   const existing = id ? concerts.find((c) => c.id === id) : undefined;
   const presetDay = !existing && fromFestival ? concerts.find((c) => c.id === fromFestival) : undefined;
   const preset = artistId ? artists[artistId] : undefined;
+  const groupKey = existing ? festivalKey(existing) : null;
+  const siblingCount = groupKey ? concerts.filter((c) => festivalKey(c) === groupKey).length : 0;
+  const multiDay = siblingCount > 1;
   const mode =
-    festival === "1" && existing
+    festival === "1" && existing && multiDay
       ? "festival"
-      : existing?.festivalName?.trim() || presetDay
+      : existing && multiDay
         ? "day"
-        : "full";
+        : presetDay
+          ? "day"
+          : "full";
 
   return (
     <AppShell>
