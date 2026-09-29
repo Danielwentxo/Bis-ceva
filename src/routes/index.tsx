@@ -160,11 +160,13 @@ function Home() {
                   const name = c.festivalName || artists[c.lineup[0]?.artistId ?? ""]?.name || c.venue;
                   const yearsAgo = Number(today.slice(0, 4)) - Number(c.date.slice(0, 4));
                   return (
-                    <li key={c.id} className="text-sm">
-                      <span className="text-muted-foreground">{yearsAgo}y{" · "}{formatConcertDate(c.date)}</span>
-                      {" — "}
-                      <span className="font-medium">{name}</span>
-                      <span className="text-muted-foreground">{" · "}{c.city}</span>
+                    <li key={c.id}>
+                      <Link to="/concerts/$id" params={{ id: c.id }} className="block text-sm hover:text-foreground">
+                        <span className="text-muted-foreground">{yearsAgo}y{" · "}{formatConcertDate(c.date)}</span>
+                        {" — "}
+                        <span className="font-medium">{name}</span>
+                        <span className="text-muted-foreground">{" · "}{c.city}</span>
+                      </Link>
                     </li>
                   );
                 })}
