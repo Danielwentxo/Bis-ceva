@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ConcertCard } from "@/components/concert-card";
@@ -8,14 +8,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { artistsLabel, formatConcertDate, showsLabel, todayIso } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
-import { computeStats } from "@/lib/stats";
+import { computeStats, concertMatchesStatsFilter, type StatsListFilter } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 import type { Concert } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+type HomeSearch = StatsListFilter & { q?: string };
+
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>): { q?: string } =>
-    typeof search.q === "string" && search.q.length > 0 ? { q: search.q } : {},
+  validateSearch: (search: Record<string, unknown>): HomeSearch => {
+    const next: HomeSearch = {};
+    if (typeof search.q === "string" && search.q.length > 0) next.q = search.q;
+    if (typeof search.country === "string" && search.country.length > 0) next.country = search.country;
+    if (typeof search.venue === "string" && search.venue.length > 0) next.venue = search.venue;
+    if (typeof search.genre === "string" && search.genre.length > 0) next.genre = search.genre;
+    if (typeof search.origin === "string" && search.origin.length > 0) next.origin = search.origin;
+    return next;
+  },
   component: Home,
 });
 
@@ -45,13 +54,13 @@ function groupList(list: Concert[]) {
 
 function Home() {
   const { t, locale } = useI18n();
-  const { q: qParam } = Route.useSearch();
+  const search = Route.useSearch();
   const hasHydrated = useArchive((s) => s.hasHydrated);
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
   const seedDemo = useArchive((s) => s.seedDemo);
   const [year, setYear] = useState<string>("all");
-  const [q, setQ] = useState(qParam ?? "");
+  const [q, setQ] = useState(search.q ?? "");
 
   const stats = useMemo(() => computeStats(concerts, artists), [concerts, artists]);
   const years = useMemo(
@@ -66,9 +75,27 @@ function Home() {
     [concerts, md, today],
   );
 
+  const statsFilter: StatsListFilter = {
+    country: search.country,
+    venue: search.venue,
+    genre: search.genre,
+    origin: search.origin,
+  };
+  const hasStatsFilter = Boolean(statsFilter.country || statsFilter.venue || statsFilter.genre || statsFilter.origin);
+  const filterTitle = statsFilter.country
+    ? stats.countryCounts.find((row) => row.key === statsFilter.country)?.data.country ?? statsFilter.country
+    : statsFilter.venue
+      ? stats.venueCounts.find((row) => row.key === statsFilter.venue)?.data.venue ?? statsFilter.venue
+      : statsFilter.genre
+        ? stats.genreCounts.find((row) => row.key === statsFilter.genre)?.data.genre ?? statsFilter.genre
+        : statsFilter.origin
+          ? stats.artistOriginCounts.find((row) => row.key === statsFilter.origin)?.data.country ?? statsFilter.origin
+          : "";
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return concerts
+      .filter((c) => concertMatchesStatsFilter(c, artists, statsFilter))
       .filter((c) => (year === "all" ? true : c.date.startsWith(year)))
       .filter((c) => {
         if (!needle) return true;
@@ -81,7 +108,7 @@ function Home() {
         );
       })
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [concerts, artists, year, q]);
+  }, [concerts, artists, year, q, statsFilter.country, statsFilter.venue, statsFilter.genre, statsFilter.origin]);
 
   const upcoming = groupList(filtered.filter((c) => c.date > today));
   const past = filtered.filter((c) => c.date <= today);
@@ -116,7 +143,16 @@ function Home() {
         <EmptyArchive onSeed={seedDemo} />
       ) : (
         <>
-          {onThisDay.length ? (
+          {hasStatsFilter ? (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+              <p className="text-sm font-medium">{filterTitle}</p>
+              <Link to="/" className="text-xs text-muted-foreground underline">
+                {t("allYears")}
+              </Link>
+            </div>
+          ) : null}
+
+          {!hasStatsFilter && onThisDay.length ? (
             <section className="mb-8 rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
               <h2 className="text-xs font-medium uppercase tracking-wider text-subtle">{extraLabel(locale, "onThisDay")}</h2>
               <ul className="mt-3 space-y-2">
