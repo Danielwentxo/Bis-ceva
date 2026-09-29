@@ -47,17 +47,23 @@ export function EmptyArchive({ onSeed }: { onSeed: () => void }) {
         }
       />
       <ol className="grid gap-3 sm:grid-cols-3">
-        <li className="rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)]">
-          <p className="text-xs uppercase tracking-wider text-subtle">1</p>
-          <p className="mt-1 font-medium">{extraLabel(locale, "onboardAdd")}</p>
+        <li>
+          <Link to="/add" className="block rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)] hover:bg-secondary/60">
+            <p className="text-xs uppercase tracking-wider text-subtle">1</p>
+            <p className="mt-1 font-medium">{extraLabel(locale, "onboardAdd")}</p>
+          </Link>
         </li>
-        <li className="rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)]">
-          <p className="text-xs uppercase tracking-wider text-subtle">2</p>
-          <p className="mt-1 font-medium">{extraLabel(locale, "onboardImport")}</p>
+        <li>
+          <Link to="/transfer" className="block rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)] hover:bg-secondary/60">
+            <p className="text-xs uppercase tracking-wider text-subtle">2</p>
+            <p className="mt-1 font-medium">{extraLabel(locale, "onboardImport")}</p>
+          </Link>
         </li>
-        <li className="rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)]">
-          <p className="text-xs uppercase tracking-wider text-subtle">3</p>
-          <p className="mt-1 font-medium">{extraLabel(locale, "onboardShare")}</p>
+        <li>
+          <Link to="/stats" className="block rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)] hover:bg-secondary/60">
+            <p className="text-xs uppercase tracking-wider text-subtle">3</p>
+            <p className="mt-1 font-medium">{extraLabel(locale, "onboardShare")}</p>
+          </Link>
         </li>
       </ol>
     </div>
