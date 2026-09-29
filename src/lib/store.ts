@@ -44,7 +44,7 @@ function festivalGroupKey(concert: Concert) {
 
 function mediaToArtist(media: ArtistMedia): Artist {
   return {
-    id: artistKey(media.name),
+    id: artistKey(media.name, media.country),
     name: media.name,
     logoUrl: media.logoUrl,
     thumbUrl: media.thumbUrl,
@@ -69,7 +69,7 @@ function fromDraft(id: string, draft: ConcertDraft, createdAt: string): Concert 
     country: draft.country,
     countryCode: draft.countryCode,
     lineup: draft.artists.map((a, index) => ({
-      artistId: artistKey(a.name),
+      artistId: artistKey(a.name, a.country),
       role: index === 0 ? "headliner" : "support",
     })),
     notes: draft.notes.trim(),
@@ -127,7 +127,7 @@ export const useArchive = create<ArchiveState>()(
         }
       },
       upsertArtist: (media) => {
-        const id = artistKey(media.name);
+        const id = artistKey(media.name, media.country);
         set((state) => {
           const prev = state.artists[id];
           const next: Artist = {
@@ -153,7 +153,7 @@ export const useArchive = create<ArchiveState>()(
         set((state) => {
           const artists = { ...state.artists };
           for (const hit of hits) {
-            const id = artistKey(hit.name);
+            const id = artistKey(hit.name, hit.country);
             const prev = artists[id];
             artists[id] = prev
               ? {
