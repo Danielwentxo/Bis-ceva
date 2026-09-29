@@ -26,46 +26,24 @@ export function EmptyState({
 export function EmptyArchive({ onSeed }: { onSeed: () => void }) {
   const { t, locale } = useI18n();
   return (
-    <div className="space-y-6">
-      <EmptyState
-        title={t("emptyTitle")}
-        body={extraLabel(locale, "onboardBody")}
-        action={
-          <>
-            <Button asChild>
-              <Link to="/add">{extraLabel(locale, "onboardAdd")}</Link>
+    <EmptyState
+      title={extraLabel(locale, "onboardTitle")}
+      body={extraLabel(locale, "onboardBody")}
+      action={
+        <>
+          <Button asChild>
+            <Link to="/add">{t("addConcert")}</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/transfer">{extraLabel(locale, "importTitle")}</Link>
+          </Button>
+          {authEnabled ? null : (
+            <Button variant="outline" type="button" onClick={onSeed}>
+              {t("loadExamples")}
             </Button>
-            <Button asChild variant="outline">
-              <Link to="/transfer">{extraLabel(locale, "importTitle")}</Link>
-            </Button>
-            {authEnabled ? null : (
-              <Button variant="outline" type="button" onClick={onSeed}>
-                {t("loadExamples")}
-              </Button>
-            )}
-          </>
-        }
-      />
-      <ol className="grid gap-3 sm:grid-cols-3">
-        <li>
-          <Link to="/add" className="block rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)] hover:bg-secondary/60">
-            <p className="text-xs uppercase tracking-wider text-subtle">1</p>
-            <p className="mt-1 font-medium">{extraLabel(locale, "onboardAdd")}</p>
-          </Link>
-        </li>
-        <li>
-          <Link to="/transfer" className="block rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)] hover:bg-secondary/60">
-            <p className="text-xs uppercase tracking-wider text-subtle">2</p>
-            <p className="mt-1 font-medium">{extraLabel(locale, "onboardImport")}</p>
-          </Link>
-        </li>
-        <li>
-          <Link to="/stats" className="block rounded-xl bg-card px-4 py-3 text-sm shadow-[var(--shadow-border)] hover:bg-secondary/60">
-            <p className="text-xs uppercase tracking-wider text-subtle">3</p>
-            <p className="mt-1 font-medium">{extraLabel(locale, "onboardShare")}</p>
-          </Link>
-        </li>
-      </ol>
-    </div>
+          )}
+        </>
+      }
+    />
   );
 }
