@@ -6,7 +6,7 @@ import { LanguageSelect } from "@/components/language-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth/client";
+import { authClient, signIn } from "@/lib/auth/client";
 import { useI18n } from "@/lib/i18n";
 import { pageLabel } from "@/lib/i18n-pages";
 
@@ -49,10 +49,9 @@ export function LoginScreen() {
   async function signInWithGoogle() {
     setSubmitting(true);
     try {
-      const { error } = await authClient.signIn.social({ provider: "google", callbackURL: "/" });
-      if (error) throw new Error(error.message ?? "Social sign-in failed");
+      await signIn("grok-google", { callbackURL: "/", errorCallbackURL: "/" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setSubmitting(false);
     }
   }
