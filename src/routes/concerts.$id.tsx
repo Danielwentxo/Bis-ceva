@@ -119,7 +119,7 @@ function ConcertDetail() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="flex-1">
-          <Link to="/add" search={{ id: concert.id }}>
+          <Link to="/add" search={{ id: concert.id, festival: undefined }}>
             <Pencil className="size-4" />
             {t("edit")}
           </Link>
