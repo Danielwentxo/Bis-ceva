@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ConcertCard } from "@/components/concert-card";
 import { FestivalGroupCard, festivalKey } from "@/components/festival-group-card";
+import { BackupReminder } from "@/components/backup-reminder";
 import { EmptyArchive } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -132,12 +133,13 @@ function Home() {
         <h1 className="mt-1 font-display text-4xl font-medium tracking-tight md:text-5xl">{t("yourConcerts")}</h1>
         {hasHydrated ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            {showsLabel(stats.totalShows)}{" · "}{artistsLabel(stats.uniqueArtists)}
+            {showsLabel(stats.totalShows)}{" \u00b7 "}{artistsLabel(stats.uniqueArtists)}
           </p>
         ) : (
           <Skeleton className="mt-3 h-4 w-40" />
         )}
       </header>
+      {hasHydrated && concerts.length ? <BackupReminder /> : null}
 
       {!hasHydrated ? (
         <div className="space-y-3">
@@ -174,10 +176,10 @@ function Home() {
                   return (
                     <li key={c.id}>
                       <Link to="/concerts/$id" params={{ id: c.id }} className="block text-sm hover:text-foreground">
-                        <span className="text-muted-foreground">{yearsAgo}y{" · "}{formatConcertDate(c.date)}</span>
-                        {" — "}
+                        <span className="text-muted-foreground">{yearsAgo}y{" \u00b7 "}{formatConcertDate(c.date)}</span>
+                        {" \u2014 "}
                         <span className="font-medium">{name}</span>
-                        <span className="text-muted-foreground">{" · "}{c.city}</span>
+                        <span className="text-muted-foreground">{" \u00b7 "}{c.city}</span>
                       </Link>
                     </li>
                   );
