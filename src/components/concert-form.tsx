@@ -136,7 +136,7 @@ export function ConcertForm({
           if (cancelled) return;
           const byName = new Map<string, ArtistMedia>();
           for (const row of [...catalog, ...api]) {
-            const key = artistKey(row.name);
+            const key = artistKey(row.name, row.country);
             if (!byName.has(key)) byName.set(key, row);
           }
           setHits([...byName.values()]);
@@ -186,12 +186,11 @@ export function ConcertForm({
       .slice(0, 6);
   }, [concerts, form.venue, catalogVenues]);
 
-  const selectedIds = new Set(form.artists.map((a) => artistKey(a.name)));
+  const selectedIds = new Set(form.artists.map((a) => artistKey(a.name, a.country)));
   const country = COUNTRIES.find((c) => c.code === form.countryCode);
-  const exactHit = hits.some((hit) => artistKey(hit.name) === artistKey(query.trim()));
 
   function addArtist(hit: ArtistMedia) {
-    if (selectedIds.has(artistKey(hit.name))) return;
+    if (selectedIds.has(artistKey(hit.name, hit.country))) return;
     setForm((f) => ({ ...f, artists: [...f.artists, hit] }));
     setQuery("");
     setHits([]);
@@ -369,7 +368,7 @@ export function ConcertForm({
         {form.artists.length ? (
           <ul className="space-y-2">
             {form.artists.map((a, i) => (
-              <li key={a.name} className="flex items-center gap-3 rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">
+              <li key={artistKey(a.name, a.country)} className="flex items-center gap-3 rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">
                 <ArtistMark artist={a} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{a.name}</p>
@@ -394,9 +393,9 @@ export function ConcertForm({
           <ul className="overflow-hidden rounded-xl bg-popover shadow-[var(--shadow-border)]">
             {searching && !hits.length ? <li className="px-3 py-3 text-sm text-muted-foreground">{t("searchingLogos")}</li> : null}
             {hits.map((hit) => {
-              const taken = selectedIds.has(artistKey(hit.name));
+              const taken = selectedIds.has(artistKey(hit.name, hit.country));
               return (
-                <li key={hit.name}>
+                <li key={artistKey(hit.name, hit.country)}>
                   <button type="button" disabled={taken} onClick={() => addArtist(hit)} className={cn("flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-secondary", taken && "opacity-40")}>
                     <ArtistMark artist={hit} size="sm" />
                     <span className="min-w-0 flex-1">
@@ -410,13 +409,11 @@ export function ConcertForm({
                 </li>
               );
             })}
-            {!exactHit ? (
-              <li>
-                <button type="button" onClick={startManualArtist} className="flex w-full items-center px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
-                  {extraLabel(locale, "addManually", { name: query.trim() })}
-                </button>
-              </li>
-            ) : null}
+            <li>
+              <button type="button" onClick={startManualArtist} className="flex w-full items-center px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+                {extraLabel(locale, "addManually", { name: query.trim() })}
+              </button>
+            </li>
           </ul>
         ) : null}
         {manual ? (
