@@ -15,8 +15,10 @@ export function slugify(value: string) {
     .slice(0, 80);
 }
 
-export function artistKey(name: string) {
-  return slugify(name) || "artist";
+export function artistKey(name: string, country?: string | null) {
+  const base = slugify(name) || "artist";
+  const place = country ? slugify(country) : "";
+  return place ? `${base}--${place}` : base;
 }
 
 export function venueKey(venue: string, city: string) {
