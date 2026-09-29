@@ -1,9 +1,11 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ConcertCard } from "@/components/concert-card";
 import { FestivalGroupCard, festivalKey } from "@/components/festival-group-card";
 import { EmptyArchive } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { artistsLabel, formatConcertDate, showsLabel, todayIso } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
@@ -13,7 +15,7 @@ import { useArchive } from "@/lib/store";
 import type { Concert } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type HomeSearch = StatsListFilter & { q?: string };
+type HomeSearch = StatsListFilter & { q?: string; from?: string };
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): HomeSearch => {
@@ -23,6 +25,7 @@ export const Route = createFileRoute("/")({
     if (typeof search.venue === "string" && search.venue.length > 0) next.venue = search.venue;
     if (typeof search.genre === "string" && search.genre.length > 0) next.genre = search.genre;
     if (typeof search.origin === "string" && search.origin.length > 0) next.origin = search.origin;
+    if (typeof search.from === "string" && search.from.length > 0) next.from = search.from;
     return next;
   },
   component: Home,
@@ -91,6 +94,8 @@ function Home() {
         : statsFilter.origin
           ? stats.artistOriginCounts.find((row) => row.key === statsFilter.origin)?.data.country ?? statsFilter.origin
           : "";
+  const backTo = search.from === "venues" ? "/venues" : search.from === "stats" ? "/stats" : null;
+  const backLabel = search.from === "venues" ? t("venuesTitle") : search.from === "stats" ? t("statsTitle") : t("allYears");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -144,11 +149,18 @@ function Home() {
       ) : (
         <>
           {hasStatsFilter ? (
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-              <p className="text-sm font-medium">{filterTitle}</p>
-              <Link to="/" className="text-xs text-muted-foreground underline">
-                {t("allYears")}
-              </Link>
+            <div className="mb-6">
+              {backTo ? (
+                <Button asChild variant="outline" className="mb-3">
+                  <Link to={backTo}>
+                    <ArrowLeft className="size-4" />
+                    {backLabel}
+                  </Link>
+                </Button>
+              ) : null}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                <p className="text-sm font-medium">{filterTitle}</p>
+              </div>
             </div>
           ) : null}
 
