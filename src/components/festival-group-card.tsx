@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
 import { concertArtists } from "@/lib/stats";
@@ -85,6 +85,14 @@ export function FestivalGroupCard({
           );
         })}
       </ul>
+      <Link
+        to="/add"
+        search={{ fromFestival: newest.id }}
+        className="mt-2 flex items-center gap-2 rounded-lg px-1 py-2 text-sm text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+      >
+        <Plus className="size-4" />
+        Add day
+      </Link>
     </article>
   );
 }
