@@ -6,6 +6,13 @@ import { todayIso } from "./format";
 
 export type CountItem<T> = { key: string; count: number; data: T };
 
+export type StatsListFilter = {
+  country?: string;
+  venue?: string;
+  genre?: string;
+  origin?: string;
+};
+
 const ORIGIN_ALIAS: Record<string, string> = {
   usa: "USA",
   us: "USA",
@@ -205,4 +212,35 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
 
 export function artistShowCount(artistId: string, concerts: Concert[]) {
   return concerts.filter((c) => c.lineup.some((l) => l.artistId === artistId)).length;
+}
+
+export function concertMatchesStatsFilter(
+  concert: Concert,
+  artists: Record<string, Artist>,
+  filter: StatsListFilter,
+) {
+  if (filter.country) {
+    const code = filter.country.toLowerCase();
+    if ((concert.countryCode || concert.country).toLowerCase() !== code && concert.country.toLowerCase() !== code) {
+      return false;
+    }
+  }
+  if (filter.venue) {
+    if (venueKey(concert.venue, concert.city) !== filter.venue) return false;
+  }
+  if (filter.genre) {
+    const want = filter.genre.toLowerCase();
+    const hit = concert.lineup.some((slot) => {
+      const artist = artists[slot.artistId];
+      if (!artist) return false;
+      return genreLabels(artist.genre ?? artist.style).some((g) => g.toLowerCase() === want);
+    });
+    if (!hit) return false;
+  }
+  if (filter.origin) {
+    const want = filter.origin.toLowerCase();
+    const hit = concert.lineup.some((slot) => originCountry(artists[slot.artistId]?.country)?.toLowerCase() === want);
+    if (!hit) return false;
+  }
+  return true;
 }
