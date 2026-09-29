@@ -63,9 +63,11 @@ function concertToForm(concert: Concert, artists: Record<string, import("@/lib/t
 export function ConcertForm({
   existing,
   presetArtist,
+  mode = "full",
 }: {
   existing?: Concert;
   presetArtist?: ArtistMedia | null;
+  mode?: "full" | "festival" | "day";
 }) {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
@@ -321,10 +323,13 @@ export function ConcertForm({
 
   return (
     <form onSubmit={(e) => void submit(e)} className="space-y-6">
+      {mode !== "festival" ? (
       <div className="space-y-2">
         <Label htmlFor="date">{t("date")}</Label>
         <Input id="date" type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} required />
       </div>
+      ) : null}
+      {mode !== "day" ? (
       <div className="space-y-2">
         <Label htmlFor="festival">{t("festivalBadge")}</Label>
         <Input id="festival" value={form.festivalName} onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))} placeholder="Untold, Sziget, Download…" />
@@ -340,6 +345,8 @@ export function ConcertForm({
           </div>
         </div>
       </div>
+      ) : null}
+      {mode !== "festival" ? (
       <div className="space-y-2">
         <Label htmlFor="artist-search">{t("artists")}</Label>
         <p className="text-xs text-subtle">{t("artistsHint")}</p>
@@ -427,6 +434,9 @@ export function ConcertForm({
           </div>
         ) : null}
       </div>
+      ) : null}
+      {mode !== "day" ? (
+      <>
       <div className="space-y-2">
         <Label htmlFor="venue">{t("venue")}</Label>
         <Input id="venue" value={form.venue} onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))} placeholder={t("venuePh")} required />
@@ -455,6 +465,10 @@ export function ConcertForm({
           </select>
         </div>
       </div>
+      </>
+      ) : null}
+      {mode !== "festival" ? (
+      <>
       <label className="flex h-11 items-center gap-3 rounded-xl bg-card px-3 shadow-[var(--shadow-border)]">
         <input type="checkbox" checked={form.favorite} onChange={(e) => setForm((f) => ({ ...f, favorite: e.target.checked }))} className="size-4 accent-primary" />
         <span className="text-sm">{t("favorite")}</span>
@@ -467,6 +481,8 @@ export function ConcertForm({
         <Label htmlFor="notes">{t("notes")}</Label>
         <Textarea id="notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={t("notesPh")} />
       </div>
+      </>
+      ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-3">
         <Button type="submit" className="flex-1" disabled={saving}>{existing ? t("save") : t("addToArchive")}</Button>
