@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, Pencil } from "lucide-react";
 import { useState } from "react";
 import { CountryFlag } from "@/components/country-flag";
 import { formatConcertDate } from "@/lib/format";
@@ -61,6 +61,14 @@ export function FestivalGroupCard({
             </span>
           </p>
         </div>
+        <Link
+          to="/add"
+          search={{ id: newest.id }}
+          aria-label="Edit festival"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+        >
+          <Pencil className="size-4" />
+        </Link>
       </div>
       <ul className="mt-3 space-y-1 border-t border-border/60 pt-3">
         {days.map((concert) => {
@@ -86,6 +94,14 @@ export function FestivalGroupCard({
                 >
                   <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
                 </button>
+                <Link
+                  to="/add"
+                  search={{ id: concert.id }}
+                  aria-label={`Edit ${formatConcertDate(concert.date)}`}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <Pencil className="size-4" />
+                </Link>
                 <Link
                   to="/concerts/$id"
                   params={{ id: concert.id }}
