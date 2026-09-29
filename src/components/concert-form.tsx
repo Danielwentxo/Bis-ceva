@@ -227,7 +227,7 @@ export function ConcertForm({
   async function onFestivalPoster(file: File | undefined) {
     if (!file) return;
     try {
-      const poster = await resizeImageFile(file);
+      const poster = await resizeImageFile(file, 1200);
       const check = await moderateImage({ data: { dataUrl: poster } });
       if (!check.ok) {
         setError(check.reason);
@@ -328,16 +328,17 @@ export function ConcertForm({
       <div className="space-y-2">
         <Label htmlFor="festival">{t("festivalBadge")}</Label>
         <Input id="festival" value={form.festivalName} onChange={(e) => setForm((f) => ({ ...f, festivalName: e.target.value }))} placeholder="Untold, Sziget, Download…" />
-        {form.festivalName.trim() ? (
-          <div className="space-y-2">
-            <Label>Festival poster</Label>
-            <input ref={posterInputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => { void onFestivalPoster(e.target.files?.[0]); e.target.value = ""; }} />
-            <div className="flex items-center gap-3">
-              {form.festivalPosterUrl ? <img src={form.festivalPosterUrl} alt="" className="h-14 w-14 rounded-lg object-cover" /> : null}
-              <Button type="button" variant="outline" onClick={() => posterInputRef.current?.click()}>Upload poster</Button>
-            </div>
+        <div className="space-y-2">
+          <Label>Poster</Label>
+          <input ref={posterInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => { void onFestivalPoster(e.target.files?.[0]); e.target.value = ""; }} />
+          <div className="flex items-center gap-3">
+            {form.festivalPosterUrl ? <img src={form.festivalPosterUrl} alt="" className="h-14 w-14 rounded-lg object-cover" /> : null}
+            <Button type="button" variant="outline" onClick={() => posterInputRef.current?.click()}>Upload poster</Button>
+            {form.festivalPosterUrl ? (
+              <Button type="button" variant="outline" onClick={() => setForm((f) => ({ ...f, festivalPosterUrl: null }))}>Remove</Button>
+            ) : null}
           </div>
-        ) : null}
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="artist-search">{t("artists")}</Label>
