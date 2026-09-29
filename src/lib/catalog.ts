@@ -54,7 +54,7 @@ export const saveCatalogArtist = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const sql = await getSql();
-    const id = artistKey(data.name);
+    const id = artistKey(data.name, data.country);
     const logoUrl = assertImageDataUrl(data.logoUrl ?? null, "Artist logo");
     const thumbUrl = assertImageDataUrl(data.thumbUrl ?? null, "Artist image") ?? logoUrl;
     const overwrite = Boolean(data.overwrite);
