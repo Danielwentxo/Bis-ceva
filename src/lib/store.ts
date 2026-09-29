@@ -198,6 +198,7 @@ export const useArchive = create<ArchiveState>()(
           country: draft.country,
           countryCode: draft.countryCode,
           festivalName,
+          festivalPosterUrl: draft.festivalPosterUrl ?? null,
         };
         const siblings =
           oldKey && festivalName
@@ -218,6 +219,7 @@ export const useArchive = create<ArchiveState>()(
                 countryCode: shared.countryCode,
                 festivalName: shared.festivalName,
                 festival: Boolean(shared.festivalName),
+                festivalPosterUrl: shared.festivalPosterUrl,
               };
             }),
           }));
@@ -234,6 +236,7 @@ export const useArchive = create<ArchiveState>()(
               country: shared.country,
               countryCode: shared.countryCode,
               festivalName: shared.festivalName,
+              festivalPosterUrl: shared.festivalPosterUrl,
             },
           });
         }
@@ -249,6 +252,7 @@ export const useArchive = create<ArchiveState>()(
               countryCode: shared.countryCode,
               festivalName: shared.festivalName,
               festival: Boolean(shared.festivalName),
+              festivalPosterUrl: shared.festivalPosterUrl,
             };
           }),
           artists: mergeArtists(state.artists, result.artists),
