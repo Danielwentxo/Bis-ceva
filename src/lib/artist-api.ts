@@ -159,20 +159,19 @@ export const searchArtists = createServerFn({ method: "POST" })
     const query = data.query;
     const tadb = await tadbSearch(query);
     const byKey = new Map<string, ArtistMedia>();
+    const mediaKey = (m: ArtistMedia) => `${norm(m.name)}|${norm(m.country ?? "")}`;
     for (const row of tadb) {
       const media = fromTadb(row);
       if (!media.name) continue;
-      byKey.set(norm(media.name), media);
+      byKey.set(mediaKey(media), media);
     }
-    if (byKey.size < 3) {
-      const mb = await mbSearch(query, 8);
-      for (const row of mb) {
-        const media = fromMb(row);
-        if (!media.name) continue;
-        const key = norm(media.name);
-        const prev = byKey.get(key);
-        byKey.set(key, prev ? mergeMedia(prev, media) : media);
-      }
+    const mb = await mbSearch(query, 8);
+    for (const row of mb) {
+      const media = fromMb(row);
+      if (!media.name) continue;
+      const key = mediaKey(media);
+      const prev = byKey.get(key);
+      byKey.set(key, prev ? mergeMedia(prev, media) : media);
     }
     const ranked = [...byKey.values()].sort((a, b) => {
       const an = norm(a.name);
