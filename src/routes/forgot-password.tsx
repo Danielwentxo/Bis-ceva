@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +24,10 @@ function ForgotPasswordPage() {
         email,
         redirectTo: "/reset-password",
       });
-      if (error) throw new Error(error.message ?? "Cererea a eșuat");
+      if (error) throw new Error(error.message ?? "Request failed");
       setSent(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "A apărut o eroare");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -36,18 +37,19 @@ function ForgotPasswordPage() {
     <div className="flex min-h-dvh items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="font-display text-3xl font-medium tracking-tight text-foreground">Bis</p>
-          <p className="mt-1 text-sm text-muted-foreground">Resetează-ți parola</p>
+          <div className="flex justify-center">
+            <AppLogo size="lg" />
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">Reset your password</p>
         </div>
 
         {sent ? (
           <div className="flex flex-col gap-4 text-center">
             <p className="text-sm text-foreground">
-              Dacă există un cont cu adresa <strong>{email}</strong>, ai primit un email cu un
-              link de resetare.
+              If an account exists for <strong>{email}</strong>, we sent a reset link.
             </p>
             <Link to="/login" className="text-sm text-muted-foreground underline">
-              Înapoi la autentificare
+              Back to sign in
             </Link>
           </div>
         ) : (
@@ -64,10 +66,10 @@ function ForgotPasswordPage() {
               />
             </div>
             <Button type="submit" disabled={submitting}>
-              Trimite link de resetare
+              Send reset link
             </Button>
             <Link to="/login" className="text-center text-sm text-muted-foreground underline">
-              Înapoi la autentificare
+              Back to sign in
             </Link>
           </form>
         )}
