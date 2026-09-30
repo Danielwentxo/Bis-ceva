@@ -11,46 +11,49 @@ import { pageLabel } from "@/lib/i18n-pages";
 
 type Mode = "sign-in" | "sign-up" | "forgot";
 
+const HERO =
+  "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=70";
+
 const WRONG_LOGIN: Record<string, string> = {
   en: "Email or password is incorrect.",
-  ro: "Adresa de email sau parola sunt greșite.",
-  sv: "E-postadressen eller lösenordet är felaktigt.",
+  ro: "Adresa de email sau parola sunt gresite.",
+  sv: "E-postadressen eller losenordet ar felaktigt.",
   de: "E-Mail oder Passwort ist falsch.",
-  fr: "L’e-mail ou le mot de passe est incorrect.",
-  es: "El correo o la contraseña no son correctos.",
-  pt: "O e-mail ou a senha estão incorretos.",
+  fr: "L'e-mail ou le mot de passe est incorrect.",
+  es: "El correo o la contrasena no son correctos.",
+  pt: "O e-mail ou a senha estao incorretos.",
   it: "Email o password non corretti.",
-  pl: "E-mail lub hasło jest niepoprawne.",
-  ja: "メールアドレスまたはパスワードが違います。",
-  ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  pl: "E-mail lub haslo jest niepoprawne.",
+  ja: "Email or password is incorrect.",
+  ar: "Email or password is incorrect.",
 };
 
 const CONFIRM_LABEL: Record<string, string> = {
   en: "Confirm password",
-  ro: "Confirmă parola",
-  sv: "Bekräfta lösenord",
-  de: "Passwort bestätigen",
+  ro: "Confirma parola",
+  sv: "Bekrafta losenord",
+  de: "Passwort bestatigen",
   fr: "Confirmer le mot de passe",
-  es: "Confirmar contraseña",
+  es: "Confirmar contrasena",
   pt: "Confirmar senha",
   it: "Conferma password",
-  pl: "Potwierdź hasło",
-  ja: "パスワードを確認",
-  ar: "تأكيد كلمة المرور",
+  pl: "Potwierdz haslo",
+  ja: "Confirm password",
+  ar: "Confirm password",
 };
 
 const MISMATCH: Record<string, string> = {
   en: "Passwords do not match.",
   ro: "Parolele nu coincid.",
-  sv: "Lösenorden överensstämmer inte.",
-  de: "Die Passwörter stimmen nicht überein.",
+  sv: "Losenorden overensstammer inte.",
+  de: "Die Passworter stimmen nicht uberein.",
   fr: "Les mots de passe ne correspondent pas.",
-  es: "Las contraseñas no coinciden.",
-  pt: "As senhas não coincidem.",
+  es: "Las contrasenas no coinciden.",
+  pt: "As senhas nao coincidem.",
   it: "Le password non coincidono.",
-  pl: "Hasła nie są astfel same.",
-  ja: "パスワードが一致しません。",
-  ar: "كلمتا المرور غير متطابقتين.",
+  pl: "Hasla nie sa takie same.",
+  ja: "Passwords do not match.",
+  ar: "Passwords do not match.",
 };
 
 function isWrongLogin(message: string) {
@@ -144,8 +147,10 @@ export function LoginScreen() {
   const title = mode === "sign-up" ? t("signUpTitle") : mode === "forgot" ? t("forgotTitle") : t("signInTitle");
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-6">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-dvh items-center justify-center px-6">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${HERO})` }} aria-hidden />
+      <div className="absolute inset-0 bg-black/70" aria-hidden />
+      <div className="relative w-full max-w-sm rounded-2xl bg-black/50 p-6 shadow-[var(--shadow-border)] backdrop-blur-sm">
         <div className="mb-8 text-center">
           <div className="flex justify-center">
             <AppLogo size="lg" />
