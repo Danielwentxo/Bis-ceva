@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /privacy
+Allow: /contact
+Allow: /login
+Disallow: /add
+Disallow: /concerts
+Disallow: /artists
+Disallow: /venues
+Disallow: /stats
+Disallow: /transfer
+Disallow: /api
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Sitemap: https://mygighistory.com/sitemap.xml
