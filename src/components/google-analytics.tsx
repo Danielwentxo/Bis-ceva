@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
-const GA_ID = (import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined)?.trim();
+const GA_ID =
+  (import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined)?.trim() || "G-MT446FPJL9";
 
 declare global {
   interface Window {
@@ -11,7 +12,7 @@ declare global {
 
 export function GoogleAnalytics() {
   useEffect(() => {
-    if (!GA_ID || !GA_ID.startsWith("G-")) return;
+    if (!GA_ID.startsWith("G-")) return;
     if (document.getElementById("ga4-src")) return;
 
     window.dataLayer = window.dataLayer ?? [];
