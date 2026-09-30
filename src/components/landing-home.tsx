@@ -6,15 +6,15 @@ import { pageLabel } from "@/lib/i18n-pages";
 const COPY: Record<string, { title: string; lead: string; a: string; b: string; c: string; free: string }> = {
   en: {
     title: "Start your gig book",
-    lead: "Keep every concert and festival in one private archive. The list is yours.",
+    lead: "A private concert archive and gig diary. Keep live shows and festivals in one place. The list is yours.",
     a: "Add a concert or a multi-day festival",
-    b: "Import a CSV or JSON list you already have",
+    b: "Import a CSV or JSON concert list you already have",
     c: "See stats and share a card",
     free: "Free. Email or Google. No App Store required.",
   },
   fr: {
     title: "Commencez votre carnet",
-    lead: "Gardez chaque concert et festival dans une archive priv\u00e9e.",
+    lead: "Une archive de concerts priv\u00e9e. Gardez chaque live et festival au m\u00eame endroit.",
     a: "Ajoutez un concert ou un festival",
     b: "Importez un fichier CSV ou JSON",
     c: "Voyez les stats et partagez une carte",
@@ -22,7 +22,7 @@ const COPY: Record<string, { title: string; lead: string; a: string; b: string; 
   },
   de: {
     title: "Starte dein Gig-Buch",
-    lead: "Alle Konzerte und Festivals in einem privaten Archiv.",
+    lead: "Ein privates Konzertarchiv. Alle Live-Shows und Festivals an einem Ort.",
     a: "Konzert oder Festival eintragen",
     b: "CSV- oder JSON-Liste importieren",
     c: "Stats sehen und eine Karte teilen",
