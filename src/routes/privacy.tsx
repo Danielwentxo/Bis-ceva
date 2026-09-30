@@ -15,6 +15,7 @@ function PrivacyPage() {
         <h1 className="font-display text-4xl font-medium tracking-tight">{APP_NAME}</h1>
         <p className="text-sm leading-relaxed text-muted-foreground">{pageLabel(locale, "privacy1")}</p>
         <p className="text-sm leading-relaxed text-muted-foreground">{pageLabel(locale, "privacy2")}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{pageLabel(locale, "privacy3")}</p>
       </article>
     </AppShell>
   );
