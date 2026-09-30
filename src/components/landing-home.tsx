@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
 import { pageLabel } from "@/lib/i18n-pages";
 
-const COPY: Record<string, { title: string; lead: string; a: string; b: string; c: string; free: string }>= {
+const COPY: Record<string, { title: string; lead: string; a: string; b: string; c: string; free: string }> = {
   en: {
     title: "Start your gig book",
     lead: "Keep every concert and festival in one private archive. The list is yours.",
