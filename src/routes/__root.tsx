@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { I18nProvider } from "@/lib/i18n";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { APP_NAME } from "@/lib/brand";
 import appCss from "../styles.css?url";
@@ -56,6 +57,7 @@ export const Route = createRootRoute({
       </head>
       <body>
         <RegisterPwa />
+        <GoogleAnalytics />
         <PreviewHostBridge />
         <I18nProvider>
           <AuthProvider>
