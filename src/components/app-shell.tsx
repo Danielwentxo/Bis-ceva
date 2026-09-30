@@ -22,6 +22,7 @@ function navActive(pathname: string, to: string) {
 }
 
 const PUBLIC_PATHS = new Set([
+  "/",
   "/forgot-password",
   "/reset-password",
   "/login",
@@ -80,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-dvh bg-background text-foreground">
         <header dir="ltr" className="flex items-center justify-between gap-3 px-4 py-4">
-          <Link to="/login">
+          <Link to="/">
             <AppLogo size="sm" />
           </Link>
           <div className="flex items-center gap-3">
