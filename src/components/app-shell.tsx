@@ -3,6 +3,7 @@ import { BarChart3, Disc3, MapPin, Plus, Ticket } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AppLogo } from "@/components/app-logo";
+import { LandingHome } from "@/components/landing-home";
 import { LanguageSelect } from "@/components/language-select";
 import { LoginScreen } from "@/components/login-screen";
 import { SiteFooter } from "@/components/site-footer";
@@ -91,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-4xl px-4 pb-12 pt-4">{children}</main>
+        <main className="mx-auto w-full max-w-4xl px-4 pb-12 pt-4">{pathname === "/" ? <LandingHome /> : children}</main>
         <SiteFooter />
         <Toaster theme="dark" position="top-center" toastOptions={{ className: "bg-popover text-popover-foreground border-border" }} />
       </div>
