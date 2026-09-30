@@ -14,13 +14,23 @@ function RegisterPwa() {
   return null;
 }
 
+const SEO_TITLE = "My Gig History \u2014 private concert archive and gig diary";
+const SEO_DESC =
+  "A private concert archive and gig diary. Log live shows and festivals, import a CSV list, and see stats. Not a ticket shop.";
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: APP_NAME },
-      { name: "description", content: "Your concert archive \u2014 artists, venues and stats." },
+      { title: SEO_TITLE },
+      { name: "description", content: SEO_DESC },
+      { name: "keywords", content: "concert archive, gig archive, gig diary, festival log, live music journal, concert list" },
+      { property: "og:title", content: SEO_TITLE },
+      { property: "og:description", content: SEO_DESC },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://mygighistory.com/" },
+      { property: "og:image", content: "https://mygighistory.com/og.jpg" },
       { name: "theme-color", content: "#0c0b0a" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
