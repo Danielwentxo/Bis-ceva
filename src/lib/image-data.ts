@@ -12,11 +12,16 @@ function looksLikeImage(bytes: Uint8Array): boolean {
 
 export function assertImageDataUrl(value: string | null | undefined, label = "Image"): string | null {
   if (value == null || value === "") return null;
-  if (value.length > MAX_CHARS) throw new Error(`${label} is too large.`);
-  if (/^https:\/\/\S{3,1800}$/i.test(value)) return value;
-  const match = /^data:(image\/(?:jpeg|jpg|png|webp));base64,([A-Za-z0-9+/=\s]+)$/i.exec(value);
+  const raw = value.trim();
+  if (raw.length > MAX_CHARS) throw new Error(`${label} is too large.`);
+  if (/^https?:\/\/\S{3,4000}$/i.test(raw)) return raw;
+
+  const match =
+    /^data:image\/(?:jpeg|jpg|pjpeg|png|webp)(?:;charset=[\w-]+)?;base64,([A-Za-z0-9+/=\s]+)$/i.exec(raw) ??
+    /^data:image\/[^;]+;base64,([A-Za-z0-9+/=\s]+)$/i.exec(raw);
   if (!match) throw new Error(`${label} must be a JPEG, PNG, or WebP.`);
-  const b64 = match[2].replace(/\s/g, "");
+
+  const b64 = match[1].replace(/\s/g, "");
   const padding = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
   const bytes = Math.floor((b64.length * 3) / 4) - padding;
   if (bytes <= 0 || bytes > MAX_BYTES) throw new Error(`${label} must be under 500 KB.`);
@@ -26,5 +31,5 @@ export function assertImageDataUrl(value: string | null | undefined, label = "Im
   } catch {
     throw new Error(`${label} must be a JPEG, PNG, or WebP.`);
   }
-  return value;
+  return raw;
 }
