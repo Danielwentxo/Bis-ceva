@@ -116,6 +116,9 @@ function ArtistsPage() {
               >
                 <ArtistMark artist={row.data} size="xl" />
                 <p className="mt-3 line-clamp-2 text-sm font-medium">{row.data.name}</p>
+                {row.data.country ? (
+                  <p className="mt-0.5 line-clamp-1 text-xs text-subtle">{row.data.country}</p>
+                ) : null}
                 <p className="mt-1 text-xs text-muted-foreground">{showsLabel(row.count)}</p>
               </Link>
             ))}
