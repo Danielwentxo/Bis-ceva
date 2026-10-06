@@ -146,7 +146,7 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
     ctx.fillStyle = "#2a0c0c";
     ctx.fillRect(0, 0, w, h);
   }
-  const ink = "#f0c2b0";
+  const ink = "#c47b68";
   const cx = w * 0.58;
   ctx.textAlign = "center";
   ctx.fillStyle = ink;
@@ -170,7 +170,7 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
     [String(stats.uniqueVenues ?? 0), "VENUES"],
     [String(stats.uniqueArtists ?? 0), "BANDS"],
   ];
-  const slots = [0.342, 0.5, 0.683, 0.846];
+  const slots = [0.3, 0.5, 0.69, 0.85];
   pills.forEach((pill, i) => {
     const x = w * slots[i];
     ctx.fillStyle = ink;
