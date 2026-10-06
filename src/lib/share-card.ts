@@ -1,4 +1,3 @@
-import { SHARE_TICKET_BG } from "@/lib/share-ticket-bg";
 import { APP_DOMAIN, APP_NAME } from "@/lib/brand";
 import type { computeStats } from "@/lib/stats";
 
@@ -8,7 +7,7 @@ async function loadTicketPhoto(): Promise<HTMLImageElement | null> {
   if (ticketPhoto && ticketPhoto.naturalWidth > 10) return ticketPhoto;
   if (typeof Image === "undefined") return null;
   const img = new Image();
-  img.src = SHARE_TICKET_BG;
+  img.src = "/hero.jpg";
   try {
     if (typeof img.decode === "function") await img.decode();
     else {
@@ -99,16 +98,13 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
 
   ctx.fillStyle = "#100c09";
   ctx.fillRect(0, 0, 1080, 1350);
-  paintStage(ctx);
   if (ticketPhoto && ticketPhoto.naturalWidth > 10) {
-    coverPhoto(ctx, ticketPhoto, 0, 0, 1080, 620);
+    coverPhoto(ctx, ticketPhoto, 0, 0, 1080, 1350);
+  } else {
+    paintStage(ctx);
   }
-
-  const fade = ctx.createLinearGradient(0, 360, 0, 680);
-  fade.addColorStop(0, "rgba(16,12,9,0)");
-  fade.addColorStop(1, "#100c09");
-  ctx.fillStyle = fade;
-  ctx.fillRect(0, 360, 1080, 320);
+  ctx.fillStyle = "rgba(10,8,6,0.55)";
+  ctx.fillRect(0, 0, 1080, 1350);
 
   ctx.strokeStyle = "#c4a574";
   ctx.lineWidth = 3;

@@ -12,7 +12,7 @@ import { pageLabel } from "@/lib/i18n-pages";
 type Mode = "sign-in" | "sign-up" | "forgot";
 
 const HERO =
-  "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=70";
+  "/hero.jpg";
 
 const WRONG_LOGIN: Record<string, string> = {
   en: "Email or password is incorrect.",
