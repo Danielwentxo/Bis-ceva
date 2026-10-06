@@ -13,6 +13,7 @@ async function sendAppEmail(params: {
   to: string;
   subject: string;
   html: string;
+  text: string;
   logLine: string;
 }): Promise<void> {
   const apiKey = env("RESEND_API_KEY");
@@ -30,10 +31,12 @@ async function sendAppEmail(params: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from,
+      from: from.includes("<") ? from : `My Gig History <${from}>`,
       to: params.to,
       subject: params.subject,
       html: params.html,
+      text: params.text,
+      reply_to: "info@mygighistory.com",
     }),
   });
 
@@ -75,6 +78,7 @@ export async function sendResetPasswordEmail(params: {
       params.resetUrl,
       "Reset password",
     ),
+    text: `${greeting} We received a request to reset your My Gig History password. Open this link: ${params.resetUrl}`,
     logLine: `[auth] Password reset for ${params.to}: ${params.resetUrl}`,
   });
 }
@@ -89,6 +93,7 @@ export async function sendVerificationEmail(params: {
     to: params.to,
     subject: "Confirm your My Gig History email",
     html: wrap(greeting, "Confirm this email to finish creating your account.", params.url, "Confirm email"),
+    text: `${greeting} Confirm your My Gig History email: ${params.url}`,
     logLine: `[auth] Verify email for ${params.to}: ${params.url}`,
   });
 }
