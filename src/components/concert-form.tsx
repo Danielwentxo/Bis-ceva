@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { ArtistLineupEditor } from "@/components/artist-lineup-editor";
 import { ArtistMark } from "@/components/artist-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -366,24 +367,7 @@ export function ConcertForm({
         <Label htmlFor="artist-search">{t("artists")}</Label>
         <p className="text-xs text-subtle">{t("artistsHint")}</p>
         {form.artists.length ? (
-          <ul className="space-y-2">
-            {form.artists.map((a, i) => (
-              <li key={artistKey(a.name, a.country)} className="flex items-center gap-3 rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">
-                <ArtistMark artist={a} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {i === 0 ? t("headliner") : t("support")}
-                    {a.country ? ` · ${a.country}` : ""}
-                    {a.genre ? ` · ${a.genre}` : ""}
-                  </p>
-                </div>
-                <button type="button" className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground" onClick={() => removeArtist(a.name)}>
-                  <X className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <ArtistLineupEditor artists={form.artists} onChange={(artists) => setForm((f) => ({ ...f, artists }))} />
         ) : null}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
