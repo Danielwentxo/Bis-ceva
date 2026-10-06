@@ -111,18 +111,6 @@ export const useArchive = create<ArchiveState>()(
         set({ syncing: true, syncError: null });
         try {
           const data = await loadArchive();
-          void (async () => {
-            try {
-              for (let i = 0; i < 20; i += 1) {
-                const step = await migrateStoredPosters();
-                if (!step.left) break;
-              }
-              const next = await loadArchive();
-              set({ concerts: next.concerts, artists: next.artists });
-            } catch {
-              // list already loaded; poster move can wait
-            }
-          })();
           set({
             concerts: data.concerts,
             artists: data.artists,

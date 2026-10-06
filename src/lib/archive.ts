@@ -217,18 +217,7 @@ export const loadArchive = createServerFn({ method: "POST" })
     `;
     const artists: Record<string, Artist> = {};
     for (const row of artistRows) artists[row.id] = rowToArtist(row);
-    const concerts = concertRows.map(rowToConcert);
-    try {
-      await mergeSameBand(context.userId, Object.values(artists), concerts);
-      for (const id of Object.keys(artists)) {
-        const name = artists[id].name.trim().toLowerCase();
-        const twin = Object.values(artists).find((artist) => artist.id !== id && artist.name.trim().toLowerCase() === name && sameBand(artist, artists[id]) && (artist.country || artist.logoUrl));
-        if (twin && !artists[id].country && !artists[id].logoUrl) delete artists[id];
-      }
-    } catch {
-      // list still returns; merge retries next login
-    }
-    return { concerts, artists };
+    return { concerts: concertRows.map(rowToConcert), artists };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
