@@ -1,3 +1,4 @@
+import { allowRequest } from "@/lib/rate-limit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
