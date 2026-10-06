@@ -8,7 +8,7 @@ const COPY: Record<string, { title: string; lead: string; a: string; b: string; 
     title: "Start your gig book",
     lead: "Keep every concert and festival in one private list.",
     a: "Add a concert or a multi-day festival",
-    b: "Import a CSV or JSON list you already have",
+    b: "Import a list you already have",
     c: "See stats and share a card",
     free: "Free. Email or Google. No App Store required.",
   },
@@ -30,8 +30,7 @@ const COPY: Record<string, { title: string; lead: string; a: string; b: string; 
   },
 };
 
-const HERO =
-  "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=70";
+const HERO = "/hero.jpg";
 
 export function LandingHome() {
   const { locale } = useI18n();
