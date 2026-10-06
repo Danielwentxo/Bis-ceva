@@ -147,65 +147,56 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
     ctx.fillRect(0, 0, w, h);
   }
 
-  const cx = w * 0.58;
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#f4f1ea";
-  ctx.font = `bold ${Math.round(w * 0.085)}px Impact, Arial Black, sans-serif`;
-  ctx.fillText("My year", cx, h * 0.16);
-  ctx.fillText("in shows", cx, h * 0.23);
-
-  ctx.fillStyle = "#e23b3b";
-  ctx.font = `bold ${Math.round(w * 0.028)}px Arial, Helvetica, sans-serif`;
-  ctx.fillText("TOP 3 ARTISTS", cx, h * 0.29);
-
-  const top = (stats.artistCounts ?? []).slice(0, 3);
-  ctx.fillStyle = "#f4f1ea";
-  top.forEach((row, i) => {
-    const max = w * 0.48;
-    let size = Math.round(w * 0.062);
-    ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
-    while (size > 18 && ctx.measureText(row.data.name).width > max) {
-      size -= 2;
-      ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
-    }
-    ctx.fillText(row.data.name, cx, h * 0.35 + i * h * 0.05);
-  });
-
   ctx.save();
-  ctx.translate(w * 0.055, h * 0.78);
+  ctx.translate(w * 0.07, h * 0.7);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = "#111111";
-  ctx.font = `bold ${Math.round(w * 0.032)}px Arial, Helvetica, sans-serif`;
+  ctx.font = `bold ${Math.round(w * 0.034)}px Arial, Helvetica, sans-serif`;
   ctx.textAlign = "center";
   ctx.fillText("mygighistory.com", 0, 0);
   ctx.restore();
 
-  ctx.fillStyle = "#6d1717";
-  ctx.fillRect(w * 0.2, h * 0.8, w * 0.74, h * 0.14);
-  const pills = [
-    [String(stats.totalShows ?? 0), "SHOWS", "ticket"],
-    [String(stats.uniqueCountries ?? 0), "COUNTRIES", "globe"],
-    [String(stats.uniqueVenues ?? 0), "VENUES", "pin"],
-    [String(stats.uniqueArtists ?? 0), "BANDS", "pick"],
-  ] as const;
-  pills.forEach((pill, i) => {
-    const x = w * (0.3 + i * 0.16);
-    drawMark(ctx, pill[2], x, h * 0.9);
-    ctx.fillStyle = "#f4f1ea";
-    ctx.font = `bold ${Math.round(w * 0.055)}px Impact, Arial Black, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(pill[0], x, h * 0.855);
-    ctx.fillStyle = "#f4f1ea";
-    ctx.font = `bold ${Math.round(w * 0.018)}px Arial, Helvetica, sans-serif`;
-    ctx.fillText(pill[1], x, h * 0.925);
-    if (i < 3) {
-      ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x + w * 0.08, h * 0.83);
-      ctx.lineTo(x + w * 0.08, h * 0.93);
-      ctx.stroke();
+  const cx = w * 0.58;
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#f4f1ea";
+  ctx.font = `bold ${Math.round(w * 0.055)}px Arial, Helvetica, sans-serif`;
+  ctx.fillText("MY GIG HISTORY", cx, h * 0.1);
+  ctx.strokeStyle = "#f4f1ea";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.32, h * 0.125);
+  ctx.lineTo(w * 0.84, h * 0.125);
+  ctx.stroke();
+  ctx.fillStyle = "#f4f1ea";
+  ctx.font = `bold ${Math.round(w * 0.03)}px Arial, Helvetica, sans-serif`;
+  ctx.fillText("TOP ARTISTS", cx, h * 0.16);
+
+  const top = (stats.artistCounts ?? []).slice(0, 3);
+  ctx.fillStyle = "#f4f1ea";
+  top.forEach((row, i) => {
+    const max = w * 0.5;
+    let size = Math.round(w * 0.07);
+    ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
+    while (size > 16 && ctx.measureText(row.data.name).width > max) {
+      size -= 2;
+      ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
     }
+    ctx.fillText(row.data.name, cx, h * 0.23 + i * h * 0.055);
+  });
+
+  const pills = [
+    [String(stats.uniqueCountries ?? 0), "COUNTRIES"],
+    [String(stats.uniqueVenues ?? 0), "VENUES"],
+    [String(stats.totalShows ?? 0), "SHOWS"],
+    [String(stats.uniqueArtists ?? 0), "BANDS"],
+  ];
+  pills.forEach((pill, i) => {
+    const x = w * (0.36 + i * 0.15);
+    ctx.fillStyle = "#f4f1ea";
+    ctx.font = `bold ${Math.round(w * 0.04)}px Arial, Helvetica, sans-serif`;
+    ctx.fillText(pill[0], x, h * 0.955);
+    ctx.font = `bold ${Math.round(w * 0.016)}px Arial, Helvetica, sans-serif`;
+    ctx.fillText(pill[1], x, h * 0.975);
   });
   return canvas;
 }
