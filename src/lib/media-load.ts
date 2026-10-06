@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { storePoster } from "@/lib/poster-store";
 
 function keepRemote(url: string | null | undefined) {
   if (!url) return null;
@@ -23,7 +24,17 @@ export const loadConcertPoster = createServerFn({ method: "POST" })
       where user_id = ${context.userId} and id = ${data.id}
       limit 1
     `;
-    return rows[0]?.festival_poster_url ?? null;
+    const current = rows[0]?.festival_poster_url ?? null;
+    if (!current || !current.startsWith("data:")) return current;
+    const stored = await storePoster(current, data.id);
+    if (stored && stored.startsWith("https://")) {
+      await sql`
+        update concerts set festival_poster_url = ${stored}
+        where user_id = ${context.userId} and id = ${data.id}
+      `;
+      return stored;
+    }
+    return current;
   });
 
 export const loadArtistImage = createServerFn({ method: "POST" })
