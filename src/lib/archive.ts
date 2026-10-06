@@ -161,6 +161,40 @@ export const migrateStoredPosters = createServerFn({ method: "POST" })
     return { moved, left: left[0]?.n ?? 0 };
   });
 
+
+function sameBand(a: Artist, b: Artist) {
+  if (a.name.trim().toLowerCase() !== b.name.trim().toLowerCase()) return false;
+  const ac = a.country?.trim().toLowerCase() ?? "";
+  const bc = b.country?.trim().toLowerCase() ?? "";
+  return !ac || !bc || ac === bc;
+}
+
+async function mergeSameBand(userId: string, artists: Artist[]) {
+  const sql = await getSql();
+  const groups = new Map<string, Artist[]>();
+  for (const artist of artists) {
+    const key = artist.name.trim().toLowerCase();
+    groups.set(key, [...(groups.get(key) ?? []), artist]);
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2 || !group.every((artist, index) => index === 0 || sameBand(group[0], artist))) continue;
+    const keep = group.find((artist) => artist.country) ?? group.find((artist) => artist.logoUrl) ?? group[0];
+    for (const extra of group) {
+      if (extra.id === keep.id) continue;
+      const rows = await sql<{ id: string; lineup: LineupEntry[] | string }>`
+        select id, lineup from concerts where user_id = ${userId}
+      `;
+      for (const row of rows) {
+        const lineup = parseLineup(row.lineup);
+        if (!lineup.some((slot) => slot.artistId === extra.id)) continue;
+        const next = lineup.map((slot) => slot.artistId === extra.id ? { ...slot, artistId: keep.id } : slot);
+        await sql`update concerts set lineup = ${JSON.stringify(next)}::jsonb where user_id = ${userId} and id = ${row.id}`;
+      }
+      await sql`delete from artists where user_id = ${userId} and id = ${extra.id}`;
+    }
+  }
+}
+
 export const loadArchive = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
@@ -180,7 +214,23 @@ export const loadArchive = createServerFn({ method: "POST" })
     `;
     const artists: Record<string, Artist> = {};
     for (const row of artistRows) artists[row.id] = rowToArtist(row);
-    return { concerts: concertRows.map(rowToConcert), artists };
+    await mergeSameBand(context.userId, Object.values(artists));
+    const concertRows2 = await sql<ConcertRow>`
+      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name,
+        case when festival_poster_url like 'https://%' then festival_poster_url else null end as festival_poster_url,
+        created_at
+      from concerts where user_id = ${context.userId} order by date desc
+    `;
+    const artistRows2 = await sql<ArtistRow>`
+      select id, name,
+        case when logo_url like 'data:%' then null else logo_url end as logo_url,
+        case when thumb_url like 'data:%' then null else thumb_url end as thumb_url,
+        genre, country, bio, fetched_at
+      from artists where user_id = ${context.userId}
+    `;
+    const artists2: Record<string, Artist> = {};
+    for (const row of artistRows2) artists2[row.id] = rowToArtist(row);
+    return { concerts: concertRows2.map(rowToConcert), artists: artists2 };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
