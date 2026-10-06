@@ -6,6 +6,7 @@ import { artistKey } from "./utils";
 import { authEnabled } from "@/lib/auth/enabled";
 import {
   loadArchive,
+  migrateStoredPosters,
   upsertConcert,
   patchFestivalShared,
   removeConcert,
@@ -109,6 +110,10 @@ export const useArchive = create<ArchiveState>()(
         }
         set({ syncing: true, syncError: null });
         try {
+          for (let i = 0; i < 20; i += 1) {
+            const step = await migrateStoredPosters();
+            if (!step.left) break;
+          }
           const data = await loadArchive();
           set({
             concerts: data.concerts,

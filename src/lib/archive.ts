@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { assertImageDataUrl } from "@/lib/image-data";
 import { listSafeImage } from "@/lib/media-load";
+import { storePoster } from "@/lib/poster-store";
 import type { Artist, Concert, LineupEntry } from "@/lib/types";
 import { artistKey } from "@/lib/utils";
 
@@ -134,6 +135,31 @@ async function upsertArtistsForUser(userId: string, artists: z.infer<typeof arti
     `;
   }
 }
+
+
+export const migrateStoredPosters = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { moved: 0, left: 0 };
+    const sql = await getSql();
+    const rows = await sql<{ id: string; festival_poster_url: string }>`
+      select id, festival_poster_url from concerts
+      where user_id = ${context.userId} and festival_poster_url like 'data:%'
+      limit 8
+    `;
+    let moved = 0;
+    for (const row of rows) {
+      const stored = await storePoster(row.festival_poster_url, row.id);
+      if (!stored || !stored.startsWith("https://")) continue;
+      await sql`update concerts set festival_poster_url = ${stored} where user_id = ${context.userId} and id = ${row.id}`;
+      moved += 1;
+    }
+    const left = await sql<{ n: number }>`
+      select count(*)::int as n from concerts
+      where user_id = ${context.userId} and festival_poster_url like 'data:%'
+    `;
+    return { moved, left: left[0]?.n ?? 0 };
+  });
 
 export const loadArchive = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
