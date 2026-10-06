@@ -24,8 +24,8 @@ const WRONG_LOGIN: Record<string, string> = {
   pt: "O e-mail ou a senha estao incorretos.",
   it: "Email o password non corretti.",
   pl: "E-mail lub haslo jest niepoprawne.",
-  ja: "Email or password is incorrect.",
-  ar: "Email or password is incorrect.",
+  ja: "メールアドレスかパスワードが違います。",
+  ar: "البريد أو كلمة المرور غير صحيحة.",
 };
 
 const CONFIRM_LABEL: Record<string, string> = {
@@ -38,8 +38,8 @@ const CONFIRM_LABEL: Record<string, string> = {
   pt: "Confirmar senha",
   it: "Conferma password",
   pl: "Potwierdz haslo",
-  ja: "Confirm password",
-  ar: "Confirm password",
+  ja: "パスワードを確認",
+  ar: "تأكيد كلمة المرور",
 };
 
 const MISMATCH: Record<string, string> = {
@@ -52,8 +52,8 @@ const MISMATCH: Record<string, string> = {
   pt: "As senhas nao coincidem.",
   it: "Le password non coincidono.",
   pl: "Hasla nie sa takie same.",
-  ja: "Passwords do not match.",
-  ar: "Passwords do not match.",
+  ja: "パスワードが一致しません。",
+  ar: "كلمتا المرور غير متطابقتين.",
 };
 
 function isWrongLogin(message: string) {
