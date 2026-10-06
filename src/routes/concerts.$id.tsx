@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Pencil, Star, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatConcertDate } from "@/lib/format";
 import { extraLabel } from "@/lib/i18n-extras";
 import { useI18n } from "@/lib/i18n";
+import { loadConcertPoster } from "@/lib/media-load";
 import { concertArtists } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 
@@ -25,6 +27,20 @@ function ConcertDetail() {
   const deleteConcert = useArchive((s) => s.deleteConcert);
   const toggleFavorite = useArchive((s) => s.toggleFavorite);
   const concert = concerts.find((c) => c.id === id);
+  const [poster, setPoster] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    setPoster(null);
+    void loadConcertPoster({ data: { id } })
+      .then((url) => {
+        if (!cancel) setPoster(url);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, [id]);
 
   if (!concert) {
     return (
@@ -52,9 +68,9 @@ function ConcertDetail() {
         </Button>
       </div>
       <div className="flex flex-col items-center text-center">
-        {concert.festivalPosterUrl ? (
+        {poster ? (
           <div className="mb-5 flex h-80 w-full max-w-sm items-center justify-center overflow-hidden rounded-2xl bg-secondary shadow-[var(--shadow-border)]">
-            <img src={concert.festivalPosterUrl} alt="" className="max-h-full max-w-full object-contain" />
+            <img src={poster} alt="" className="max-h-full max-w-full object-contain" />
           </div>
         ) : (
           <ArtistMark artist={headliner} size="hero" />
