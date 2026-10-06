@@ -88,6 +88,7 @@ export type ArchiveStats = {
   countryCounts: CountItem<{ country: string; countryCode: string }>[];
   artistOriginCounts: CountItem<{ country: string }>[];
   genreCounts: CountItem<{ genre: string }>[];
+  festivalCounts: CountItem<{ name: string; city: string }>[];
   yearCounts: { year: number; count: number }[];
   monthCounts: { month: number; count: number }[];
 };
@@ -167,6 +168,20 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
     }
   }
 
+  const festivalMap = new Map<string, CountItem<{ name: string; city: string }>>();
+  const festivalYears = new Map<string, Set<string>>();
+  for (const c of concerts) {
+    const name = c.festivalName?.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    const year = c.date.slice(0, 4);
+    const years = festivalYears.get(key) ?? new Set<string>();
+    years.add(year);
+    festivalYears.set(key, years);
+    const prev = festivalMap.get(key);
+    festivalMap.set(key, { key, count: years.size, data: { name, city: prev?.data.city || c.city } });
+  }
+
   const sortCount = <T>(items: CountItem<T>[]) =>
     [...items].sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 
@@ -205,6 +220,7 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
     countryCounts: sortCount([...countryMap.values()]),
     artistOriginCounts: sortCount([...originMap.values()]),
     genreCounts: sortCount([...genreMap.values()]),
+    festivalCounts: sortCount([...festivalMap.values()]),
     yearCounts,
     monthCounts,
   };

@@ -80,6 +80,7 @@ function StatsPage() {
   const topArtists = stats.artistCounts.slice(0, 3);
   const topCountries = stats.countryCounts.slice(0, 8);
   const topVenues = stats.venueCounts.slice(0, 8);
+  const topFestivals = stats.festivalCounts.slice(0, 8);
   const topOrigins = stats.artistOriginCounts.slice(0, 8);
   const topGenres = stats.genreCounts.slice(0, 8);
 
@@ -200,6 +201,29 @@ function StatsPage() {
                     <span className="mt-1 block truncate pl-7 text-xs text-muted-foreground">
                       {row.data.city}, {row.data.country}
                     </span>
+                  </span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+
+      {topFestivals.length ? (
+        <section className="mt-8">
+          <h2 className="mb-3 font-display text-xl font-medium">{extraLabel(locale, "topFestivals")}</h2>
+          <ul className="space-y-2">
+            {topFestivals.map((row, index) => (
+              <li key={row.key}>
+                <Link to="/" search={{ q: row.data.name, from: "stats" }} className="flex items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      <span className="w-5 text-subtle">{index + 1}</span>
+                      {row.data.name}
+                    </span>
+                    <span className="mt-1 block truncate pl-7 text-xs text-muted-foreground">{row.data.city}</span>
                   </span>
                   <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
                 </Link>
