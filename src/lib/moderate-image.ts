@@ -59,19 +59,8 @@ export const moderateImage = createServerFn({ method: "POST" })
     }
 
     const explicit =
-      num(json.nudity?.sexual_activity) > 0.35 ||
-      num(json.nudity?.sexual_display) > 0.35 ||
-      num(json.nudity?.erotica) > 0.45 ||
-      num(json.nudity?.very_suggestive) > 0.7;
-    const gore = num(json.gore?.prob) > 0.5;
-    const offensive = num(json.offensive?.prob) > 0.6;
-    const weapon =
-      typeof json.weapon === "number"
-        ? json.weapon > 0.6
-        : Object.values(json.weapon?.classes ?? {}).some((v) => num(v) > 0.7);
-
-    if (explicit || gore || offensive || weapon) {
-      return { ok: false, reason: "blocked" };
-    }
+      num(json.nudity?.sexual_activity) > 0.5 ||
+      num(json.nudity?.sexual_display) > 0.5;
+    if (explicit) return { ok: false, reason: "blocked" };
     return { ok: true };
   });
