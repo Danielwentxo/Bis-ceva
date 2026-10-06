@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ConcertForm } from "@/components/concert-form";
 import { festivalKey } from "@/components/festival-group-card";
 import { useI18n } from "@/lib/i18n";
+import { loadConcertPoster } from "@/lib/media-load";
 import { useArchive } from "@/lib/store";
 
 type AddSearch = {
@@ -43,6 +45,31 @@ function AddPage() {
         : presetDay
           ? "day"
           : "full";
+  const [posterReady, setPosterReady] = useState(!id);
+  const [poster, setPoster] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setPosterReady(true);
+      return;
+    }
+    let cancel = false;
+    setPosterReady(false);
+    void loadConcertPoster({ data: { id } })
+      .then((url) => {
+        if (cancel) return;
+        setPoster(url);
+        setPosterReady(true);
+      })
+      .catch(() => {
+        if (!cancel) setPosterReady(true);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [id]);
+
+  const existingWithPoster = existing ? { ...existing, festivalPosterUrl: poster } : undefined;
 
   return (
     <AppShell>
@@ -54,23 +81,26 @@ function AddPage() {
           {mode === "festival" ? t("festivalBadge") : existing ? t("editConcert") : t("addConcert")}
         </h1>
       </header>
-      <ConcertForm
-        existing={existing}
-        mode={mode}
-        presetDay={presetDay}
-        presetArtist={
-          preset
-            ? {
-                name: preset.name,
-                logoUrl: preset.logoUrl,
-                thumbUrl: preset.thumbUrl,
-                genre: preset.genre,
-                country: preset.country,
-                bio: preset.bio,
-              }
-            : null
-        }
-      />
+      {posterReady ? (
+        <ConcertForm
+          key={id ?? "new"}
+          existing={existingWithPoster}
+          mode={mode}
+          presetDay={presetDay}
+          presetArtist={
+            preset
+              ? {
+                  name: preset.name,
+                  logoUrl: preset.logoUrl,
+                  thumbUrl: preset.thumbUrl,
+                  genre: preset.genre,
+                  country: preset.country,
+                  bio: preset.bio,
+                }
+              : null
+          }
+        />
+      ) : null}
     </AppShell>
   );
 }
