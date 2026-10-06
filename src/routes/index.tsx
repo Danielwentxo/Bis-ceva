@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ConcertCard } from "@/components/concert-card";
 import { FestivalGroupCard, festivalKey } from "@/components/festival-group-card";
@@ -125,6 +125,15 @@ function Home() {
     list.push(c);
     groups.set(y, list);
   }
+
+  useEffect(() => {
+    if (!hasHydrated || !concerts.length) return;
+    const saved = sessionStorage.getItem("list-scroll");
+    if (saved) window.scrollTo(0, Number(saved) || 0);
+    const onScroll = () => sessionStorage.setItem("list-scroll", String(window.scrollY));
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hasHydrated, concerts.length]);
 
   return (
     <AppShell>
