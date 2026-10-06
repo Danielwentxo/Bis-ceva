@@ -22,8 +22,6 @@ export const Route = createFileRoute("/stats")({ component: StatsPage });
 
 async function confirmDeleteAccount(locale: string) {
   if (!window.confirm(extraLabel(locale, "deleteAccountConfirm"))) return;
-  const typed = window.prompt("Type DELETE to confirm");
-  if (typed !== "DELETE") return;
   try {
     await useArchive.getState().deleteAccount();
     await signOut("/");

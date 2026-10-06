@@ -25,12 +25,3 @@ export async function storePoster(value: string | null | undefined, concertId: s
   }
   return publicUrl(path);
 }
-
-export async function removePoster(concertId: string): Promise<void> {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) return;
-  await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${concertId}.jpg`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${key}` },
-  });
-}
