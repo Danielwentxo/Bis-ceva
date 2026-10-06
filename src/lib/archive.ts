@@ -217,7 +217,7 @@ export const loadArchive = createServerFn({ method: "POST" })
     `;
     const artists: Record<string, Artist> = {};
     for (const row of artistRows) artists[row.id] = rowToArtist(row);
-    return { concerts: concertRows.map(rowToConcert), artists };
+    return { concerts: concertRows.filter((row) => row.user_id === context.userId).map(rowToConcert), artists };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
