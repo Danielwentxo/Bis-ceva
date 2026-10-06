@@ -135,8 +135,8 @@ function drawMark(ctx: CanvasRenderingContext2D, kind: "ticket" | "globe" | "pin
 export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   const photo = ticketPhoto && ticketPhoto.naturalWidth > 10 ? ticketPhoto : null;
-  canvas.width = photo?.naturalWidth || 1080;
-  canvas.height = photo?.naturalHeight || 1620;
+  canvas.width = photo?.naturalWidth || 1152;
+  canvas.height = photo?.naturalHeight || 1712;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not draw stats.");
   const w = canvas.width;
@@ -146,21 +146,23 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
     ctx.fillStyle = "#2a0c0c";
     ctx.fillRect(0, 0, w, h);
   }
+  const ink = "#f0c2b0";
   const cx = w * 0.58;
   ctx.textAlign = "center";
-  ctx.fillStyle = "#f4f1ea";
-  ctx.font = `bold ${Math.round(w * 0.03)}px Arial, Helvetica, sans-serif`;
+  ctx.fillStyle = ink;
+  ctx.font = `bold ${Math.round(w * 0.032)}px Impact, Arial Black, sans-serif`;
   ctx.fillText("TOP ARTISTS", cx, h * 0.2);
   const top = (stats.artistCounts ?? []).slice(0, 3);
   top.forEach((row, i) => {
-    const max = w * 0.5;
-    let size = Math.round(w * 0.055);
-    ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
-    while (size > 16 && ctx.measureText(row.data.name).width > max) {
+    const max = w * 0.46;
+    let size = Math.round(w * 0.07);
+    ctx.font = `bold ${size}px Impact, Arial Black, sans-serif`;
+    while (size > 18 && ctx.measureText(row.data.name).width > max) {
       size -= 2;
-      ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
+      ctx.font = `bold ${size}px Impact, Arial Black, sans-serif`;
     }
-    ctx.fillText(row.data.name, cx, h * 0.26 + i * h * 0.045);
+    ctx.fillStyle = ink;
+    ctx.fillText(row.data.name, cx, h * 0.27 + i * h * 0.05);
   });
   const pills = [
     [String(stats.totalShows ?? 0), "SHOWS"],
@@ -168,13 +170,14 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
     [String(stats.uniqueVenues ?? 0), "VENUES"],
     [String(stats.uniqueArtists ?? 0), "BANDS"],
   ];
+  const slots = [0.342, 0.5, 0.683, 0.846];
   pills.forEach((pill, i) => {
-    const x = w * (0.36 + i * 0.15);
-    ctx.fillStyle = "#f4f1ea";
-    ctx.font = `bold ${Math.round(w * 0.05)}px Arial, Helvetica, sans-serif`;
+    const x = w * slots[i];
+    ctx.fillStyle = ink;
+    ctx.font = `bold ${Math.round(w * 0.055)}px Impact, Arial Black, sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText(pill[0], x, h * 0.9);
-    ctx.font = `bold ${Math.round(w * 0.018)}px Arial, Helvetica, sans-serif`;
+    ctx.font = `bold ${Math.round(w * 0.02)}px Impact, Arial Black, sans-serif`;
     ctx.fillText(pill[1], x, h * 0.93);
   });
   return canvas;
