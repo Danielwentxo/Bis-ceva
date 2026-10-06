@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronDown, ChevronUp, GripVertical, MapPin, Pencil, Star, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil, Star, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ArtistMark } from "@/components/artist-mark";
@@ -25,7 +25,6 @@ function ConcertDetail() {
   const concerts = useArchive((s) => s.concerts);
   const artists = useArchive((s) => s.artists);
   const deleteConcert = useArchive((s) => s.deleteConcert);
-  const updateConcert = useArchive((s) => s.updateConcert);
   const toggleFavorite = useArchive((s) => s.toggleFavorite);
   const concert = concerts.find((c) => c.id === id);
   const [poster, setPoster] = useState<string | null>(null);
@@ -57,30 +56,6 @@ function ConcertDetail() {
   const lineup = concertArtists(concert, artists);
   const headliner = lineup[0]?.artist;
   const festivalName = concert.festivalName?.trim() ?? "";
-
-
-  async function reorder(from: number, to: number) {
-    if (!concert || to < 0 || to >= lineup.length || from === to) return;
-    const next = [...lineup];
-    const [item] = next.splice(from, 1);
-    if (!item) return;
-    next.splice(to, 0, item);
-    await updateConcert(concert.id, {
-      date: concert.date,
-      venue: concert.venue,
-      city: concert.city,
-      country: concert.country,
-      countryCode: concert.countryCode,
-      artists: next.map((slot) => slot.artist),
-      notes: concert.notes,
-      rating: concert.rating,
-      favorite: concert.favorite,
-      festival: concert.festival,
-      festivalName: concert.festivalName,
-      festivalPosterUrl: concert.festivalPosterUrl,
-      ticketUrl: concert.ticketUrl,
-    });
-  }
 
   return (
     <AppShell>
@@ -127,36 +102,16 @@ function ConcertDetail() {
         <section className="mt-10">
           <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-subtle">{t("lineup")}</h2>
           <ul className="space-y-2">
-            {lineup.map((slot, index) => (
-              <li
-                key={slot.artistId}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", String(index));
-                  e.dataTransfer.effectAllowed = "move";
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const from = Number(e.dataTransfer.getData("text/plain"));
-                  if (Number.isFinite(from)) void reorder(from, index);
-                }}
-                className="flex items-center gap-2 rounded-xl bg-card px-2 py-2 shadow-[var(--shadow-border)]"
-              >
-                <GripVertical className="size-4 shrink-0 text-subtle" />
-                <Link to="/artists/$slug" params={{ slug: slot.artist.id }} className="flex min-w-0 flex-1 items-center gap-3">
+            {lineup.map((slot) => (
+              <li key={slot.artistId}>
+                <Link
+                  to="/artists/$slug"
+                  params={{ slug: slot.artist.id }}
+                  className="flex items-center gap-3 rounded-xl bg-card px-3 py-2.5 shadow-[var(--shadow-border)]"
+                >
                   <ArtistMark artist={slot.artist} size="sm" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{slot.artist.name}</span>
                 </Link>
-                <button type="button" className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary" onClick={() => void reorder(index, index - 1)} aria-label="Move up">
-                  <ChevronUp className="size-4" />
-                </button>
-                <button type="button" className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary" onClick={() => void reorder(index, index + 1)} aria-label="Move down">
-                  <ChevronDown className="size-4" />
-                </button>
               </li>
             ))}
           </ul>
