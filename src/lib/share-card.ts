@@ -172,30 +172,40 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   });
 
   ctx.save();
-  ctx.translate(w * 0.075, h * 0.62);
+  ctx.translate(w * 0.055, h * 0.78);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = "#111111";
-  ctx.font = `bold ${Math.round(w * 0.028)}px Arial, Helvetica, sans-serif`;
+  ctx.font = `bold ${Math.round(w * 0.032)}px Arial, Helvetica, sans-serif`;
   ctx.textAlign = "center";
   ctx.fillText("mygighistory.com", 0, 0);
   ctx.restore();
 
+  ctx.fillStyle = "#6d1717";
+  ctx.fillRect(w * 0.2, h * 0.8, w * 0.74, h * 0.14);
   const pills = [
-    String(stats.totalShows ?? 0),
-    String(stats.uniqueCountries ?? 0),
-    String(stats.uniqueVenues ?? 0),
-    String(stats.uniqueArtists ?? 0),
-  ];
-  const labels = ["SHOWS", "COUNTRIES", "VENUES", "BANDS"];
-  ctx.font = `bold ${Math.round(w * 0.07)}px Impact, Arial Black, sans-serif`;
-  pills.forEach((value, i) => {
-    const x = w * (0.34 + i * 0.155);
+    [String(stats.totalShows ?? 0), "SHOWS", "ticket"],
+    [String(stats.uniqueCountries ?? 0), "COUNTRIES", "globe"],
+    [String(stats.uniqueVenues ?? 0), "VENUES", "pin"],
+    [String(stats.uniqueArtists ?? 0), "BANDS", "pick"],
+  ] as const;
+  pills.forEach((pill, i) => {
+    const x = w * (0.3 + i * 0.16);
+    drawMark(ctx, pill[2], x, h * 0.9);
     ctx.fillStyle = "#f4f1ea";
-    ctx.fillText(value, x, h * 0.86);
-    ctx.fillStyle = "#d7d1c8";
-    ctx.font = `bold ${Math.round(w * 0.02)}px Arial, Helvetica, sans-serif`;
-    ctx.fillText(labels[i], x, h * 0.885);
-    ctx.font = `bold ${Math.round(w * 0.07)}px Impact, Arial Black, sans-serif`;
+    ctx.font = `bold ${Math.round(w * 0.055)}px Impact, Arial Black, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(pill[0], x, h * 0.855);
+    ctx.fillStyle = "#f4f1ea";
+    ctx.font = `bold ${Math.round(w * 0.018)}px Arial, Helvetica, sans-serif`;
+    ctx.fillText(pill[1], x, h * 0.925);
+    if (i < 3) {
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.08, h * 0.83);
+      ctx.lineTo(x + w * 0.08, h * 0.93);
+      ctx.stroke();
+    }
   });
   return canvas;
 }
