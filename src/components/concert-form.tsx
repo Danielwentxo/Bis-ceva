@@ -247,7 +247,7 @@ export function ConcertForm({
       const poster = await resizeImageFile(file, 1200);
       const check = await moderateImage({ data: { dataUrl: poster } });
       if (!check.ok) {
-        setError(check.reason);
+        setError(check.reason === "blocked" ? extraLabel(locale, "imageBlocked") : check.reason);
         return;
       }
       setError(null);
@@ -263,7 +263,7 @@ export function ConcertForm({
       const logoUrl = await resizeImageFile(file);
       const check = await moderateImage({ data: { dataUrl: logoUrl } });
       if (!check.ok) {
-        setError(check.reason);
+        setError(check.reason === "blocked" ? extraLabel(locale, "imageBlocked") : check.reason);
         return;
       }
       setError(null);

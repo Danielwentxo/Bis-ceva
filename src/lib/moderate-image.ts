@@ -71,7 +71,7 @@ export const moderateImage = createServerFn({ method: "POST" })
         : Object.values(json.weapon?.classes ?? {}).some((v) => num(v) > 0.7);
 
     if (explicit || gore || offensive || weapon) {
-      return { ok: false, reason: "This image cannot be used as a logo." };
+      return { ok: false, reason: "blocked" };
     }
     return { ok: true };
   });
