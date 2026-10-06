@@ -4,7 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { assertImageDataUrl } from "@/lib/image-data";
 import { listSafeImage } from "@/lib/media-load";
-import { storePoster } from "@/lib/poster-store";
+import { removePoster, storePoster } from "@/lib/poster-store";
 import type { Artist, Concert, LineupEntry } from "@/lib/types";
 import { artistKey } from "@/lib/utils";
 
@@ -205,7 +205,7 @@ export const loadArchive = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
     const sql = await getSql();
     const concertRows = await sql<ConcertRow>`
-      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, created_at
+      select id, user_id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, created_at
       from concerts where user_id = ${context.userId} order by date desc
     `;
     const artistRows = await sql<ArtistRow>`
@@ -224,6 +224,9 @@ export const upsertConcert = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.object({ id: z.string().min(1).max(80).optional(), draft: draftSchema, createdAt: z.string().optional() }))
   .handler(async ({ data, context }) => {
+    if (!allowRequest(`save:${context.userId}`, 40, 10 * 60 * 1000)) {
+      throw new Error("Too many saves. Wait a few minutes and try the import again.");
+    }
     const sql = await getSql();
     const id = data.id ?? crypto.randomUUID();
     const createdAt = data.createdAt ?? new Date().toISOString();
@@ -331,8 +334,16 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    const posters = await sql<{ id: string }>`select id from concerts where user_id = ${context.userId}`;
     await sql`delete from concerts where user_id = ${context.userId}`;
     await sql`delete from artists where user_id = ${context.userId}`;
+    for (const row of posters) {
+      try {
+        await removePoster(row.id);
+      } catch {
+        // Poster cleanup must not keep the account.
+      }
+    }
     await sql`delete from "session" where "userId" = ${context.userId}`;
     await sql`delete from "account" where "userId" = ${context.userId}`;
     await sql`delete from "user" where "id" = ${context.userId}`;
