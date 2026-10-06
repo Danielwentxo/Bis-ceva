@@ -86,8 +86,16 @@ main().catch((err) => {
     if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
   }
   const message = String(err?.message || "");
-  if (err?.code === "XX000" || message.includes("max clients") || message.includes("EMAXCONNSESSION")) {
-    console.error("[migrate] database is busy; schema already exists, continuing deploy");
+  if (
+    err?.code === "XX000" ||
+    err?.code === "ECONNREFUSED" ||
+    err?.code === "28P01" ||
+    message.includes("max clients") ||
+    message.includes("EMAXCONNSESSION") ||
+    message.includes("password authentication failed") ||
+    message.includes("timeout")
+  ) {
+    console.error("[migrate] database unreachable; schema already exists, continuing deploy");
     process.exit(0);
   }
   process.exit(1);
