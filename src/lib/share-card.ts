@@ -92,73 +92,89 @@ function coverPhoto(
 export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
-  canvas.height = 1350;
+  canvas.height = 1620;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not draw stats.");
 
-  ctx.fillStyle = "#100c09";
-  ctx.fillRect(0, 0, 1080, 1350);
-  if (ticketPhoto && ticketPhoto.naturalWidth > 10) {
-    coverPhoto(ctx, ticketPhoto, 0, 0, 1080, 1350);
-  } else {
-    paintStage(ctx);
-  }
-  ctx.fillStyle = "rgba(10,8,6,0.55)";
-  ctx.fillRect(0, 0, 1080, 1350);
+  ctx.fillStyle = "#070605";
+  ctx.fillRect(0, 0, 1080, 1620);
+  if (ticketPhoto && ticketPhoto.naturalWidth > 10) coverPhoto(ctx, ticketPhoto, 0, 0, 1080, 1620);
+  else paintStage(ctx);
+  const shade = ctx.createLinearGradient(0, 0, 0, 1620);
+  shade.addColorStop(0, "rgba(0,0,0,0.35)");
+  shade.addColorStop(0.45, "rgba(0,0,0,0.25)");
+  shade.addColorStop(1, "rgba(0,0,0,0.82)");
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, 1080, 1620);
 
-  ctx.strokeStyle = "#c4a574";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(36, 36, 1008, 1278);
+  ctx.fillStyle = "#e7e1d6";
+  ctx.fillRect(0, 0, 92, 1620);
+  ctx.fillStyle = "#111";
+  for (let y = 18; y < 1600; y += 28) {
+    ctx.beginPath();
+    ctx.arc(0, y, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.save();
+  ctx.translate(46, 980);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = "#1a1a1a";
+  ctx.font = "bold 22px Arial, Helvetica, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(APP_NAME.toUpperCase(), 0, 0);
+  ctx.restore();
 
   ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "#f3e6d0";
+  ctx.fillStyle = "#e23b3b";
+  ctx.font = "bold 22px Arial, Helvetica, sans-serif";
+  ctx.fillText(APP_NAME.toUpperCase(), 580, 150);
+  ctx.strokeStyle = "#e23b3b";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(250, 142);
+  ctx.lineTo(390, 142);
+  ctx.moveTo(770, 142);
+  ctx.lineTo(910, 142);
+  ctx.stroke();
+
+  ctx.fillStyle = "#f4f1ea";
+  ctx.font = "bold 92px Arial, Helvetica, sans-serif";
+  ctx.fillText("My year", 580, 300);
+  ctx.fillText("in shows", 580, 400);
+
+  ctx.fillStyle = "#e23b3b";
   ctx.font = "bold 20px Arial, Helvetica, sans-serif";
-  ctx.fillText(APP_NAME.toUpperCase(), 540, 80);
-
-  ctx.fillStyle = "#f3e6d0";
-  ctx.font = "bold 150px Georgia, Times New Roman, serif";
-  ctx.fillText(String(stats.totalShows ?? 0), 540, 780);
-  ctx.fillStyle = "#c4a574";
-  ctx.font = "bold 26px Arial, Helvetica, sans-serif";
-  ctx.fillText("CONCERTS", 540, 824);
-
-  const pills = [
-    [String(stats.uniqueArtists ?? 0), "ARTISTS"],
-    [String(stats.uniqueVenues ?? 0), "VENUES"],
-    [String(stats.uniqueCountries ?? 0), "COUNTRIES"],
-  ];
-  pills.forEach((pill, i) => {
-    const cx = 220 + i * 320;
-    ctx.fillStyle = "#f3e6d0";
-    ctx.font = "bold 48px Georgia, Times New Roman, serif";
-    ctx.fillText(pill[0], cx, 920);
-    ctx.fillStyle = "#c4a574";
-    ctx.font = "bold 15px Arial, Helvetica, sans-serif";
-    ctx.fillText(pill[1], cx, 950);
-  });
-
-  ctx.fillStyle = "#c4a574";
-  ctx.font = "bold 15px Arial, Helvetica, sans-serif";
-  ctx.fillText("MOST SEEN", 540, 1020);
+  ctx.fillText("TOP 3 ARTISTS", 580, 490);
+  ctx.beginPath();
+  ctx.moveTo(250, 484);
+  ctx.lineTo(400, 484);
+  ctx.moveTo(760, 484);
+  ctx.lineTo(910, 484);
+  ctx.stroke();
 
   const top = (stats.artistCounts ?? []).slice(0, 3);
-  top.forEach((row, i) => {
-    const yy = 1070 + i * 52;
-    ctx.textAlign = "left";
-    ctx.fillStyle = "#f3e6d0";
-    ctx.font = "bold 28px Georgia, Times New Roman, serif";
-    ctx.fillText(`${i + 1}.  ${row.data.name}`, 120, yy);
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#c4a574";
-    ctx.font = "bold 24px Arial, Helvetica, sans-serif";
-    ctx.fillText(String(row.count), 960, yy);
-    ctx.textAlign = "center";
-  });
+  ctx.fillStyle = "#f4f1ea";
+  ctx.font = "bold 42px Arial, Helvetica, sans-serif";
+  top.forEach((row, i) => ctx.fillText(row.data.name, 580, 560 + i * 58));
 
-  ctx.fillStyle = "#c4a574";
-  ctx.font = "bold 16px Arial, Helvetica, sans-serif";
-  ctx.fillText(APP_DOMAIN.toUpperCase(), 540, 1278);
+  ctx.fillStyle = "rgba(0,0,0,0.78)";
+  ctx.fillRect(92, 1280, 988, 340);
+  const pills = [
+    [String(stats.totalShows ?? 0), "SHOWS"],
+    [String(stats.uniqueCountries ?? 0), "COUNTRIES"],
+    [String(stats.uniqueVenues ?? 0), "VENUES"],
+    [String(stats.uniqueArtists ?? 0), "BANDS"],
+  ];
+  pills.forEach((pill, i) => {
+    const cx = 210 + i * 230;
+    ctx.fillStyle = "#f4f1ea";
+    ctx.font = "bold 64px Arial, Helvetica, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(pill[0], cx, 1460);
+    ctx.fillStyle = "#b9b3aa";
+    ctx.font = "bold 18px Arial, Helvetica, sans-serif";
+    ctx.fillText(pill[1], cx, 1500);
+  });
   return canvas;
 }
 
