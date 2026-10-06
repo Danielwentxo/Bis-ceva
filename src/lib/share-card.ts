@@ -89,6 +89,49 @@ function coverPhoto(
   ctx.drawImage(photo, x + (w - iw * scale) / 2, y + (h - ih * scale) / 2, iw * scale, ih * scale);
 }
 
+
+function drawMark(ctx: CanvasRenderingContext2D, kind: "ticket" | "globe" | "pin" | "pick", x: number, y: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = "#e23b3b";
+  ctx.fillStyle = "#e23b3b";
+  ctx.lineWidth = 3;
+  if (kind === "ticket") {
+    ctx.strokeRect(-16, -12, 32, 22);
+    ctx.beginPath();
+    ctx.moveTo(-6, -12);
+    ctx.lineTo(-6, 10);
+    ctx.stroke();
+  } else if (kind === "globe") {
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6, 14, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-14, 0);
+    ctx.lineTo(14, 0);
+    ctx.stroke();
+  } else if (kind === "pin") {
+    ctx.beginPath();
+    ctx.arc(0, -4, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 4);
+    ctx.lineTo(0, 16);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, -14);
+    ctx.quadraticCurveTo(16, -6, 10, 8);
+    ctx.quadraticCurveTo(0, 16, -10, 8);
+    ctx.quadraticCurveTo(-16, -6, 0, -14);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
@@ -157,23 +200,32 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   ctx.font = "bold 46px Arial, Helvetica, sans-serif";
   top.forEach((row, i) => ctx.fillText(row.data.name, 580, 570 + i * 64));
 
-  ctx.fillStyle = "rgba(0,0,0,0.78)";
-  ctx.fillRect(92, 1280, 988, 340);
+  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  ctx.fillRect(92, 1260, 988, 360);
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  ctx.lineWidth = 2;
+  for (const x of [330, 560, 790]) {
+    ctx.beginPath();
+    ctx.moveTo(x, 1320);
+    ctx.lineTo(x, 1540);
+    ctx.stroke();
+  }
   const pills = [
-    [String(stats.totalShows ?? 0), "SHOWS"],
-    [String(stats.uniqueCountries ?? 0), "COUNTRIES"],
-    [String(stats.uniqueVenues ?? 0), "VENUES"],
-    [String(stats.uniqueArtists ?? 0), "BANDS"],
-  ];
+    [String(stats.totalShows ?? 0), "SHOWS", "ticket"],
+    [String(stats.uniqueCountries ?? 0), "COUNTRIES", "globe"],
+    [String(stats.uniqueVenues ?? 0), "VENUES", "pin"],
+    [String(stats.uniqueArtists ?? 0), "BANDS", "pick"],
+  ] as const;
   pills.forEach((pill, i) => {
     const cx = 210 + i * 230;
+    drawMark(ctx, pill[2], cx, 1348);
     ctx.fillStyle = "#f4f1ea";
     ctx.font = "bold 72px Impact, Arial Black, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(pill[0], cx, 1465);
     ctx.fillStyle = "#b9b3aa";
     ctx.font = "bold 18px Arial, Helvetica, sans-serif";
-    ctx.fillText(pill[1], cx, 1500);
+    ctx.fillText(pill[1], cx, 1504);
   });
   return canvas;
 }
