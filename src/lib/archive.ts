@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { assertImageDataUrl } from "@/lib/image-data";
+import { listSafeImage } from "@/lib/media-load";
 import type { Artist, Concert, LineupEntry } from "@/lib/types";
 import { artistKey } from "@/lib/utils";
 
@@ -86,8 +87,8 @@ function rowToConcert(row: ConcertRow): Concert {
     favorite: Boolean(row.favorite),
     festival: Boolean(row.festival) || Boolean(festivalName),
     festivalName,
-    festivalPosterUrl: row.festival_poster_url ?? null,
-    ticketUrl: row.ticket_url ?? null,
+    festivalPosterUrl: null,
+    ticketUrl: null,
     createdAt: created,
   };
 }
@@ -102,8 +103,8 @@ function rowToArtist(row: ArtistRow): Artist {
   return {
     id: row.id,
     name: row.name,
-    logoUrl: row.logo_url,
-    thumbUrl: row.thumb_url,
+    logoUrl: listSafeImage(row.logo_url),
+    thumbUrl: listSafeImage(row.thumb_url),
     genre: row.genre,
     country: row.country,
     bio: row.bio,
@@ -139,11 +140,14 @@ export const loadArchive = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
     const sql = await getSql();
     const concertRows = await sql<ConcertRow>`
-      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, ticket_url, created_at
+      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, created_at
       from concerts where user_id = ${context.userId} order by date desc
     `;
     const artistRows = await sql<ArtistRow>`
-      select id, name, logo_url, thumb_url, genre, country, bio, fetched_at
+      select id, name,
+        case when logo_url like 'data:%' then null else logo_url end as logo_url,
+        case when thumb_url like 'data:%' then null else thumb_url end as thumb_url,
+        genre, country, bio, fetched_at
       from artists where user_id = ${context.userId}
     `;
     const artists: Record<string, Artist> = {};
@@ -187,13 +191,13 @@ export const upsertConcert = createServerFn({ method: "POST" })
         ticket_url = excluded.ticket_url
     `;
     const artists: Artist[] = draft.artists.map((a) => ({
-      id: artistKey(a.name, a.country), name: a.name, logoUrl: a.logoUrl ?? null, thumbUrl: a.thumbUrl ?? null,
+      id: artistKey(a.name, a.country), name: a.name, logoUrl: listSafeImage(a.logoUrl), thumbUrl: listSafeImage(a.thumbUrl),
       genre: a.genre ?? null, country: a.country ?? null, bio: a.bio ?? null,
     }));
     const concert: Concert = {
       id, date: draft.date, venue: draft.venue.trim(), city: draft.city.trim(), country: draft.country,
       countryCode: draft.countryCode ?? "", lineup, notes: draft.notes.trim(), rating: draft.rating,
-      favorite: draft.favorite, festival, festivalName, festivalPosterUrl, ticketUrl, createdAt,
+      favorite: draft.favorite, festival, festivalName, festivalPosterUrl: null, ticketUrl: null, createdAt,
     };
     return { id, concert, artists };
   });
