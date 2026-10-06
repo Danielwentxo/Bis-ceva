@@ -169,29 +169,34 @@ function sameBand(a: Artist, b: Artist) {
   return !ac || !bc || ac === bc;
 }
 
-async function mergeSameBand(userId: string, artists: Artist[]) {
-  const sql = await getSql();
+async function mergeSameBand(userId: string, artists: Artist[], concerts: Concert[]) {
   const groups = new Map<string, Artist[]>();
   for (const artist of artists) {
     const key = artist.name.trim().toLowerCase();
     groups.set(key, [...(groups.get(key) ?? []), artist]);
   }
+  const replace = new Map<string, string>();
+  const drop = new Set<string>();
   for (const group of groups.values()) {
     if (group.length < 2 || !group.every((artist, index) => index === 0 || sameBand(group[0], artist))) continue;
     const keep = group.find((artist) => artist.country) ?? group.find((artist) => artist.logoUrl) ?? group[0];
     for (const extra of group) {
       if (extra.id === keep.id) continue;
-      const rows = await sql<{ id: string; lineup: LineupEntry[] | string }>`
-        select id, lineup from concerts where user_id = ${userId}
-      `;
-      for (const row of rows) {
-        const lineup = parseLineup(row.lineup);
-        if (!lineup.some((slot) => slot.artistId === extra.id)) continue;
-        const next = lineup.map((slot) => slot.artistId === extra.id ? { ...slot, artistId: keep.id } : slot);
-        await sql`update concerts set lineup = ${JSON.stringify(next)}::jsonb where user_id = ${userId} and id = ${row.id}`;
-      }
-      await sql`delete from artists where user_id = ${userId} and id = ${extra.id}`;
+      replace.set(extra.id, keep.id);
+      drop.add(extra.id);
     }
+  }
+  if (!replace.size) return;
+  const sql = await getSql();
+  for (const concert of concerts) {
+    if (!concert.lineup.some((slot) => replace.has(slot.artistId))) continue;
+    const lineup = concert.lineup.map((slot) => replace.has(slot.artistId) ? { ...slot, artistId: replace.get(slot.artistId)! } : slot);
+    concert.lineup = lineup;
+    await sql`update concerts set lineup = ${JSON.stringify(lineup)}::jsonb where user_id = ${userId} and id = ${concert.id}`;
+  }
+  for (const id of drop) {
+    delete artists.find ? undefined : undefined;
+    await sql`delete from artists where user_id = ${userId} and id = ${id}`;
   }
 }
 
@@ -200,9 +205,7 @@ export const loadArchive = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
     const sql = await getSql();
     const concertRows = await sql<ConcertRow>`
-      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name,
-        case when festival_poster_url like 'https://%' then festival_poster_url else null end as festival_poster_url,
-        created_at
+      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, created_at
       from concerts where user_id = ${context.userId} order by date desc
     `;
     const artistRows = await sql<ArtistRow>`
@@ -214,12 +217,18 @@ export const loadArchive = createServerFn({ method: "POST" })
     `;
     const artists: Record<string, Artist> = {};
     for (const row of artistRows) artists[row.id] = rowToArtist(row);
+    const concerts = concertRows.map(rowToConcert);
     try {
-      await mergeSameBand(context.userId, Object.values(artists));
+      await mergeSameBand(context.userId, Object.values(artists), concerts);
+      for (const id of Object.keys(artists)) {
+        const name = artists[id].name.trim().toLowerCase();
+        const twin = Object.values(artists).find((artist) => artist.id !== id && artist.name.trim().toLowerCase() === name && sameBand(artist, artists[id]) && (artist.country || artist.logoUrl));
+        if (twin && !artists[id].country && !artists[id].logoUrl) delete artists[id];
+      }
     } catch {
-      return { concerts: concertRows.map(rowToConcert), artists };
+      // list still returns; merge retries next login
     }
-    return { concerts: concertRows.map(rowToConcert), artists };
+    return { concerts, artists };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
