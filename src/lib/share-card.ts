@@ -7,7 +7,7 @@ async function loadTicketPhoto(): Promise<HTMLImageElement | null> {
   if (ticketPhoto && ticketPhoto.naturalWidth > 10) return ticketPhoto;
   if (typeof Image === "undefined") return null;
   const img = new Image();
-  img.src = "/hero.jpg";
+  img.src = "/share-stats-bg.jpg";
   try {
     if (typeof img.decode === "function") await img.decode();
     else {
@@ -134,98 +134,51 @@ function drawMark(ctx: CanvasRenderingContext2D, kind: "ticket" | "globe" | "pin
 
 export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1620;
+  const photo = ticketPhoto && ticketPhoto.naturalWidth > 10 ? ticketPhoto : null;
+  canvas.width = photo?.naturalWidth || 1080;
+  canvas.height = photo?.naturalHeight || 1620;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not draw stats.");
-
-  ctx.fillStyle = "#070605";
-  ctx.fillRect(0, 0, 1080, 1620);
-  if (ticketPhoto && ticketPhoto.naturalWidth > 10) coverPhoto(ctx, ticketPhoto, 0, 0, 1080, 1620);
-  else paintStage(ctx);
-  const shade = ctx.createLinearGradient(0, 0, 0, 1620);
-  shade.addColorStop(0, "rgba(0,0,0,0.35)");
-  shade.addColorStop(0.45, "rgba(0,0,0,0.25)");
-  shade.addColorStop(1, "rgba(0,0,0,0.82)");
-  ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, 1080, 1620);
-
-  ctx.fillStyle = "#e7e1d6";
-  ctx.fillRect(0, 0, 92, 1620);
-  ctx.fillStyle = "#111";
-  for (let y = 18; y < 1600; y += 28) {
-    ctx.beginPath();
-    ctx.arc(0, y, 10, 0, Math.PI * 2);
-    ctx.fill();
+  const w = canvas.width;
+  const h = canvas.height;
+  if (photo) ctx.drawImage(photo, 0, 0, w, h);
+  else {
+    ctx.fillStyle = "#5a1010";
+    ctx.fillRect(0, 0, w, h);
   }
-  ctx.save();
-  ctx.translate(46, 980);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = "#1a1a1a";
-  ctx.font = "bold 22px Arial, Helvetica, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(APP_NAME.toUpperCase(), 0, 0);
-  ctx.restore();
 
+  const cx = w * 0.58;
   ctx.textAlign = "center";
-  ctx.fillStyle = "#e23b3b";
-  ctx.font = "bold 22px Arial, Helvetica, sans-serif";
-  ctx.fillText(APP_NAME.toUpperCase(), 580, 150);
-  ctx.strokeStyle = "#e23b3b";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(250, 142);
-  ctx.lineTo(390, 142);
-  ctx.moveTo(770, 142);
-  ctx.lineTo(910, 142);
-  ctx.stroke();
-
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = "bold 108px Impact, Arial Black, sans-serif";
-  ctx.fillText("My year", 580, 310);
-  ctx.fillText("in shows", 580, 420);
+  ctx.font = `bold ${Math.round(w * 0.085)}px Impact, Arial Black, sans-serif`;
+  ctx.fillText("My year", cx, h * 0.16);
+  ctx.fillText("in shows", cx, h * 0.23);
 
   ctx.fillStyle = "#e23b3b";
-  ctx.font = "bold 20px Arial, Helvetica, sans-serif";
-  ctx.fillText("TOP 3 ARTISTS", 580, 490);
-  ctx.beginPath();
-  ctx.moveTo(250, 484);
-  ctx.lineTo(400, 484);
-  ctx.moveTo(760, 484);
-  ctx.lineTo(910, 484);
-  ctx.stroke();
+  ctx.font = `bold ${Math.round(w * 0.028)}px Arial, Helvetica, sans-serif`;
+  ctx.fillText("TOP 3 ARTISTS", cx, h * 0.29);
 
   const top = (stats.artistCounts ?? []).slice(0, 3);
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = "bold 46px Arial, Helvetica, sans-serif";
-  top.forEach((row, i) => ctx.fillText(row.data.name, 580, 570 + i * 64));
+  ctx.font = `bold ${Math.round(w * 0.045)}px Arial, Helvetica, sans-serif`;
+  top.forEach((row, i) => ctx.fillText(row.data.name, cx, h * 0.35 + i * h * 0.045));
 
-  ctx.fillStyle = "rgba(0,0,0,0.82)";
-  ctx.fillRect(92, 1260, 988, 360);
-  ctx.strokeStyle = "rgba(255,255,255,0.28)";
-  ctx.lineWidth = 2;
-  for (const x of [330, 560, 790]) {
-    ctx.beginPath();
-    ctx.moveTo(x, 1320);
-    ctx.lineTo(x, 1540);
-    ctx.stroke();
-  }
   const pills = [
-    [String(stats.totalShows ?? 0), "SHOWS", "ticket"],
-    [String(stats.uniqueCountries ?? 0), "COUNTRIES", "globe"],
-    [String(stats.uniqueVenues ?? 0), "VENUES", "pin"],
-    [String(stats.uniqueArtists ?? 0), "BANDS", "pick"],
-  ] as const;
-  pills.forEach((pill, i) => {
-    const cx = 210 + i * 230;
-    drawMark(ctx, pill[2], cx, 1348);
+    String(stats.totalShows ?? 0),
+    String(stats.uniqueCountries ?? 0),
+    String(stats.uniqueVenues ?? 0),
+    String(stats.uniqueArtists ?? 0),
+  ];
+  const labels = ["SHOWS", "COUNTRIES", "VENUES", "BANDS"];
+  ctx.font = `bold ${Math.round(w * 0.07)}px Impact, Arial Black, sans-serif`;
+  pills.forEach((value, i) => {
+    const x = w * (0.34 + i * 0.155);
     ctx.fillStyle = "#f4f1ea";
-    ctx.font = "bold 72px Impact, Arial Black, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(pill[0], cx, 1465);
-    ctx.fillStyle = "#b9b3aa";
-    ctx.font = "bold 18px Arial, Helvetica, sans-serif";
-    ctx.fillText(pill[1], cx, 1504);
+    ctx.fillText(value, x, h * 0.86);
+    ctx.fillStyle = "#d7d1c8";
+    ctx.font = `bold ${Math.round(w * 0.02)}px Arial, Helvetica, sans-serif`;
+    ctx.fillText(labels[i], x, h * 0.885);
+    ctx.font = `bold ${Math.round(w * 0.07)}px Impact, Arial Black, sans-serif`;
   });
   return canvas;
 }
