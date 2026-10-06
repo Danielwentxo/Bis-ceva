@@ -214,23 +214,12 @@ export const loadArchive = createServerFn({ method: "POST" })
     `;
     const artists: Record<string, Artist> = {};
     for (const row of artistRows) artists[row.id] = rowToArtist(row);
-    await mergeSameBand(context.userId, Object.values(artists));
-    const concertRows2 = await sql<ConcertRow>`
-      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name,
-        case when festival_poster_url like 'https://%' then festival_poster_url else null end as festival_poster_url,
-        created_at
-      from concerts where user_id = ${context.userId} order by date desc
-    `;
-    const artistRows2 = await sql<ArtistRow>`
-      select id, name,
-        case when logo_url like 'data:%' then null else logo_url end as logo_url,
-        case when thumb_url like 'data:%' then null else thumb_url end as thumb_url,
-        genre, country, bio, fetched_at
-      from artists where user_id = ${context.userId}
-    `;
-    const artists2: Record<string, Artist> = {};
-    for (const row of artistRows2) artists2[row.id] = rowToArtist(row);
-    return { concerts: concertRows2.map(rowToConcert), artists: artists2 };
+    try {
+      await mergeSameBand(context.userId, Object.values(artists));
+    } catch {
+      return { concerts: concertRows.map(rowToConcert), artists };
+    }
+    return { concerts: concertRows.map(rowToConcert), artists };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
