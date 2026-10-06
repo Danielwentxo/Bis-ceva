@@ -87,7 +87,7 @@ function rowToConcert(row: ConcertRow): Concert {
     favorite: Boolean(row.favorite),
     festival: Boolean(row.festival) || Boolean(festivalName),
     festivalName,
-    festivalPosterUrl: null,
+    festivalPosterUrl: row.festival_poster_url && row.festival_poster_url.startsWith("https://") ? row.festival_poster_url : null,
     ticketUrl: null,
     createdAt: created,
   };
@@ -140,7 +140,9 @@ export const loadArchive = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ concerts: Concert[]; artists: Record<string, Artist> }> => {
     const sql = await getSql();
     const concertRows = await sql<ConcertRow>`
-      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, created_at
+      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name,
+        case when festival_poster_url like 'https://%' then festival_poster_url else null end as festival_poster_url,
+        created_at
       from concerts where user_id = ${context.userId} order by date desc
     `;
     const artistRows = await sql<ArtistRow>`
