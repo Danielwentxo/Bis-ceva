@@ -143,60 +143,39 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   const h = canvas.height;
   if (photo) ctx.drawImage(photo, 0, 0, w, h);
   else {
-    ctx.fillStyle = "#5a1010";
+    ctx.fillStyle = "#2a0c0c";
     ctx.fillRect(0, 0, w, h);
   }
-
-  ctx.save();
-  ctx.translate(w * 0.07, h * 0.7);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = "#111111";
-  ctx.font = `bold ${Math.round(w * 0.034)}px Arial, Helvetica, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("mygighistory.com", 0, 0);
-  ctx.restore();
-
   const cx = w * 0.58;
   ctx.textAlign = "center";
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = `bold ${Math.round(w * 0.055)}px Arial, Helvetica, sans-serif`;
-  ctx.fillText("MY GIG HISTORY", cx, h * 0.1);
-  ctx.strokeStyle = "#f4f1ea";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(w * 0.32, h * 0.125);
-  ctx.lineTo(w * 0.84, h * 0.125);
-  ctx.stroke();
-  ctx.fillStyle = "#f4f1ea";
   ctx.font = `bold ${Math.round(w * 0.03)}px Arial, Helvetica, sans-serif`;
-  ctx.fillText("TOP ARTISTS", cx, h * 0.16);
-
+  ctx.fillText("TOP ARTISTS", cx, h * 0.2);
   const top = (stats.artistCounts ?? []).slice(0, 3);
-  ctx.fillStyle = "#f4f1ea";
   top.forEach((row, i) => {
     const max = w * 0.5;
-    let size = Math.round(w * 0.07);
+    let size = Math.round(w * 0.055);
     ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
     while (size > 16 && ctx.measureText(row.data.name).width > max) {
       size -= 2;
       ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
     }
-    ctx.fillText(row.data.name, cx, h * 0.23 + i * h * 0.055);
+    ctx.fillText(row.data.name, cx, h * 0.26 + i * h * 0.045);
   });
-
   const pills = [
+    [String(stats.totalShows ?? 0), "SHOWS"],
     [String(stats.uniqueCountries ?? 0), "COUNTRIES"],
     [String(stats.uniqueVenues ?? 0), "VENUES"],
-    [String(stats.totalShows ?? 0), "SHOWS"],
     [String(stats.uniqueArtists ?? 0), "BANDS"],
   ];
   pills.forEach((pill, i) => {
     const x = w * (0.36 + i * 0.15);
     ctx.fillStyle = "#f4f1ea";
-    ctx.font = `bold ${Math.round(w * 0.04)}px Arial, Helvetica, sans-serif`;
-    ctx.fillText(pill[0], x, h * 0.955);
-    ctx.font = `bold ${Math.round(w * 0.016)}px Arial, Helvetica, sans-serif`;
-    ctx.fillText(pill[1], x, h * 0.975);
+    ctx.font = `bold ${Math.round(w * 0.05)}px Arial, Helvetica, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(pill[0], x, h * 0.9);
+    ctx.font = `bold ${Math.round(w * 0.018)}px Arial, Helvetica, sans-serif`;
+    ctx.fillText(pill[1], x, h * 0.93);
   });
   return canvas;
 }
