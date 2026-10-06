@@ -150,7 +150,7 @@ function Home() {
         <EmptyArchive onSeed={seedDemo} />
       ) : (
         <>
-          {hasStatsFilter ? (
+          {hasStatsFilter || backTo ? (
             <div className="mb-6">
               {backTo ? (
                 <Button asChild variant="outline" className="mb-3">
