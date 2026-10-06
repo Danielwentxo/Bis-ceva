@@ -160,8 +160,25 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
 
   const top = (stats.artistCounts ?? []).slice(0, 3);
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = `bold ${Math.round(w * 0.045)}px Arial, Helvetica, sans-serif`;
-  top.forEach((row, i) => ctx.fillText(row.data.name, cx, h * 0.35 + i * h * 0.045));
+  top.forEach((row, i) => {
+    const max = w * 0.48;
+    let size = Math.round(w * 0.062);
+    ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
+    while (size > 18 && ctx.measureText(row.data.name).width > max) {
+      size -= 2;
+      ctx.font = `bold ${size}px Arial, Helvetica, sans-serif`;
+    }
+    ctx.fillText(row.data.name, cx, h * 0.35 + i * h * 0.05);
+  });
+
+  ctx.save();
+  ctx.translate(w * 0.075, h * 0.62);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = "#111111";
+  ctx.font = `bold ${Math.round(w * 0.028)}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("mygighistory.com", 0, 0);
+  ctx.restore();
 
   const pills = [
     String(stats.totalShows ?? 0),
