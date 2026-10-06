@@ -138,9 +138,9 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   ctx.stroke();
 
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = "bold 92px Arial, Helvetica, sans-serif";
-  ctx.fillText("My year", 580, 300);
-  ctx.fillText("in shows", 580, 400);
+  ctx.font = "bold 108px Impact, Arial Black, sans-serif";
+  ctx.fillText("My year", 580, 310);
+  ctx.fillText("in shows", 580, 420);
 
   ctx.fillStyle = "#e23b3b";
   ctx.font = "bold 20px Arial, Helvetica, sans-serif";
@@ -154,8 +154,8 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
 
   const top = (stats.artistCounts ?? []).slice(0, 3);
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = "bold 42px Arial, Helvetica, sans-serif";
-  top.forEach((row, i) => ctx.fillText(row.data.name, 580, 560 + i * 58));
+  ctx.font = "bold 46px Arial, Helvetica, sans-serif";
+  top.forEach((row, i) => ctx.fillText(row.data.name, 580, 570 + i * 64));
 
   ctx.fillStyle = "rgba(0,0,0,0.78)";
   ctx.fillRect(92, 1280, 988, 340);
@@ -168,9 +168,9 @@ export function drawStatsPoster(stats: ReturnType<typeof computeStats>): HTMLCan
   pills.forEach((pill, i) => {
     const cx = 210 + i * 230;
     ctx.fillStyle = "#f4f1ea";
-    ctx.font = "bold 64px Arial, Helvetica, sans-serif";
+    ctx.font = "bold 72px Impact, Arial Black, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(pill[0], cx, 1460);
+    ctx.fillText(pill[0], cx, 1465);
     ctx.fillStyle = "#b9b3aa";
     ctx.font = "bold 18px Arial, Helvetica, sans-serif";
     ctx.fillText(pill[1], cx, 1500);
