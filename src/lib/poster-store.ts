@@ -14,15 +14,11 @@ export async function storePoster(value: string | null | undefined, concertId: s
   if (!match) return value;
   const bytes = Buffer.from(match[2].replace(/\s/g, ""), "base64");
   const path = `${concertId}.jpg`;
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "image/jpeg",
-      "x-upsert": "true",
-    },
-    body: bytes,
-  });
+  const headers = { Authorization: `Bearer ${key}`, "Content-Type": "image/jpeg" };
+  let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: "POST", headers, body: bytes });
+  if (!res.ok) {
+    res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: "PUT", headers, body: bytes });
+  }
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`Could not store poster (${res.status}): ${detail.slice(0, 180)}`);

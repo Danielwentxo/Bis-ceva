@@ -128,11 +128,16 @@ function Home() {
 
   useEffect(() => {
     if (!hasHydrated || !concerts.length) return;
-    const saved = sessionStorage.getItem("list-scroll");
-    if (saved) window.scrollTo(0, Number(saved) || 0);
+    const y = Number(sessionStorage.getItem("list-scroll") || 0);
+    const restore = () => { if (y) window.scrollTo(0, y); };
+    restore();
+    const timers = [50, 200, 600].map((ms) => window.setTimeout(restore, ms));
     const onScroll = () => sessionStorage.setItem("list-scroll", String(window.scrollY));
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      timers.forEach((id) => window.clearTimeout(id));
+    };
   }, [hasHydrated, concerts.length]);
 
   return (
