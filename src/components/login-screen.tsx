@@ -117,7 +117,7 @@ export function LoginScreen() {
       }
       if (mode === "sign-up") {
         const { error } = await authClient.signUp.email({ name, email, password, callbackURL: "/login" });
-        if (error) throw new Error(error.message ?? "Sign up failed");
+        if (error) throw new Error(error.message || error.statusText || "Sign up failed");
         setVerifySent(true);
         return;
       } else {

@@ -143,11 +143,15 @@ export const auth = betterAuth({
             user: { email: string; name?: string | null };
             url: string;
           }) => {
-            await sendVerificationEmail({
-              to: user.email,
-              url,
-              userName: user.name,
-            });
+            try {
+              await sendVerificationEmail({
+                to: user.email,
+                url,
+                userName: user.name,
+              });
+            } catch (err) {
+              console.error("[auth] verification email failed", err);
+            }
           },
         },
       }
