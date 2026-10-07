@@ -29,7 +29,15 @@ async function handleAuth(request: Request) {
       const sql = await getSql();
       await sql`select 1`;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Database is not reachable";
+      const raw = process.env.DATABASE_URL ?? "";
+      let where = "no DATABASE_URL";
+      try {
+        const url = new URL(raw);
+        where = `user ${decodeURIComponent(url.username)} host ${url.hostname} port ${url.port || "5432"}`;
+      } catch {
+        where = "DATABASE_URL is not a valid address";
+      }
+      const message = `${err instanceof Error ? err.message : "Database is not reachable"} (${where})`;
       return new Response(JSON.stringify({ message }), {
         status: 500,
         headers: { "content-type": "application/json" },
