@@ -14,4 +14,4 @@ Disallow: /api
 Disallow: /reset-password
 Disallow: /forgot-password
 
-Sitemap: https://mygighistory.com/sitemap.xml
+Sitemap: https://www.mygighistory.com/sitemap.xml
