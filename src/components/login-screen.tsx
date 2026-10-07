@@ -188,6 +188,22 @@ export function LoginScreen() {
         {(mode === "sign-up" && verifySent) || (mode === "forgot" && resetSent) ? (
           <div className="flex flex-col gap-4 text-center">
             <p className="text-sm text-foreground">{mode === "sign-up" ? (VERIFY_SENT[locale] ?? VERIFY_SENT.en) : t("resetSent", { email })}</p>
+            {mode === "sign-up" ? (
+              <button
+                type="button"
+                className="text-sm text-muted-foreground underline"
+                onClick={() => {
+                  void fetch("/api/auth/send-verification-email", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ email, callbackURL: "/login" }),
+                  });
+                }}
+              >
+                {locale === "ro" ? "Trimite din nou linkul" : "Send the link again"}
+              </button>
+            ) : null}
             <button type="button" onClick={() => changeMode("sign-in")} className="text-sm text-muted-foreground underline">
               {t("backToSignIn")}
             </button>
