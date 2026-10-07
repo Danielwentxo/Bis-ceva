@@ -42,6 +42,21 @@ const CONFIRM_LABEL: Record<string, string> = {
   ar: "تأكيد كلمة المرور",
 };
 
+
+const VERIFY_SENT: Record<string, string> = {
+  en: "Check your email and open the link to confirm the address. Then you can sign in.",
+  ro: "Verifică emailul și deschide linkul ca să confirmi adresa. Apoi te poți loga.",
+  sv: "Kolla mejlen och öppna länken för att bekräfta adressen. Sedan kan du logga in.",
+  de: "Prüfe die E-Mail und öffne den Link, um die Adresse zu bestätigen. Danach kannst du dich anmelden.",
+  fr: "Vérifiez l'e-mail et ouvrez le lien pour confirmer l'adresse. Ensuite vous pouvez vous connecter.",
+  es: "Revisa el correo y abre el enlace para confirmar la dirección. Luego puedes entrar.",
+  pt: "Vê o email e abre o link para confirmar o endereço. Depois podes entrar.",
+  it: "Controlla l'email e apri il link per confermare l'indirizzo. Poi puoi entrare.",
+  pl: "Sprawdź mail i otwórz link, żeby potwierdzić adres. Potem możesz się zalogować.",
+  ja: "メールを確認し、リンクを開いてアドレスを確認してください。その後ログインできます。",
+  ar: "تحقق من البريد وافتح الرابط لتأكيد العنوان. بعدها يمكنك تسجيل الدخول.",
+};
+
 const MISMATCH: Record<string, string> = {
   en: "Passwords do not match.",
   ro: "Parolele nu coincid.",
@@ -160,9 +175,9 @@ export function LoginScreen() {
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{title}</p>
         </div>
-        {mode === "forgot" && resetSent ? (
+        {(mode === "sign-up" && verifySent) || (mode === "forgot" && resetSent) ? (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-sm text-foreground">{t("resetSent", { email })}</p>
+            <p className="text-sm text-foreground">{mode === "sign-up" ? (VERIFY_SENT[locale] ?? VERIFY_SENT.en) : t("resetSent", { email })}</p>
             <button type="button" onClick={() => changeMode("sign-in")} className="text-sm text-muted-foreground underline">
               {t("backToSignIn")}
             </button>
