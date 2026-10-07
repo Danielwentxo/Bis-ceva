@@ -136,26 +136,19 @@ export const auth = betterAuth({
               userName: user.name,
             });
           },
-          sendVerificationEmail: async ({
-            user,
-            url,
-          }: {
-            user: { email: string; name?: string | null };
-            url: string;
-          }) => {
-            try {
-              await sendVerificationEmail({
-                to: user.email,
-                url,
-                userName: user.name,
-              });
-            } catch (err) {
-              console.error("[auth] verification email failed", err);
-            }
-          },
         },
       }
     : {}),
+  emailVerification: {
+    sendOnSignUp: true,
+    sendVerificationEmail: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
+      await sendVerificationEmail({
+        to: user.email,
+        url,
+        userName: user.name,
+      });
+    },
+  },
   ...((googleClientId && googleClientSecret) || (appleClientId && appleClientSecret)
     ? {
         socialProviders: {
