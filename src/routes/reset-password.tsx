@@ -74,7 +74,7 @@ function ResetPasswordPage() {
                 minLength={8}
                 required
               />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground">{showPassword ? "hide" : "show"}</button>
+              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground">{showPassword ? "🙈" : "👁"}</button>
               </div>
             </div>
             <Button type="submit" disabled={submitting}>

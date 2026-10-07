@@ -231,7 +231,7 @@ export function LoginScreen() {
                   required
                   className="pr-10"
                 />
-                <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground" aria-label="Show password">{showPassword ? "hide" : "show"}</button>
+                <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground" aria-label="Show password">{showPassword ? "🙈" : "👁"}</button>
                 </div>
               </div>
             ) : null}
@@ -252,7 +252,7 @@ export function LoginScreen() {
                   required
                   className="pr-10"
                 />
-                <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground" aria-label="Show password">{showConfirm ? "hide" : "show"}</button>
+                <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground" aria-label="Show password">{showConfirm ? "🙈" : "👁"}</button>
                 </div>
               </div>
             ) : null}
