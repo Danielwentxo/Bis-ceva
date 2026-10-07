@@ -23,7 +23,16 @@ async function handleAuth(request: Request) {
       headers: { "content-type": "application/json" },
     });
   }
-  return auth.handler(request);
+  try {
+    return await auth.handler(request);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Sign up failed";
+    console.error("[auth] handler failed", err);
+    return new Response(JSON.stringify({ message }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
 }
 
 export const Route = createFileRoute("/api/auth/$")({
