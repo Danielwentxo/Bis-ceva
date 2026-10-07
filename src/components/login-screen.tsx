@@ -75,6 +75,7 @@ export function LoginScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [verifySent, setVerifySent] = useState(false);
   const [formError, setFormError] = useState("");
 
   function changeMode(next: Mode) {
@@ -100,8 +101,10 @@ export function LoginScreen() {
         return;
       }
       if (mode === "sign-up") {
-        const { error } = await authClient.signUp.email({ name, email, password });
+        const { error } = await authClient.signUp.email({ name, email, password, callbackURL: "/login" });
         if (error) throw new Error(error.message ?? "Sign up failed");
+        setVerifySent(true);
+        return;
       } else {
         const { error } = await authClient.signIn.email({ email, password });
         if (error) throw new Error(error.message ?? "Sign in failed");
@@ -235,7 +238,7 @@ export function LoginScreen() {
             </Button>
           </form>
         )}
-        {mode !== "forgot" || !resetSent ? (
+        {(mode !== "forgot" || !resetSent) && !verifySent ? (
           <>
             {mode !== "forgot" ? (
               <>
