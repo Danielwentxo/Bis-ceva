@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { auth } from "@/lib/auth/server";
+import { getSql } from "@/lib/db";
 import { allowRequest, clientIp } from "@/lib/rate-limit";
 
 function sensitiveAuth(url: string) {
@@ -23,8 +24,30 @@ async function handleAuth(request: Request) {
       headers: { "content-type": "application/json" },
     });
   }
+  if (request.method === "POST" && /sign-up\/email/i.test(request.url)) {
+    try {
+      const sql = await getSql();
+      await sql`select 1`;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Database is not reachable";
+      return new Response(JSON.stringify({ message }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
+    }
+  }
   try {
-    return await auth.handler(request);
+    const response = await auth.handler(request);
+    if (response.status >= 500) {
+      const text = await response.clone().text();
+      if (!text.trim()) {
+        return new Response(JSON.stringify({ message: "Account could not be created. The database did not accept the request." }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    }
+    return response;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sign up failed";
     console.error("[auth] handler failed", err);

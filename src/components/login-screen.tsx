@@ -116,8 +116,16 @@ export function LoginScreen() {
         return;
       }
       if (mode === "sign-up") {
-        const { error } = await authClient.signUp.email({ name, email, password, callbackURL: "/login" });
-        if (error) throw new Error(error.message || error.statusText || "Sign up failed");
+        const res = await fetch("/api/auth/sign-up/email", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ name, email, password, callbackURL: "/login" }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message || "Sign up failed");
+        }
         setVerifySent(true);
         return;
       } else {
