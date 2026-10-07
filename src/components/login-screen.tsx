@@ -88,6 +88,8 @@ export function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [verifySent, setVerifySent] = useState(false);
@@ -215,9 +217,10 @@ export function LoginScreen() {
             {mode !== "forgot" ? (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="password">{t("password")}</Label>
+                <div className="relative">
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -226,15 +229,19 @@ export function LoginScreen() {
                   autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
                   minLength={8}
                   required
+                  className="pr-10"
                 />
+                <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground" aria-label="Show password">{showPassword ? "hide" : "show"}</button>
+                </div>
               </div>
             ) : null}
             {mode === "sign-up" ? (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="confirmPassword">{CONFIRM_LABEL[locale] ?? CONFIRM_LABEL.en}</Label>
+                <div className="relative">
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirm ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
@@ -243,7 +250,10 @@ export function LoginScreen() {
                   autoComplete="new-password"
                   minLength={8}
                   required
+                  className="pr-10"
                 />
+                <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground" aria-label="Show password">{showConfirm ? "hide" : "show"}</button>
+                </div>
               </div>
             ) : null}
             {formError ? (

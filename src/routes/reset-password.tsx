@@ -20,6 +20,7 @@ function ResetPasswordPage() {
   const navigate = useNavigate();
   const { token } = Route.useSearch();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
@@ -62,15 +63,19 @@ function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">New password</Label>
+              <div className="relative">
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
+                className="pr-10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 minLength={8}
                 required
               />
+              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-3 text-xs text-muted-foreground">{showPassword ? "hide" : "show"}</button>
+              </div>
             </div>
             <Button type="submit" disabled={submitting}>
               Save new password
