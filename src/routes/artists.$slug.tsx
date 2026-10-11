@@ -42,9 +42,12 @@ function ArtistDetail() {
   const artist: Artist | undefined =
     artists[slug] ?? Object.values(artists).find((a) => a.id === slug || artistKey(a.name) === slug);
 
+  const nameKey = artistKey(artist?.name ?? slug);
+  const sameName = Object.values(artists).filter((a) => artistKey(a.name) === nameKey);
+  const ids = new Set(sameName.length <= 1 ? sameName.map((a) => a.id) : [artist?.id].filter(Boolean));
   const shows = concerts
     .filter((c) =>
-      c.lineup.some((l) => l.artistId === slug || l.artistId === artist?.id || artistKey(l.artistId) === slug),
+      c.lineup.some((l) => ids.has(l.artistId) || artistKey(l.artistId.split("--")[0] ?? l.artistId) === nameKey),
     )
     .sort((a, b) => b.date.localeCompare(a.date));
 

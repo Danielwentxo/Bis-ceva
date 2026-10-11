@@ -1,5 +1,6 @@
 import { parseISO } from "date-fns";
 import { countryByCode, countryByName } from "./countries";
+import { artistKey } from "./utils";
 import type { Artist, Concert } from "./types";
 import { venueKey } from "./utils";
 import { todayIso } from "./format";
@@ -132,7 +133,7 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
 
   for (const c of concerts) {
     for (const slot of c.lineup) {
-      const artist = artists[slot.artistId];
+      const artist = artists[slot.artistId] ?? Object.values(artists).find((a) => artistKey(a.name) === artistKey(slot.artistId.split("--")[0] ?? slot.artistId));
       if (!artist) continue;
       seenArtists.add(artist.id);
       bump(artistMap, artist.id, artist);

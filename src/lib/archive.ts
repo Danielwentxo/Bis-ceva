@@ -236,8 +236,14 @@ export const upsertConcert = createServerFn({ method: "POST" })
       assertImageDataUrl(artist.logoUrl ?? null, "Artist logo");
       assertImageDataUrl(artist.thumbUrl ?? null, "Artist image");
     }
-    await upsertArtistsForUser(context.userId, draft.artists);
-    const lineup: LineupEntry[] = draft.artists.map((a, index) => ({
+    const known = await sql<{ id: string; name: string; country: string | null }>`select id, name, country from artists where user_id = ${context.userId}`;
+    const artistsForSave = draft.artists.map((a) => {
+      if (a.country) return a;
+      const match = known.find((row) => artistKey(row.name) === artistKey(a.name));
+      return match ? { ...a, country: match.country } : a;
+    });
+    await upsertArtistsForUser(context.userId, artistsForSave);
+    const lineup: LineupEntry[] = artistsForSave.map((a, index) => ({
       artistId: artistKey(a.name, a.country),
       role: index === 0 ? "headliner" : "support",
     }));
