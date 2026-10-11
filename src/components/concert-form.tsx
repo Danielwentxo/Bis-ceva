@@ -191,8 +191,12 @@ export function ConcertForm({
   const country = COUNTRIES.find((c) => c.code === form.countryCode);
 
   function addArtist(hit: ArtistMedia) {
-    if (selectedIds.has(artistKey(hit.name, hit.country))) return;
-    setForm((f) => ({ ...f, artists: [...f.artists, hit] }));
+    const sameName = Object.values(archiveArtists).filter((a) => artistKey(a.name) === artistKey(hit.name));
+    const chosen = sameName.length === 1
+      ? { ...hit, name: sameName[0]!.name, country: sameName[0]!.country, logoUrl: sameName[0]!.logoUrl ?? hit.logoUrl, thumbUrl: sameName[0]!.thumbUrl ?? hit.thumbUrl, genre: sameName[0]!.genre ?? hit.genre }
+      : hit;
+    if (selectedIds.has(artistKey(chosen.name, chosen.country))) return;
+    setForm((f) => ({ ...f, artists: [...f.artists, chosen] }));
     setQuery("");
     setHits([]);
     setManual(null);
