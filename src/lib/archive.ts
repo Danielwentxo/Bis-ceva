@@ -349,3 +349,29 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await sql`delete from "user" where "id" = ${context.userId}`;
     return { ok: true as const };
   });
+
+export const updateUserArtist = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({
+    id: z.string().min(1).max(200),
+    logoUrl: z.string().nullable().optional(),
+    thumbUrl: z.string().nullable().optional(),
+    genre: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    bio: z.string().nullable().optional(),
+  }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    const logoUrl = assertImageDataUrl(data.logoUrl ?? null, "Artist logo");
+    const thumbUrl = assertImageDataUrl(data.thumbUrl ?? null, "Artist image") ?? logoUrl;
+    await sql`
+      update artists set
+        logo_url = ${logoUrl},
+        thumb_url = ${thumbUrl},
+        genre = ${data.genre ?? null},
+        country = ${data.country ?? null},
+        bio = ${data.bio ?? null}
+      where user_id = ${context.userId} and id = ${data.id}
+    `;
+    return { ok: true };
+  });

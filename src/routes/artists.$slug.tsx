@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { saveCatalogArtist } from "@/lib/catalog";
+import { updateUserArtist } from "@/lib/archive";
 import { COUNTRIES } from "@/lib/countries";
 import { showsLabel } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -102,6 +103,16 @@ function ArtistDetail() {
     };
     useArchive.setState((s) => ({ artists: { ...s.artists, [artist.id]: next } }));
     try {
+      await updateUserArtist({
+        data: {
+          id: artist.id,
+          logoUrl,
+          thumbUrl: logoUrl ?? artist.thumbUrl,
+          genre: genre.trim() || null,
+          country: originName,
+          bio: bio.trim() || null,
+        },
+      });
       await saveCatalogArtist({
         data: {
           name: artist.name,
