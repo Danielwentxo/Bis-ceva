@@ -1,6 +1,6 @@
 import { parseISO } from "date-fns";
-import { countryByCode, countryByName } from "./countries";
-import { artistKey } from "./utils";
+import { canonicalCountry, countryByCode, countryByName } from "./countries";
+import { artistKey, slugify } from "./utils";
 import type { Artist, Concert } from "./types";
 import { venueKey } from "./utils";
 import { todayIso } from "./format";
@@ -50,6 +50,8 @@ export function originCountry(raw: string | null | undefined) {
   if (!parts.length) return null;
   const candidates = [...parts].reverse();
   for (const part of candidates) {
+    const canonical = canonicalCountry(part);
+    if (canonical) return canonical.name;
     const alias = ORIGIN_ALIAS[cleanToken(part)];
     if (alias) return alias;
     const named = countryByName(part);
@@ -144,14 +146,15 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
       country: c.country,
       countryCode: c.countryCode,
     });
-    bump(cityMap, `${c.city}|${c.countryCode}`, {
+    bump(cityMap, `${slugify(c.city)}|${canonicalCountry(c.country)?.code ?? c.countryCode}`, {
       city: c.city,
       country: c.country,
       countryCode: c.countryCode,
     });
-    bump(countryMap, c.countryCode || c.country, {
-      country: c.country,
-      countryCode: c.countryCode,
+    const country = canonicalCountry(c.country) ?? canonicalCountry(c.countryCode);
+    bump(countryMap, country?.code || c.countryCode || slugify(c.country), {
+      country: country?.name ?? c.country,
+      countryCode: country?.code ?? c.countryCode,
     });
     const d = parseISO(c.date);
     if (!Number.isNaN(d.getTime())) {

@@ -7,6 +7,7 @@ import { listSafeImage } from "@/lib/media-load";
 import { storePoster } from "@/lib/poster-store";
 import type { Artist, Concert, LineupEntry } from "@/lib/types";
 import { artistKey } from "@/lib/utils";
+import { canonicalCountry } from "@/lib/countries";
 
 const artistMediaSchema = z.object({
   name: z.string().min(1).max(200),
@@ -164,8 +165,8 @@ export const migrateStoredPosters = createServerFn({ method: "POST" })
 
 function sameBand(a: Artist, b: Artist) {
   if (artistKey(a.name) !== artistKey(b.name)) return false;
-  const ac = a.country ? artistKey(a.country) : "";
-  const bc = b.country ? artistKey(b.country) : "";
+  const ac = a.country ? canonicalCountry(a.country)?.code ?? artistKey(a.country) : "";
+  const bc = b.country ? canonicalCountry(b.country)?.code ?? artistKey(b.country) : "";
   return !ac || !bc || ac === bc;
 }
 

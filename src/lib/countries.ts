@@ -212,3 +212,48 @@ export function countryByName(name: string) {
 export function flagUrl(code: string, width = 40) {
   return `https://flagcdn.com/w${width}/${code.toLowerCase()}.png`;
 }
+
+import { slugify } from "./utils";
+
+const NAME_ALIAS: Record<string, string> = {
+  rumanien: "RO", roumanie: "RO", rumania: "RO", romania: "RO", rumunien: "RO",
+  deutschland: "DE", allemagne: "DE", alemania: "DE", alemanha: "DE", germania: "DE", niemcy: "DE", tyskland: "DE",
+  frankreich: "FR", france: "FR", francia: "FR", franca: "FR", francja: "FR", frankrike: "FR",
+  espana: "ES", spanien: "ES", espanha: "ES", hiszpania: "ES", spania: "ES",
+  italia: "IT", italien: "IT", italie: "IT", wlochy: "IT",
+  nederland: "NL", niederlande: "NL", "pays-bas": "NL", olanda: "NL", holandia: "NL", holland: "NL",
+  sverige: "SE", schweden: "SE", suede: "SE", suecia: "SE", suedia: "SE",
+  polska: "PL", polen: "PL", pologne: "PL", polonia: "PL",
+  czechia: "CZ", cesko: "CZ", tschechien: "CZ", "czech-republic": "CZ",
+  magyarorszag: "HU", ungarn: "HU", hongrie: "HU", ungaria: "HU",
+  osterreich: "AT", autriche: "AT", austria: "AT",
+  schweiz: "CH", suisse: "CH", svizzera: "CH", elvetia: "CH",
+  belgie: "BE", belgique: "BE", belgien: "BE", belgica: "BE",
+  griechenland: "GR", grece: "GR", grecia: "GR", ellada: "GR",
+  turkiye: "TR", turkei: "TR", turquie: "TR", turcia: "TR",
+  japon: "JP", japan: "JP", giappone: "JP", japonia: "JP",
+  brasil: "BR", brasilien: "BR", bresil: "BR",
+  mexico: "MX", mexiko: "MX",
+  kanada: "CA", canada: "CA",
+  norge: "NO", norwegen: "NO", norvege: "NO", norvegia: "NO",
+  danmark: "DK", danemark: "DK", danimarca: "DK",
+  suomi: "FI", finnland: "FI", finlande: "FI", finlanda: "FI",
+  hrvatska: "HR", kroatien: "HR", croatie: "HR",
+  srbija: "RS", serbien: "RS", serbie: "RS",
+  bulgarien: "BG", bulgarie: "BG", bulgaria: "BG",
+  slovensko: "SK", slowakei: "SK", slovaquie: "SK",
+  slovenija: "SI", slowenien: "SI",
+  irland: "IE", eire: "IE", irlande: "IE",
+  island: "IS", islandia: "IS",
+};
+
+export function canonicalCountry(raw: string | null | undefined) {
+  if (!raw) return null;
+  const key = slugify(raw);
+  if (!key) return null;
+  const code = NAME_ALIAS[key] ?? BY_CODE.get(raw.trim().toUpperCase())?.code;
+  const bySlug = [...COUNTRIES].find((c) => slugify(c.name) === key);
+  const found = (code ? BY_CODE.get(code) : null) ?? bySlug ?? countryByName(raw);
+  if (!found) return null;
+  return { code: found.code, name: found.code === "US" ? "USA" : found.code === "GB" ? "UK" : found.name };
+}
