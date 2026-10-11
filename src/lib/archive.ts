@@ -163,9 +163,9 @@ export const migrateStoredPosters = createServerFn({ method: "POST" })
 
 
 function sameBand(a: Artist, b: Artist) {
-  if (a.name.trim().toLowerCase() !== b.name.trim().toLowerCase()) return false;
-  const ac = a.country?.trim().toLowerCase() ?? "";
-  const bc = b.country?.trim().toLowerCase() ?? "";
+  if (artistKey(a.name) !== artistKey(b.name)) return false;
+  const ac = a.country ? artistKey(a.country) : "";
+  const bc = b.country ? artistKey(b.country) : "";
   return !ac || !bc || ac === bc;
 }
 
@@ -179,7 +179,7 @@ async function mergeSameBand(userId: string, artists: Artist[], concerts: Concer
   const drop = new Set<string>();
   for (const group of groups.values()) {
     if (group.length < 2 || !group.every((artist, index) => index === 0 || sameBand(group[0], artist))) continue;
-    const keep = group.find((artist) => artist.country) ?? group.find((artist) => artist.logoUrl) ?? group[0];
+    const keep = [...group].sort((a, b) => Number(Boolean(b.logoUrl)) - Number(Boolean(a.logoUrl)) || Number(Boolean(b.country)) - Number(Boolean(a.country)))[0]!;
     for (const extra of group) {
       if (extra.id === keep.id) continue;
       replace.set(extra.id, keep.id);
@@ -195,7 +195,8 @@ async function mergeSameBand(userId: string, artists: Artist[], concerts: Concer
     await sql`update concerts set lineup = ${JSON.stringify(lineup)}::jsonb where user_id = ${userId} and id = ${concert.id}`;
   }
   for (const id of drop) {
-    delete artists.find ? undefined : undefined;
+    const index = artists.findIndex((artist) => artist.id === id);
+    if (index >= 0) artists.splice(index, 1);
     await sql`delete from artists where user_id = ${userId} and id = ${id}`;
   }
 }
@@ -215,9 +216,12 @@ export const loadArchive = createServerFn({ method: "POST" })
         genre, country, bio, fetched_at
       from artists where user_id = ${context.userId}
     `;
+    const artistList = artistRows.map(rowToArtist);
+    const concerts = concertRows.map(rowToConcert);
+    await mergeSameBand(context.userId, artistList, concerts);
     const artists: Record<string, Artist> = {};
-    for (const row of artistRows) artists[row.id] = rowToArtist(row);
-    return { concerts: concertRows.map(rowToConcert), artists };
+    for (const artist of artistList) artists[artist.id] = artist;
+    return { concerts, artists };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
