@@ -41,6 +41,7 @@ const baseDict: Record<string, Record<string, string>> = {
     friendsList: "Friends",
     friendsEmpty: "No friends yet.",
     friendsWithYou: "Who was with you",
+    friendsNoneYet: "No friends yet. Invite them in the Friends tab, then they appear here.",
     friendsAsk: "Ask them to confirm",
     friendsTagged: "Request sent. They will see it in Friends.",
     friendsLoadError: "Could not load friends.",

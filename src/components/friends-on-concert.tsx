@@ -20,11 +20,10 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
     void refresh().catch(() => undefined);
   }, [concertId]);
 
-  if (!friends.length && !sent.length) return null;
-
   return (
     <section className="mt-8 rounded-2xl bg-card p-5 shadow-[var(--shadow-border)]">
       <h2 className="text-xs font-medium uppercase tracking-wider text-subtle">{t("friendsWithYou")}</h2>
+      {!friends.length ? <p className="mt-2 text-sm text-muted-foreground">{t("friendsNoneYet")}</p> : null}
       {friends.length ? (
         <ul className="mt-3 space-y-2">
           {friends.map((friend) => (
