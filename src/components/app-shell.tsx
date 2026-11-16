@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-5">
           {nav.map((item) => {
             const Icon = item.icon;
             const active = navActive(pathname, item.to);
@@ -176,11 +176,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link
                   to={item.to}
                   className={cn(
-                    "flex h-14 flex-col items-center justify-center gap-1 text-xs font-medium",
+                    "flex h-14 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium leading-none",
                     active ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
-                  <Icon className="size-5" />
+                  <Icon className="size-4" />
                   {item.label}
                 </Link>
               </li>
