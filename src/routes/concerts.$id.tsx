@@ -2,6 +2,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Pencil, Star, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { FriendsOnConcert } from "@/components/friends-on-concert";
 import { ArtistMark } from "@/components/artist-mark";
 import { CountryFlag } from "@/components/country-flag";
 import { StarRating } from "@/components/star-rating";
@@ -132,6 +133,8 @@ function ConcertDetail() {
           <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">{concert.notes}</p>
         </section>
       ) : null}
+
+      <FriendsOnConcert concertId={concert.id} />
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="flex-1">

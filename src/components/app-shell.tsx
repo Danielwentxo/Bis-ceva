@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Disc3, MapPin, Plus, Ticket } from "lucide-react";
+import { BarChart3, Disc3, MapPin, Plus, Ticket, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AppLogo } from "@/components/app-logo";
@@ -71,6 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/artists", label: t("navArtists"), icon: Disc3 },
     { to: "/venues", label: t("navVenues"), icon: MapPin },
     { to: "/stats", label: t("navStats"), icon: BarChart3 },
+    { to: "/friends", label: t("navFriends"), icon: Users },
   ] as const;
 
   const isPublic = PUBLIC_PATHS.has(pathname);

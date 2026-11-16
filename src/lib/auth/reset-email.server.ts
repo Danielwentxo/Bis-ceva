@@ -97,3 +97,19 @@ export async function sendVerificationEmail(params: {
     logLine: `[auth] Verify email for ${params.to}: ${params.url}`,
   });
 }
+
+export async function sendFriendInviteEmail(params: { to: string; inviteUrl: string; fromName?: string | null }): Promise<void> {
+  const who = params.fromName?.trim() || "Someone";
+  await sendAppEmail({
+    to: params.to,
+    subject: `${who} invited you to My Gig History`,
+    html: wrap(
+      "You have a concert invite",
+      `${who} wants to add you as a friend on My Gig History. After you join, you can confirm shows you went to together.`,
+      params.inviteUrl,
+      "Open invite",
+    ),
+    text: `${who} invited you to My Gig History. Open: ${params.inviteUrl}`,
+    logLine: `[auth] friend invite for ${params.to}: ${params.inviteUrl}`,
+  });
+}
