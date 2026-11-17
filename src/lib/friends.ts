@@ -424,3 +424,17 @@ export const friendConcerts = createServerFn({ method: "POST" })
       together: row.together,
     }));
   });
+
+export const friendAlerts = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql<{ n: string }>`
+      select (
+        (select count(*) from friendships where friend_id = ${context.userId} and status = 'pending')
+        +
+        (select count(*) from concert_tags where to_user_id = ${context.userId} and status = 'pending')
+      )::text as n
+    `;
+    return Number(rows[0]?.n ?? 0);
+  });

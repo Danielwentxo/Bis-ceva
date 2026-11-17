@@ -14,9 +14,14 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { APP_TAGLINE } from "@/lib/brand";
 import { useI18n } from "@/lib/i18n";
 import { pageLabel } from "@/lib/i18n-pages";
-import { claimInvite } from "@/lib/friends";
+import { claimInvite, friendAlerts } from "@/lib/friends";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+function unseen(count: number) {
+  const seen = Number(window.localStorage.getItem("bis-friends-seen") ?? 0);
+  return Math.max(0, count - seen);
+}
 
 function navActive(pathname: string, to: string) {
   if (to === "/") return pathname === "/";
@@ -36,6 +41,7 @@ const PUBLIC_PATHS = new Set([
 function MobileSignOut() {
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
+
   return (
     <button
       type="button"
@@ -55,6 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t, locale } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
+  const [friendBadge, setFriendBadge] = useState(0);
   useEnrichArtists();
   useEffect(() => {
     if (user) return;
@@ -65,10 +72,22 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!user) return;
     void useArchive.getState().loadFromServer();
     const token = window.localStorage.getItem("bis-invite");
-    if (!token) return;
-    window.localStorage.removeItem("bis-invite");
-    void claimInvite({ data: { token } }).catch(() => undefined);
-  }, [user?.id]);
+    if (token) {
+      window.localStorage.removeItem("bis-invite");
+      void claimInvite({ data: { token } }).finally(() => {
+        void friendAlerts().then((n) => setFriendBadge(unseen(n))).catch(() => undefined);
+      });
+    } else {
+      void friendAlerts().then((n) => setFriendBadge(unseen(n))).catch(() => undefined);
+    }
+  }, [user?.id, pathname]);
+  useEffect(() => {
+    if (!user || !pathname.startsWith("/friends")) return;
+    void friendAlerts().then((n) => {
+      window.localStorage.setItem("bis-friends-seen", String(n));
+      setFriendBadge(0);
+    }).catch(() => undefined);
+  }, [user?.id, pathname]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (!useArchive.getState().hasHydrated) useArchive.getState().finishHydration();
@@ -130,7 +149,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                   active ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                 )}
               >
-                <Icon className="size-4" />
+                <span className="relative">
+                  <Icon className="size-4" />
+                  {item.to === "/friends" && friendBadge > 0 ? <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white">{friendBadge}</span> : null}
+                </span>
                 {item.label}
               </Link>
             );
@@ -190,7 +212,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                     active ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
-                  <Icon className="size-4" />
+                  <span className="relative">
+                    <Icon className="size-4" />
+                    {item.to === "/friends" && friendBadge > 0 ? <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white">{friendBadge}</span> : null}
+                  </span>
                   {item.label}
                 </Link>
               </li>
