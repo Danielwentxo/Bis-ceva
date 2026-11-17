@@ -332,9 +332,10 @@ export const friendConcerts = createServerFn({ method: "POST" })
       venue: string;
       city: string;
       festival_name: string | null;
+      lineup: { artistId?: string }[] | null;
       together: boolean;
     }>`
-      select c.id, c.date, c.venue, c.city, c.festival_name,
+      select c.id, c.date, c.venue, c.city, c.festival_name, c.lineup,
         exists (
           select 1 from concert_tags t
           where t.status = 'accepted' and (
@@ -347,5 +348,19 @@ export const friendConcerts = createServerFn({ method: "POST" })
       where c.user_id = ${data.friendId}
       order by c.date desc
     `;
-    return rows;
+    const artists = await sql<{ id: string; name: string }>`
+      select id, name from artists where user_id = ${data.friendId}
+    `;
+    const names = new Map(artists.map((a) => [a.id, a.name]));
+    return rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      venue: row.venue,
+      city: row.city,
+      festivalName: row.festival_name,
+      artists: (Array.isArray(row.lineup) ? row.lineup : [])
+        .map((slot) => names.get(slot.artistId ?? "") || "")
+        .filter(Boolean),
+      together: row.together,
+    }));
   });

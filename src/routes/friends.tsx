@@ -15,7 +15,7 @@ export const Route = createFileRoute("/friends")({
 
 type Friend = { id: string; name: string; email: string; nickname?: string | null };
 type Tag = { id: string; from_name: string; date: string; venue: string; city: string };
-type FriendShow = { id: string; date: string; venue: string; city: string; festival_name: string | null; together: boolean };
+type FriendShow = { id: string; date: string; venue: string; city: string; festivalName: string | null; artists: string[]; together: boolean };
 
 function FriendsPage() {
   const { t } = useI18n();
@@ -152,7 +152,9 @@ function FriendsPage() {
             <ul className="space-y-2">
               {shows.map((show) => (
                 <li key={show.id} className="rounded-xl bg-card px-3 py-3 text-sm">
-                  <p>{show.festival_name || show.venue} · {show.city}</p>
+                  <p className="font-medium">{show.artists.slice(0, 3).join(", ") || show.festivalName || show.venue}</p>
+                  {show.festivalName ? <p className="text-xs text-muted-foreground">{show.festivalName}</p> : null}
+                  <p className="text-xs text-muted-foreground">{show.venue} · {show.city}</p>
                   <p className="text-xs text-muted-foreground">{show.date}{show.together ? ` · ${t("friendsTogether")}` : ""}</p>
                 </li>
               ))}
