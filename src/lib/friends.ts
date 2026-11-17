@@ -119,6 +119,66 @@ export const inviteFriend = createServerFn({ method: "POST" })
     return { ok: true, message: "Invite email sent." };
   });
 
+export const shareInvite = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const self = await me(sql, context.userId);
+    const existing = await sql<{ token: string }>`
+      select token from friend_invites
+      where from_user_id = ${context.userId} and email = 'share' and status = 'open'
+      limit 1
+    `;
+    const token = existing[0]?.token ?? crypto.randomUUID();
+    if (!existing[0]) {
+      await sql`
+        insert into friend_invites (id, from_user_id, email, token, status)
+        values (${crypto.randomUUID()}, ${context.userId}, 'share', ${token}, 'open')
+      `;
+    }
+    return {
+      url: `${appOrigin()}/friends?invite=${token}`,
+      name: self?.name || "A friend",
+    };
+  });
+
+export const claimInvite = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ token: z.string().min(8).max(80) }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    const rows = await sql<{ from_user_id: string; email: string; status: string }>`
+      select from_user_id, email, status from friend_invites where token = ${data.token} limit 1
+    `;
+    const invite = rows[0];
+    if (!invite) return { ok: false, message: "Invite not found." };
+    if (invite.from_user_id === context.userId) return { ok: false, message: "That is your own invite." };
+    if (invite.email !== "share") {
+      const self = await me(sql, context.userId);
+      if (!self || self.email.toLowerCase() !== invite.email.toLowerCase()) {
+        return { ok: false, message: "Sign in with the invited email." };
+      }
+    }
+    const already = await sql<{ status: string }>`
+      select status from friendships
+      where (user_id = ${invite.from_user_id} and friend_id = ${context.userId})
+         or (user_id = ${context.userId} and friend_id = ${invite.from_user_id})
+      limit 1
+    `;
+    if (already[0]?.status === "accepted") return { ok: true, message: "You are already friends." };
+    if (!already[0]) {
+      await sql`
+        insert into friendships (user_id, friend_id, status)
+        values (${invite.from_user_id}, ${context.userId}, 'pending')
+        on conflict (user_id, friend_id) do nothing
+      `;
+    }
+    if (invite.email !== "share") {
+      await sql`update friend_invites set status = 'claimed' where token = ${data.token}`;
+    }
+    return { ok: true, message: "Request received. Accept it below." };
+  });
+
 export const respondFriend = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.object({ fromUserId: z.string().min(1).max(80), accept: z.boolean() }))

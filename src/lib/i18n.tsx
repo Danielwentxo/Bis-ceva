@@ -32,6 +32,8 @@ const baseDict: Record<string, Record<string, string>> = {
     friendsLead: "Invite people you go to shows with. They only see concerts they confirm.",
     friendsInvite: "Invite by email",
     friendsSend: "Invite",
+    friendsShare: "Share",
+    friendsShareText: "{name} invited you to My Gig History. Open: {url}",
     friendsLeft: "{n} invites left today",
     friendsRequests: "Friend requests",
     friendsShows: "Were you at these shows?",

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { friendConcerts, inviteFriend, listFriends, removeFriend, renameFriend, respondFriend, respondTag } from "@/lib/friends";
+import { claimInvite, friendConcerts, inviteFriend, listFriends, removeFriend, renameFriend, respondFriend, respondTag, shareInvite } from "@/lib/friends";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/friends")({
@@ -46,7 +46,12 @@ function FriendsPage() {
 
   useEffect(() => {
     if (!invite) return;
-    setMessage(t("friendsInviteOpened"));
+    void claimInvite({ data: { token: invite } })
+      .then((res) => {
+        setMessage(res.message);
+        return refresh();
+      })
+      .catch(() => setMessage(t("friendsInviteOpened")));
   }, [invite, t]);
 
   return (
@@ -78,6 +83,24 @@ function FriendsPage() {
           <Button type="submit" disabled={busy || left <= 0}>{t("friendsSend")}</Button>
         </form>
         <p className="mt-2 text-xs text-muted-foreground">{t("friendsLeft", { n: String(left) })}</p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-3"
+          onClick={() => {
+            void shareInvite().then(async (res) => {
+              const text = t("friendsShareText", { name: res.name, url: res.url });
+              if (navigator.share) {
+                await navigator.share({ title: t("navFriends"), text, url: res.url }).catch(() => undefined);
+                return;
+              }
+              const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
+              window.open(wa, "_blank", "noopener,noreferrer");
+            }).catch(() => setMessage(t("friendsLoadError")));
+          }}
+        >
+          {t("friendsShare")}
+        </Button>
         {message ? <p className="mt-2 text-sm text-foreground">{message}</p> : null}
       </section>
 
