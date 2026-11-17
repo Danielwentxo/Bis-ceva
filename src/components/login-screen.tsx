@@ -134,7 +134,7 @@ export function LoginScreen() {
         const { error } = await authClient.signIn.email({ email, password });
         if (error) throw new Error(error.message ?? "Sign in failed");
       }
-      window.location.assign("/");
+      window.location.assign(window.localStorage.getItem("bis-invite") ? "/friends" : "/");
     } catch (err) {
       const raw = err instanceof Error ? err.message : "Something went wrong";
       if (mode === "sign-in" && isWrongLogin(raw)) {
@@ -152,12 +152,12 @@ export function LoginScreen() {
     setSubmitting(true);
     try {
       if (useGrokBroker()) {
-        await signIn("grok-google", { callbackURL: "/", errorCallbackURL: "/" });
+        await signIn("grok-google", { callbackURL: "/friends", errorCallbackURL: "/" });
         return;
       }
       const { data, error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: window.localStorage.getItem("bis-invite") ? "/friends" : "/",
         errorCallbackURL: "/",
       });
       if (error) throw new Error(error.message ?? "Google sign-in failed");

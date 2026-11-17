@@ -14,6 +14,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { APP_TAGLINE } from "@/lib/brand";
 import { useI18n } from "@/lib/i18n";
 import { pageLabel } from "@/lib/i18n-pages";
+import { claimInvite } from "@/lib/friends";
 import { useArchive } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -56,8 +57,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, isPending } = useCurrentUserState();
   useEnrichArtists();
   useEffect(() => {
+    if (user) return;
+    const token = new URLSearchParams(window.location.search).get("invite");
+    if (token) window.localStorage.setItem("bis-invite", token);
+  }, [user]);
+  useEffect(() => {
     if (!user) return;
     void useArchive.getState().loadFromServer();
+    const token = window.localStorage.getItem("bis-invite");
+    if (!token) return;
+    window.localStorage.removeItem("bis-invite");
+    void claimInvite({ data: { token } }).catch(() => undefined);
   }, [user?.id]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
