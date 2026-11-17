@@ -50,6 +50,8 @@ const baseDict: Record<string, Record<string, string>> = {
     friendsRemove: "Remove",
     friendsSave: "Save",
     friendsRemoveConfirm: "Remove this friend? Shared show requests are cancelled.",
+    friendsTogether: "Together",
+    friendsNoShows: "No concerts yet.",
     addConcert: "Add concert",
     signInTitle: "Sign in to your account",
     signUpTitle: "Create an account",

@@ -311,3 +311,41 @@ export const removeTag = createServerFn({ method: "POST" })
     `;
     return { ok: true };
   });
+
+export const friendConcerts = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ friendId: z.string().min(1).max(80) }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    const allowed = await sql<{ status: string }>`
+      select status from friendships
+      where status = 'accepted' and (
+        (user_id = ${context.userId} and friend_id = ${data.friendId})
+        or (user_id = ${data.friendId} and friend_id = ${context.userId})
+      )
+      limit 1
+    `;
+    if (!allowed[0]) return [];
+    const rows = await sql<{
+      id: string;
+      date: string;
+      venue: string;
+      city: string;
+      festival_name: string | null;
+      together: boolean;
+    }>`
+      select c.id, c.date, c.venue, c.city, c.festival_name,
+        exists (
+          select 1 from concert_tags t
+          where t.status = 'accepted' and (
+            (t.from_user_id = ${context.userId} and t.to_user_id = ${data.friendId} and (t.concert_id = c.id or t.copied_concert_id = c.id))
+            or
+            (t.from_user_id = ${data.friendId} and t.to_user_id = ${context.userId} and (t.concert_id = c.id or t.copied_concert_id = c.id))
+          )
+        ) as together
+      from concerts c
+      where c.user_id = ${data.friendId}
+      order by c.date desc
+    `;
+    return rows;
+  });

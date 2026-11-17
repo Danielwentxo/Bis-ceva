@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { inviteFriend, listFriends, removeFriend, renameFriend, respondFriend, respondTag } from "@/lib/friends";
+import { friendConcerts, inviteFriend, listFriends, removeFriend, renameFriend, respondFriend, respondTag } from "@/lib/friends";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/friends")({
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/friends")({
 
 type Friend = { id: string; name: string; email: string; nickname?: string | null };
 type Tag = { id: string; from_name: string; date: string; venue: string; city: string };
+type FriendShow = { id: string; date: string; venue: string; city: string; festival_name: string | null; together: boolean };
 
 function FriendsPage() {
   const { t } = useI18n();
@@ -28,6 +29,8 @@ function FriendsPage() {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [nickname, setNickname] = useState("");
+  const [openFriend, setOpenFriend] = useState<Friend | null>(null);
+  const [shows, setShows] = useState<FriendShow[]>([]);
 
   async function refresh() {
     const data = await listFriends();
@@ -119,7 +122,7 @@ function FriendsPage() {
             {friends.map((friend) => (
               <li key={friend.id} className="rounded-xl bg-card px-3 py-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="min-w-0 truncate">{friend.nickname || friend.name || friend.email}</span>
+                  <button type="button" className="min-w-0 truncate text-left font-medium hover:underline" onClick={() => { setOpenFriend(friend); void friendConcerts({ data: { friendId: friend.id } }).then(setShows); }}>{friend.nickname || friend.name || friend.email}</button>
                   <span className="flex shrink-0 gap-2">
                     <Button type="button" variant="outline" onClick={() => { setEditing(friend.id); setNickname(friend.nickname || friend.name || ""); }}>{t("friendsEdit")}</Button>
                     <Button type="button" variant="destructive" onClick={() => { if (window.confirm(t("friendsRemoveConfirm"))) void removeFriend({ data: { friendId: friend.id } }).then(refresh); }}>{t("friendsRemove")}</Button>
@@ -138,6 +141,27 @@ function FriendsPage() {
           <p className="text-sm text-muted-foreground">{t("friendsEmpty")}</p>
         )}
       </section>
+
+      {openFriend ? (
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-medium">{openFriend.nickname || openFriend.name || openFriend.email}</h2>
+            <Button type="button" variant="outline" onClick={() => setOpenFriend(null)}>{t("back")}</Button>
+          </div>
+          {shows.length ? (
+            <ul className="space-y-2">
+              {shows.map((show) => (
+                <li key={show.id} className="rounded-xl bg-card px-3 py-3 text-sm">
+                  <p>{show.festival_name || show.venue} · {show.city}</p>
+                  <p className="text-xs text-muted-foreground">{show.date}{show.together ? ` · ${t("friendsTogether")}` : ""}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("friendsNoShows")}</p>
+          )}
+        </section>
+      ) : null}
     </AppShell>
   );
 }
