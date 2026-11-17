@@ -61,49 +61,6 @@ function FriendsPage() {
         <p className="mt-2 text-sm text-muted-foreground">{t("friendsLead")}</p>
       </header>
 
-      <section className="rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
-        <h2 className="text-sm font-medium">{t("friendsInvite")}</h2>
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setBusy(true);
-            setMessage("");
-            void inviteFriend({ data: { email } })
-              .then((res) => {
-                setMessage(res.message);
-                if (res.ok) setEmail("");
-                return refresh();
-              })
-              .catch(() => setMessage(t("friendsLoadError")))
-              .finally(() => setBusy(false));
-          }}
-        >
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("email")} required />
-          <Button type="submit" disabled={busy || left <= 0}>{t("friendsSend")}</Button>
-        </form>
-        <p className="mt-2 text-xs text-muted-foreground">{t("friendsLeft", { n: String(left) })}</p>
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-3"
-          onClick={() => {
-            void shareInvite().then(async (res) => {
-              const text = t("friendsShareText", { name: res.name, url: res.url });
-              if (navigator.share) {
-                await navigator.share({ title: t("navFriends"), text, url: res.url }).catch(() => undefined);
-                return;
-              }
-              const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
-              window.open(wa, "_blank", "noopener,noreferrer");
-            }).catch(() => setMessage(t("friendsLoadError")));
-          }}
-        >
-          {t("friendsShare")}
-        </Button>
-        {message ? <p className="mt-2 text-sm text-foreground">{message}</p> : null}
-      </section>
-
       {requests.length ? (
         <section className="mt-6">
           <h2 className="mb-3 text-sm font-medium">{t("friendsRequests")}</h2>
@@ -163,6 +120,55 @@ function FriendsPage() {
         ) : (
           <p className="text-sm text-muted-foreground">{t("friendsEmpty")}</p>
         )}
+      </section>
+
+      <section className="mt-8 rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
+        <h2 className="text-sm font-medium">{t("friendsInviteTitle")}</h2>
+        <div className="mt-4">
+          <p className="text-sm font-medium">{t("friendsShare")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("friendsShareHint")}</p>
+          <Button
+            type="button"
+            className="mt-3"
+            onClick={() => {
+              void shareInvite().then(async (res) => {
+                const text = t("friendsShareText", { name: res.name, url: res.url });
+                if (navigator.share) {
+                  await navigator.share({ title: t("navFriends"), text, url: res.url }).catch(() => undefined);
+                  return;
+                }
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+              }).catch(() => setMessage(t("friendsLoadError")));
+            }}
+          >
+            {t("friendsShare")}
+          </Button>
+        </div>
+        <div className="mt-5 border-t border-border pt-4">
+          <p className="text-sm font-medium">{t("friendsInvite")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("friendsEmailHint")}</p>
+          <form
+            className="mt-3 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setBusy(true);
+              setMessage("");
+              void inviteFriend({ data: { email } })
+                .then((res) => {
+                  setMessage(res.message);
+                  if (res.ok) setEmail("");
+                  return refresh();
+                })
+                .catch(() => setMessage(t("friendsLoadError")))
+                .finally(() => setBusy(false));
+            }}
+          >
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("email")} required />
+            <Button type="submit" disabled={busy || left <= 0}>{t("friendsSend")}</Button>
+          </form>
+          <p className="mt-2 text-xs text-muted-foreground">{t("friendsLeft", { n: String(left) })}</p>
+        </div>
+        {message ? <p className="mt-3 text-sm text-foreground">{message}</p> : null}
       </section>
 
       {openFriend ? (
