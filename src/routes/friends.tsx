@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { inviteFriend, listFriends, respondFriend, respondTag } from "@/lib/friends";
+import { inviteFriend, listFriends, removeFriend, renameFriend, respondFriend, respondTag } from "@/lib/friends";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/friends")({
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/friends")({
   component: FriendsPage,
 });
 
-type Friend = { id: string; name: string; email: string };
+type Friend = { id: string; name: string; email: string; nickname?: string | null };
 type Tag = { id: string; from_name: string; date: string; venue: string; city: string };
 
 function FriendsPage() {
@@ -26,6 +26,8 @@ function FriendsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [left, setLeft] = useState(10);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [nickname, setNickname] = useState("");
 
   async function refresh() {
     const data = await listFriends();
@@ -115,7 +117,21 @@ function FriendsPage() {
         {friends.length ? (
           <ul className="space-y-2">
             {friends.map((friend) => (
-              <li key={friend.id} className="rounded-xl bg-card px-3 py-3 text-sm">{friend.name || friend.email}</li>
+              <li key={friend.id} className="rounded-xl bg-card px-3 py-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate">{friend.nickname || friend.name || friend.email}</span>
+                  <span className="flex shrink-0 gap-2">
+                    <Button type="button" variant="outline" onClick={() => { setEditing(friend.id); setNickname(friend.nickname || friend.name || ""); }}>{t("friendsEdit")}</Button>
+                    <Button type="button" variant="destructive" onClick={() => { if (window.confirm(t("friendsRemoveConfirm"))) void removeFriend({ data: { friendId: friend.id } }).then(refresh); }}>{t("friendsRemove")}</Button>
+                  </span>
+                </div>
+                {editing === friend.id ? (
+                  <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); void renameFriend({ data: { friendId: friend.id, nickname } }).then(() => { setEditing(null); return refresh(); }); }}>
+                    <Input value={nickname} onChange={(e) => setNickname(e.target.value)} />
+                    <Button type="submit">{t("friendsSave")}</Button>
+                  </form>
+                ) : null}
+              </li>
             ))}
           </ul>
         ) : (

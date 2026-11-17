@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { concertTags, listFriends, tagFriends } from "@/lib/friends";
+import { concertTags, listFriends, removeTag, tagFriends } from "@/lib/friends";
 import { useI18n } from "@/lib/i18n";
 
 export function FriendsOnConcert({ concertId }: { concertId: string }) {
   const { t } = useI18n();
-  const [friends, setFriends] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [friends, setFriends] = useState<{ id: string; name: string; email: string; nickname?: string | null }[]>([]);
   const [picked, setPicked] = useState<string[]>([]);
-  const [sent, setSent] = useState<{ to_name: string; status: string }[]>([]);
+  const [sent, setSent] = useState<{ id: string; to_name: string; status: string }[]>([]);
   const [message, setMessage] = useState("");
 
   async function refresh() {
@@ -36,7 +36,7 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
                     setPicked((cur) => (e.target.checked ? [...cur, friend.id] : cur.filter((id) => id !== friend.id)))
                   }
                 />
-                {friend.name || friend.email}
+                {friend.nickname || friend.name || friend.email}
               </label>
             </li>
           ))}
@@ -63,7 +63,10 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
       {sent.length ? (
         <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
           {sent.map((row) => (
-            <li key={`${row.to_name}-${row.status}`}>{row.to_name}: {row.status}</li>
+            <li key={row.id} className="flex items-center justify-between gap-2">
+              <span>{row.to_name}: {row.status}</span>
+              <Button type="button" variant="outline" onClick={() => void removeTag({ data: { tagId: row.id } }).then(refresh)}>{t("friendsRemove")}</Button>
+            </li>
           ))}
         </ul>
       ) : null}

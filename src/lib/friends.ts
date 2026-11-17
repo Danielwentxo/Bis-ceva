@@ -49,8 +49,9 @@ export const listFriends = createServerFn({ method: "POST" })
         await sql`update friend_invites set status = 'claimed' where id = ${invite.id}`;
       }
     }
-    const friends = await sql<{ id: string; name: string; email: string }>`
-      select u.id, u.name, u.email
+    const friends = await sql<{ id: string; name: string; email: string; nickname: string | null }>`
+      select u.id, u.name, u.email,
+        (select nickname from friendships mine where mine.user_id = ${context.userId} and mine.friend_id = u.id limit 1) as nickname
       from friendships f
       join "user" u on u.id = case when f.user_id = ${context.userId} then f.friend_id else f.user_id end
       where f.status = 'accepted' and (f.user_id = ${context.userId} or f.friend_id = ${context.userId})
@@ -265,6 +266,48 @@ export const respondTag = createServerFn({ method: "POST" })
     `;
     await sql`
       update concert_tags set status = 'accepted', copied_concert_id = ${copyId} where id = ${tag.id}
+    `;
+    return { ok: true };
+  });
+
+export const removeFriend = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ friendId: z.string().min(1).max(80) }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    await sql`
+      delete from friendships
+      where (user_id = ${context.userId} and friend_id = ${data.friendId})
+         or (user_id = ${data.friendId} and friend_id = ${context.userId})
+    `;
+    await sql`
+      delete from concert_tags
+      where (from_user_id = ${context.userId} and to_user_id = ${data.friendId})
+         or (from_user_id = ${data.friendId} and to_user_id = ${context.userId})
+    `;
+    return { ok: true };
+  });
+
+export const renameFriend = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ friendId: z.string().min(1).max(80), nickname: z.string().trim().max(80) }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    await sql`
+      update friendships set nickname = ${data.nickname || null}
+      where user_id = ${context.userId} and friend_id = ${data.friendId}
+    `;
+    return { ok: true };
+  });
+
+export const removeTag = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ tagId: z.string().min(1).max(80) }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    await sql`
+      delete from concert_tags
+      where id = ${data.tagId} and from_user_id = ${context.userId}
     `;
     return { ok: true };
   });
