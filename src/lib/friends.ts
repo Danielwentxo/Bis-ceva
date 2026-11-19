@@ -33,6 +33,7 @@ export const listFriends = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    await repairCopiedLineups(sql, context.userId);
     const self = await me(sql, context.userId);
     if (self?.email) {
       const waiting = await sql<{ id: string; from_user_id: string; token: string }>`
@@ -62,18 +63,36 @@ export const listFriends = createServerFn({ method: "POST" })
       join "user" u on u.id = f.user_id
       where f.friend_id = ${context.userId} and f.status = 'pending'
     `;
-    const tags = await sql<{ id: string; concert_id: string; from_name: string; date: string; venue: string; city: string }>`
-      select t.id, t.concert_id, u.name as from_name, c.date, c.venue, c.city
+    const tags = await sql<{ id: string; concert_id: string; from_name: string; date: string; venue: string; city: string; festival_name: string | null; poster: string | null; lineup: { artistId?: string }[] | null }>`
+      select t.id, t.concert_id, u.name as from_name, c.date, c.venue, c.city, c.festival_name, c.festival_poster_url as poster, c.lineup
       from concert_tags t
       join "user" u on u.id = t.from_user_id
       join concerts c on c.user_id = t.from_user_id and c.id = t.concert_id
       where t.to_user_id = ${context.userId} and t.status = 'pending'
     `;
+    const pendingArtists = await sql<{ id: string; name: string; logo_url: string | null }>`
+      select id, name, logo_url from artists
+    `;
+    const pendingNames = new Map(pendingArtists.map((a) => [a.id, a]));
     const seen = new Set<string>();
     return {
       friends: friends.filter((f) => (seen.has(f.id) ? false : (seen.add(f.id), true))),
       requests,
-      tags,
+      tags: tags.map((tag) => {
+        const slots = Array.isArray(tag.lineup) ? tag.lineup : [];
+        const people = slots.map((slot) => pendingNames.get(slot.artistId ?? "")).filter(Boolean) as { name: string; logo_url: string | null }[];
+        return {
+          id: tag.id,
+          concert_id: tag.concert_id,
+          from_name: tag.from_name,
+          date: tag.date,
+          venue: tag.venue,
+          city: tag.city,
+          title: tag.festival_name || people[0]?.name || tag.venue,
+          artists: people.map((p) => p.name),
+          poster: tag.poster || people[0]?.logo_url || null,
+        };
+      }),
       invitesLeft: Math.max(0, DAILY_INVITES - (await invitesSentToday(sql, context.userId))),
     };
   });
@@ -223,6 +242,15 @@ export const tagFriends = createServerFn({ method: "POST" })
         limit 1
       `;
       if (!friend[0]) continue;
+      const linked = await sql<{ id: string }>`
+        select id from concert_tags
+        where status in ('pending', 'accepted') and (
+          (from_user_id = ${context.userId} and to_user_id = ${friendId} and concert_id = ${data.concertId})
+          or (from_user_id = ${friendId} and to_user_id = ${context.userId} and (concert_id = ${data.concertId} or copied_concert_id = ${data.concertId}))
+        )
+        limit 1
+      `;
+      if (linked[0]) continue;
       await sql`
         insert into concert_tags (id, concert_id, from_user_id, to_user_id)
         values (${crypto.randomUUID()}, ${data.concertId}, ${context.userId}, ${friendId})
@@ -238,12 +266,21 @@ export const concertTags = createServerFn({ method: "POST" })
   .validator(z.object({ concertId: z.string().min(1).max(80) }))
   .handler(async ({ data, context }) => {
     const sql = await getSql();
-    return sql<{ id: string; to_name: string; status: string }>`
-      select t.id, u.name as to_name, t.status
+    const outgoing = await sql<{ id: string; to_name: string; status: string; friend_id: string }>`
+      select t.id, u.name as to_name, t.status, t.to_user_id as friend_id
       from concert_tags t
       join "user" u on u.id = t.to_user_id
       where t.concert_id = ${data.concertId} and t.from_user_id = ${context.userId}
     `;
+    const incoming = await sql<{ id: string; to_name: string; status: string; friend_id: string }>`
+      select t.id, u.name as to_name, t.status, t.from_user_id as friend_id
+      from concert_tags t
+      join "user" u on u.id = t.from_user_id
+      where t.to_user_id = ${context.userId} and t.status = 'accepted'
+        and (t.copied_concert_id = ${data.concertId} or t.concert_id = ${data.concertId})
+    `;
+    const seen = new Set<string>();
+    return [...outgoing, ...incoming].filter((row) => (seen.has(row.friend_id) ? false : (seen.add(row.friend_id), true)));
   });
 
 export const respondTag = createServerFn({ method: "POST" })
@@ -304,12 +341,19 @@ export const respondTag = createServerFn({ method: "POST" })
         `;
         if (rows[0]) artists.push(rows[0]);
       }
+      const idMap = new Map<string, string>();
       for (const a of artists) {
+        const newId = artistKey(a.name, a.country);
+        idMap.set(a.id, newId);
         await sql`
           insert into artists (id, user_id, name, logo_url, thumb_url, genre, country, bio)
-          values (${artistKey(a.name, a.country)}, ${context.userId}, ${a.name}, ${a.logo_url}, ${a.thumb_url}, ${a.genre}, ${a.country}, ${a.bio})
+          values (${newId}, ${context.userId}, ${a.name}, ${a.logo_url}, ${a.thumb_url}, ${a.genre}, ${a.country}, ${a.bio})
           on conflict (user_id, id) do nothing
         `;
+      }
+      for (const slot of lineup) {
+        const oldId = (slot as { artistId?: string }).artistId;
+        if (oldId && idMap.has(oldId)) (slot as { artistId?: string }).artistId = idMap.get(oldId);
       }
     }
     const copyId = crypto.randomUUID();
@@ -438,3 +482,29 @@ export const friendAlerts = createServerFn({ method: "POST" })
     `;
     return Number(rows[0]?.n ?? 0);
   });
+
+async function repairCopiedLineups(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const copies = await sql<{ copied_concert_id: string; concert_id: string; from_user_id: string }>`
+    select copied_concert_id, concert_id, from_user_id
+    from concert_tags
+    where status = 'accepted' and to_user_id = ${userId} and copied_concert_id is not null
+  `;
+  for (const copy of copies) {
+    const source = await sql<{ lineup: { artistId?: string }[] | null }>`
+      select lineup from concerts where user_id = ${copy.from_user_id} and id = ${copy.concert_id} limit 1
+    `;
+    const slots = Array.isArray(source[0]?.lineup) ? source[0]!.lineup! : [];
+    if (!slots.length) continue;
+    const mapped = [];
+    for (const slot of slots) {
+      const rows = await sql<{ name: string; country: string | null }>`
+        select name, country from artists where user_id = ${copy.from_user_id} and id = ${slot.artistId ?? ""} limit 1
+      `;
+      if (!rows[0]) continue;
+      mapped.push({ ...slot, artistId: artistKey(rows[0].name, rows[0].country) });
+    }
+    if (mapped.length) {
+      await sql`update concerts set lineup = ${JSON.stringify(mapped)}::jsonb where user_id = ${userId} and id = ${copy.copied_concert_id}`;
+    }
+  }
+}

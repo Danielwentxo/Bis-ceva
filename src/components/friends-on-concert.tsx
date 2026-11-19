@@ -7,7 +7,7 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
   const { t } = useI18n();
   const [friends, setFriends] = useState<{ id: string; name: string; email: string; nickname?: string | null }[]>([]);
   const [picked, setPicked] = useState<string[]>([]);
-  const [sent, setSent] = useState<{ id: string; to_name: string; status: string }[]>([]);
+  const [sent, setSent] = useState<{ id: string; to_name: string; status: string; friend_id: string }[]>([]);
   const [message, setMessage] = useState("");
 
   async function refresh() {
@@ -24,9 +24,9 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
     <section className="mt-8 rounded-2xl bg-card p-5 shadow-[var(--shadow-border)]">
       <h2 className="text-xs font-medium uppercase tracking-wider text-subtle">{t("friendsWithYou")}</h2>
       {!friends.length ? <p className="mt-2 text-sm text-muted-foreground">{t("friendsNoneYet")}</p> : null}
-      {friends.length ? (
+      {friends.filter((friend) => !sent.some((row) => row.friend_id === friend.id)).length ? (
         <ul className="mt-3 space-y-2">
-          {friends.map((friend) => (
+          {friends.filter((friend) => !sent.some((row) => row.friend_id === friend.id)).map((friend) => (
             <li key={friend.id}>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -42,7 +42,7 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
           ))}
         </ul>
       ) : null}
-      {friends.length ? (
+      {friends.filter((friend) => !sent.some((row) => row.friend_id === friend.id)).length ? (
         <Button
           type="button"
           className="mt-3"
@@ -64,7 +64,7 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
         <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
           {sent.map((row) => (
             <li key={row.id} className="flex items-center justify-between gap-2">
-              <span>{row.to_name}: {row.status}</span>
+              <span>{row.to_name}: {row.status === "accepted" ? t("friendsTogether") : row.status}</span>
               <Button type="button" variant="outline" onClick={() => void removeTag({ data: { tagId: row.id } }).then(refresh)}>{t("friendsRemove")}</Button>
             </li>
           ))}

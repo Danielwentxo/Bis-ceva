@@ -14,7 +14,7 @@ export const Route = createFileRoute("/friends")({
 });
 
 type Friend = { id: string; name: string; email: string; nickname?: string | null };
-type Tag = { id: string; from_name: string; date: string; venue: string; city: string };
+type Tag = { id: string; from_name: string; date: string; venue: string; city: string; title?: string; artists?: string[]; poster?: string | null };
 type FriendShow = { id: string; date: string; venue: string; city: string; festivalName: string | null; artists: string[]; together: boolean };
 
 function FriendsPage() {
@@ -84,7 +84,14 @@ function FriendsPage() {
           <ul className="space-y-2">
             {tags.map((tag) => (
               <li key={tag.id} className="rounded-xl bg-card px-3 py-3">
-                <p className="text-sm">{t("friendsWereYou", { name: tag.from_name, venue: tag.venue, city: tag.city, date: tag.date })}</p>
+                <div className="flex gap-3">
+                  {tag.poster ? <img src={tag.poster} alt="" className="size-12 shrink-0 rounded-lg object-cover" /> : null}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{tag.title || tag.venue}</p>
+                    {tag.artists?.length ? <p className="truncate text-xs text-muted-foreground">{tag.artists.join(", ")}</p> : null}
+                    <p className="text-xs text-muted-foreground">{t("friendsWereYou", { name: tag.from_name, venue: tag.venue, city: tag.city, date: tag.date })}</p>
+                  </div>
+                </div>
                 <div className="mt-2 flex gap-2">
                   <Button type="button" onClick={() => void respondTag({ data: { tagId: tag.id, accept: true } }).then(refresh)}>{t("friendsAccept")}</Button>
                   <Button type="button" variant="outline" onClick={() => void respondTag({ data: { tagId: tag.id, accept: false } }).then(refresh)}>{t("friendsDecline")}</Button>
