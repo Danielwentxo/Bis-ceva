@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { InstallApp } from "@/components/install-app";
 import { ConcertCard } from "@/components/concert-card";
 import { FestivalGroupCard, festivalKey } from "@/components/festival-group-card";
 import { BackupReminder } from "@/components/backup-reminder";
@@ -170,6 +171,7 @@ function Home() {
         )}
       </header>
       {hasHydrated && concerts.length ? <BackupReminder /> : null}
+      <InstallApp />
 
       {!hasHydrated ? (
         <div className="space-y-3">

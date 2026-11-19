@@ -105,6 +105,8 @@ export const MORE_DICTS: Record<string, Record<string, string>> = {
     backToConcerts: "Retour aux concerts",
     artistMissing: "Cet artiste n'est pas dans l'archive.",
     back: "Retour",
+    install: "Installer",
+    close: "Plus tard",
     seenLive: "Vu en live",
     with: "avec",
     favoriteBadge: "Favori",

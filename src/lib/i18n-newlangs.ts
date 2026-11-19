@@ -105,6 +105,8 @@ export const NEW_DICTS: Record<string, Record<string, string>> = {
     backToConcerts: "Voltar aos concertos",
     artistMissing: "Este artista n\u00e3o est\u00e1 no arquivo.",
     back: "Voltar",
+    install: "Instalar",
+    close: "Agora não",
     seenLive: "Visto ao vivo",
     with: "com",
     favoriteBadge: "Favorito",

@@ -128,6 +128,8 @@ const baseDict: Record<string, Record<string, string>> = {
     backToConcerts: "Back to concerts",
     artistMissing: "This artist is not in the archive.",
     back: "Back",
+    install: "Install",
+    close: "Not now",
     seenLive: "Seen live",
     with: "with",
     favoriteBadge: "Favorite",
