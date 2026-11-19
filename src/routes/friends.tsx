@@ -186,14 +186,20 @@ function FriendsPage() {
           </div>
           {shows.length ? (
             <ul className="space-y-2">
-              {shows.map((show) => (
+              {shows.reduce<typeof shows>((acc, show) => {
+                const key = `${show.date}|${show.venue}|${show.city}|${show.festivalName || ""}`;
+                const existing = acc.find((item) => `${item.date}|${item.venue}|${item.city}|${item.festivalName || ""}` === key);
+                if (!existing) acc.push({ ...show, artists: [...show.artists] });
+                else existing.artists = [...new Set([...existing.artists, ...show.artists])];
+                return acc;
+              }, []).map((show) => (
                 <li key={show.id} className="rounded-xl bg-card px-3 py-3 text-sm">
                   <p className="font-medium">{show.artists.slice(0, 3).join(", ") || show.festivalName || show.venue}</p>
                   {show.festivalName ? <p className="text-xs text-muted-foreground">{show.festivalName}</p> : null}
                   <p className="text-xs text-muted-foreground">{show.venue} · {show.city}</p>
                   <p className="text-xs text-muted-foreground">{show.date}{show.together ? ` · ${t("friendsTogether")}` : ""}</p>
                 </li>
-              ))}
+              )})}
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">{t("friendsNoShows")}</p>

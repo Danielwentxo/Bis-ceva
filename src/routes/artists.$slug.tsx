@@ -46,11 +46,28 @@ function ArtistDetail() {
   const nameKey = artistKey(artist?.name ?? slug);
   const sameName = Object.values(artists).filter((a) => artistKey(a.name) === nameKey);
   const ids = new Set(sameName.length <= 1 ? sameName.map((a) => a.id) : [artist?.id].filter(Boolean));
-  const shows = concerts
+  const matched = concerts
     .filter((c) =>
       c.lineup.some((l) => ids.has(l.artistId) || artistKey(l.artistId.split("--")[0] ?? l.artistId) === nameKey),
     )
     .sort((a, b) => b.date.localeCompare(a.date));
+  const merged = new Map<string, (typeof matched)[number]>();
+  for (const concert of matched) {
+    const title = concert.festivalName?.trim() || artists[concert.lineup[0]?.artistId ?? ""]?.name || concert.venue;
+    const key = `${concert.date}|${concert.venue.trim().toLowerCase()}|${concert.city.trim().toLowerCase()}|${title.toLowerCase()}`;
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, concert);
+      continue;
+    }
+    const seen = new Set(existing.lineup.map((slot) => slot.artistId));
+    existing.lineup = [
+      ...existing.lineup,
+      ...concert.lineup.filter((slot) => !seen.has(slot.artistId)),
+    ];
+    if (!existing.festivalPosterUrl && concert.festivalPosterUrl) existing.festivalPosterUrl = concert.festivalPosterUrl;
+  }
+  const shows = [...merged.values()];
 
   const name = artist?.name ?? slug.replace(/-/g, " ");
   const country = originCountry(artist?.country) ?? artist?.country;
