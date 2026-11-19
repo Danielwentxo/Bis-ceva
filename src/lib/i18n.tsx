@@ -118,6 +118,8 @@ const baseDict: Record<string, Record<string, string>> = {
     edit: "Edit",
     newEntry: "New entry",
     editConcert: "Edit concert",
+    editFestival: "Edit festival",
+    addDay: "Add day",
     headliner: "Headliner",
     support: "Support",
     lineup: "Lineup",

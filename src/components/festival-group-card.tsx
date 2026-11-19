@@ -42,8 +42,8 @@ export function FestivalGroupCard({
   return (
     <article className="rounded-2xl bg-card p-4 shadow-[var(--shadow-border)]">
       <Link
-        to="/add"
-        search={{ id: newest.id, festival: "1" }}
+        to="/festivals/$id"
+        params={{ id: newest.id }}
         className="flex gap-3 rounded-xl outline-none transition-[opacity] hover:opacity-90"
       >
         {poster ? (

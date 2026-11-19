@@ -21,6 +21,7 @@ import { Route as VenuesRouteImport } from './routes/venues'
 import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
 import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
 import { Route as ConcertsIdRouteImport } from './routes/concerts.$id'
+import { Route as FestivalsIdRouteImport } from './routes/festivals.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -102,6 +103,11 @@ const ConcertsIdRoute = ConcertsIdRouteImport.update({
   path: '/concerts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FestivalsIdRoute = FestivalsIdRouteImport.update({
+  id: '/festivals/$id',
+  path: '/festivals/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/artists/': typeof ArtistsIndexRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/concerts/$id': typeof ConcertsIdRoute
+  '/festivals/$id': typeof FestivalsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/venues': typeof VenuesRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/concerts/$id': typeof ConcertsIdRoute
+  '/festivals/$id': typeof FestivalsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/artists/': typeof ArtistsIndexRoute
   '/artists/$slug': typeof ArtistsSlugRoute
   '/concerts/$id': typeof ConcertsIdRoute
+  '/festivals/$id': typeof FestivalsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/artists/'
     | '/artists/$slug'
     | '/concerts/$id'
+    | '/festivals/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/venues'
     | '/artists/$slug'
     | '/concerts/$id'
+    | '/festivals/$id'
   id:
     | '__root__'
     | '/'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/artists/'
     | '/artists/$slug'
     | '/concerts/$id'
+    | '/festivals/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,6 +240,7 @@ export interface RootRouteChildren {
   TransferRoute: typeof TransferRoute
   VenuesRoute: typeof VenuesRoute
   ConcertsIdRoute: typeof ConcertsIdRoute
+  FestivalsIdRoute: typeof FestivalsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConcertsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/festivals/$id': {
+      id: '/festivals/$id'
+      path: '/festivals/$id'
+      fullPath: '/festivals/$id'
+      preLoaderRoute: typeof FestivalsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -375,6 +395,7 @@ const rootRouteChildren: RootRouteChildren = {
   TransferRoute: TransferRoute,
   VenuesRoute: VenuesRoute,
   ConcertsIdRoute: ConcertsIdRoute,
+  FestivalsIdRoute: FestivalsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
