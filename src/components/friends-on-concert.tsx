@@ -64,7 +64,7 @@ export function FriendsOnConcert({ concertId }: { concertId: string }) {
         <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
           {sent.map((row) => (
             <li key={row.id} className="flex items-center justify-between gap-2">
-              <span>{row.to_name}: {row.status === "accepted" ? t("friendsTogether") : row.status}</span>
+              <span>{row.to_name}{row.status === "accepted" ? "" : `: ${row.status}`}</span>
               <Button type="button" variant="outline" onClick={() => void removeTag({ data: { tagId: row.id } }).then(refresh)}>{t("friendsRemove")}</Button>
             </li>
           ))}
