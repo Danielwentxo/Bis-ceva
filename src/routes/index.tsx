@@ -33,6 +33,22 @@ export const Route = createFileRoute("/")({
 });
 
 function groupList(list: Concert[]) {
+  const unique: Concert[] = [];
+  const seenDay = new Map<string, Concert>();
+  for (const concert of list) {
+    const key = `${concert.date.slice(0, 10)}|${concert.venue.trim().toLowerCase()}|${concert.city.trim().toLowerCase()}`;
+    const existing = seenDay.get(key);
+    if (!existing) {
+      seenDay.set(key, concert);
+      unique.push(concert);
+      continue;
+    }
+    const ids = new Set(existing.lineup.map((slot) => slot.artistId));
+    existing.lineup = [...existing.lineup, ...concert.lineup.filter((slot) => !ids.has(slot.artistId))];
+    if (!existing.festivalName && concert.festivalName) existing.festivalName = concert.festivalName;
+    if (!existing.festivalPosterUrl && concert.festivalPosterUrl) existing.festivalPosterUrl = concert.festivalPosterUrl;
+  }
+  list = unique;
   const items: Array<{ type: "concert"; concert: Concert } | { type: "festival"; key: string; concerts: Concert[] }> = [];
   const seen = new Set<string>();
   const byFest = new Map<string, Concert[]>();
