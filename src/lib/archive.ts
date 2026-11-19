@@ -220,9 +220,15 @@ export const loadArchive = createServerFn({ method: "POST" })
     const artistList = artistRows.map(rowToArtist);
     const concerts = concertRows.map(rowToConcert);
     await mergeSameBand(context.userId, artistList, concerts);
+    await removeEmptyCopies(sql, context.userId);
+    const fresh = await sql<ConcertRow>`
+      select id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, created_at
+      from concerts where user_id = ${context.userId} order by date desc
+    `;
+    const cleaned = fresh.map(rowToConcert);
     const artists: Record<string, Artist> = {};
     for (const artist of artistList) artists[artist.id] = artist;
-    return { concerts, artists };
+    return { concerts: cleaned, artists };
   });
 
 export const upsertConcert = createServerFn({ method: "POST" })
@@ -230,7 +236,7 @@ export const upsertConcert = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.string().min(1).max(80).optional(), draft: draftSchema, createdAt: z.string().optional() }))
   .handler(async ({ data, context }) => {
     const sql = await getSql();
-    const id = data.id ?? crypto.randomUUID();
+    let id = data.id ?? crypto.randomUUID();
     const createdAt = data.createdAt ?? new Date().toISOString();
     const draft = data.draft;
     const festivalName = draft.festivalName?.trim() ?? "";
@@ -252,6 +258,22 @@ export const upsertConcert = createServerFn({ method: "POST" })
       artistId: artistKey(a.name, a.country),
       role: index === 0 ? "headliner" : "support",
     }));
+    if (!data.id) {
+      const same = await sql<{ id: string; lineup: LineupEntry[] | null }>`
+        select id, lineup from concerts
+        where user_id = ${context.userId}
+          and left(date, 10) = ${draft.date.slice(0, 10)}
+          and lower(venue) = ${draft.venue.trim().toLowerCase()}
+          and lower(city) = ${draft.city.trim().toLowerCase()}
+        limit 1
+      `;
+      if (same[0]) {
+        id = same[0].id;
+        const seen = new Set((same[0].lineup ?? []).map((slot) => slot.artistId));
+        for (const slot of lineup) if (!seen.has(slot.artistId)) same[0].lineup = [...(same[0].lineup ?? []), slot];
+        lineup.splice(0, lineup.length, ...(same[0].lineup ?? lineup));
+      }
+    }
     await sql`
       insert into concerts (id, user_id, date, venue, city, country, country_code, lineup, notes, rating, favorite, festival, festival_name, festival_poster_url, ticket_url, created_at)
       values (
@@ -375,3 +397,36 @@ export const updateUserArtist = createServerFn({ method: "POST" })
     `;
     return { ok: true };
   });
+
+async function removeEmptyCopies(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const rows = await sql<{ id: string; date: string; venue: string; city: string; lineup: { artistId?: string }[] | null }>`
+    select id, date, venue, city, lineup from concerts where user_id = ${userId}
+  `;
+  const groups = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const key = `${row.date.slice(0, 10)}|${row.venue.trim().toLowerCase()}|${row.city.trim().toLowerCase()}`;
+    const bucket = groups.get(key) ?? [];
+    bucket.push(row);
+    groups.set(key, bucket);
+  }
+  for (const bucket of groups.values()) {
+    if (bucket.length < 2) continue;
+    const ranked = [...bucket].sort((a, b) => (b.lineup?.length ?? 0) - (a.lineup?.length ?? 0));
+    const keep = ranked[0]!;
+    const merged = [...(keep.lineup ?? [])];
+    const seen = new Set(merged.map((slot) => slot.artistId));
+    for (const extra of ranked.slice(1)) {
+      for (const slot of extra.lineup ?? []) {
+        if (slot.artistId && !seen.has(slot.artistId)) {
+          seen.add(slot.artistId);
+          merged.push(slot);
+        }
+      }
+      await sql`delete from concerts where user_id = ${userId} and id = ${extra.id}`;
+      await sql`update concert_tags set copied_concert_id = ${keep.id} where copied_concert_id = ${extra.id}`;
+    }
+    if (merged.length !== (keep.lineup?.length ?? 0)) {
+      await sql`update concerts set lineup = ${JSON.stringify(merged)}::jsonb where user_id = ${userId} and id = ${keep.id}`;
+    }
+  }
+}

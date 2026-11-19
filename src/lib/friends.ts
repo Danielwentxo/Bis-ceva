@@ -356,9 +356,17 @@ export const respondTag = createServerFn({ method: "POST" })
         if (oldId && idMap.has(oldId)) (slot as { artistId?: string }).artistId = idMap.get(oldId);
       }
     }
-    const copyId = crypto.randomUUID();
+    const existing = await sql<{ id: string }>`
+      select id from concerts
+      where user_id = ${context.userId}
+        and left(date, 10) = ${String(source.date).slice(0, 10)}
+        and lower(venue) = ${source.venue.trim().toLowerCase()}
+        and lower(city) = ${source.city.trim().toLowerCase()}
+      limit 1
+    `;
+    const copyId = existing[0]?.id ?? crypto.randomUUID();
     const poster = source.festival_poster_url?.startsWith("https://") ? source.festival_poster_url : null;
-    await sql`
+    if (!existing[0]) await sql`
       insert into concerts (
         id, user_id, date, venue, city, country, country_code, lineup, notes, rating, favorite,
         festival, festival_name, festival_poster_url, created_at
