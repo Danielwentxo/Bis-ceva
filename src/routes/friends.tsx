@@ -6,6 +6,25 @@ import { Input } from "@/components/ui/input";
 import { claimInvite, friendConcerts, inviteFriend, listFriends, removeFriend, renameFriend, respondFriend, respondTag, shareInvite } from "@/lib/friends";
 import { useI18n } from "@/lib/i18n";
 
+
+function groupFriendShows(shows: FriendShow[]) {
+  const acc: FriendShow[] = [];
+  for (const show of shows) {
+    const key = show.festivalName
+      ? "festival|" + show.festivalName.trim().toLowerCase() + "|" + show.date.slice(0, 4) + "|" + show.city.trim().toLowerCase()
+      : "show|" + show.date.slice(0, 10) + "|" + show.venue.trim().toLowerCase() + "|" + show.city.trim().toLowerCase();
+    const existing = acc.find((item) => {
+      const itemKey = item.festivalName
+        ? "festival|" + item.festivalName.trim().toLowerCase() + "|" + item.date.slice(0, 4) + "|" + item.city.trim().toLowerCase()
+        : "show|" + item.date.slice(0, 10) + "|" + item.venue.trim().toLowerCase() + "|" + item.city.trim().toLowerCase();
+      return itemKey === key;
+    });
+    if (!existing) acc.push({ ...show, artists: [...show.artists] });
+    else existing.artists = Array.from(new Set([...existing.artists, ...show.artists]));
+  }
+  return acc;
+}
+
 export const Route = createFileRoute("/friends")({
   validateSearch: (search: Record<string, unknown>) => ({
     invite: typeof search.invite === "string" ? search.invite : "",
@@ -186,27 +205,14 @@ function FriendsPage() {
           </div>
           {shows.length ? (
             <ul className="space-y-2">
-              {shows.reduce<typeof shows>((acc, show) => {
-                const key = show.festivalName
-                  ? `festival|${show.festivalName.trim().toLowerCase()}|${show.date.slice(0, 4)}|${show.city.trim().toLowerCase()}`
-                  : `show|${show.date.slice(0, 10)}|${show.venue.trim().toLowerCase()}|${show.city.trim().toLowerCase()}`;
-                const existing = acc.find((item) => {
-                  const itemKey = item.festivalName
-                    ? `festival|${item.festivalName.trim().toLowerCase()}|${item.date.slice(0, 4)}|${item.city.trim().toLowerCase()}`
-                    : `show|${item.date.slice(0, 10)}|${item.venue.trim().toLowerCase()}|${item.city.trim().toLowerCase()}`;
-                  return itemKey === key;
-                });
-                if (!existing) acc.push({ ...show, artists: [...show.artists] });
-                else existing.artists = [...new Set([...existing.artists, ...show.artists])];
-                return acc;
-              }, []).map((show) => (
+              {groupFriendShows(shows).map((show) => (
                 <li key={show.id} className="rounded-xl bg-card px-3 py-3 text-sm">
                   <p className="font-medium">{show.artists.slice(0, 3).join(", ") || show.festivalName || show.venue}</p>
                   {show.festivalName ? <p className="text-xs text-muted-foreground">{show.festivalName}</p> : null}
                   <p className="text-xs text-muted-foreground">{show.venue} · {show.city}</p>
-                  <p className="text-xs text-muted-foreground">{show.date}{show.together ? ` · ${t("friendsTogether")}` : ""}</p>
+                  <p className="text-xs text-muted-foreground">{show.date}{show.together ? " · together" : ""}</p>
                 </li>
-              )})}
+              ))}
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">{t("friendsNoShows")}</p>
