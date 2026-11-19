@@ -63,36 +63,6 @@ export function FestivalGroupCard({
           </p>
         </div>
       </Link>
-      <ul className="mt-3 space-y-1 border-t border-border/60 pt-3">
-        {days.map((concert) => {
-          const lineup = concertArtists(concert, artists);
-          const extra = lineup.length > 1 ? lineup.length - 1 : 0;
-          return (
-            <li key={concert.id}>
-              <Link
-                to="/concerts/$id"
-                params={{ id: concert.id }}
-                className="block truncate rounded-lg px-1 py-1.5 text-sm hover:bg-secondary/50"
-              >
-                <span className="tabular-nums text-muted-foreground">{formatConcertDate(concert.date)}</span>
-                {" "}
-                <span className="font-medium">
-                  {lineup[0]?.artist.name ?? "Day"}
-                  {extra ? <span className="font-normal text-muted-foreground"> +more</span> : null}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-      <Link
-        to="/add"
-        search={{ fromFestival: newest.id }}
-        className="mt-2 flex items-center gap-2 rounded-lg px-1 py-2 text-sm text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-      >
-        <Plus className="size-4" />
-        Add day
-      </Link>
     </article>
   );
 }
