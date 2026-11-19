@@ -398,25 +398,39 @@ export const updateUserArtist = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+function asLineup(value: unknown) {
+  if (Array.isArray(value)) return value as { artistId?: string }[];
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed as { artistId?: string }[] : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 async function removeEmptyCopies(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
-  const rows = await sql<{ id: string; date: string; venue: string; city: string; lineup: { artistId?: string }[] | null }>`
+  const rows = await sql<{ id: string; date: string; venue: string; city: string; lineup: unknown }>`
     select id, date, venue, city, lineup from concerts where user_id = ${userId}
   `;
-  const groups = new Map<string, typeof rows>();
+  const groups = new Map<string, { id: string; lineup: { artistId?: string }[] }[]>();
   for (const row of rows) {
-    const key = `${row.date.slice(0, 10)}|${row.venue.trim().toLowerCase()}|${row.city.trim().toLowerCase()}`;
+    const day = String(row.date).slice(0, 10);
+    const key = `${day}|${row.venue.trim().toLowerCase()}|${row.city.trim().toLowerCase()}`;
     const bucket = groups.get(key) ?? [];
-    bucket.push(row);
+    bucket.push({ id: row.id, lineup: asLineup(row.lineup) });
     groups.set(key, bucket);
   }
   for (const bucket of groups.values()) {
     if (bucket.length < 2) continue;
-    const ranked = [...bucket].sort((a, b) => (b.lineup?.length ?? 0) - (a.lineup?.length ?? 0));
+    const ranked = [...bucket].sort((a, b) => b.lineup.length - a.lineup.length);
     const keep = ranked[0]!;
-    const merged = [...(keep.lineup ?? [])];
+    const merged = [...keep.lineup];
     const seen = new Set(merged.map((slot) => slot.artistId));
     for (const extra of ranked.slice(1)) {
-      for (const slot of extra.lineup ?? []) {
+      for (const slot of extra.lineup) {
         if (slot.artistId && !seen.has(slot.artistId)) {
           seen.add(slot.artistId);
           merged.push(slot);
@@ -425,7 +439,7 @@ async function removeEmptyCopies(sql: Awaited<ReturnType<typeof getSql>>, userId
       await sql`delete from concerts where user_id = ${userId} and id = ${extra.id}`;
       await sql`update concert_tags set copied_concert_id = ${keep.id} where copied_concert_id = ${extra.id}`;
     }
-    if (merged.length !== (keep.lineup?.length ?? 0)) {
+    if (merged.length !== keep.lineup.length) {
       await sql`update concerts set lineup = ${JSON.stringify(merged)}::jsonb where user_id = ${userId} and id = ${keep.id}`;
     }
   }
