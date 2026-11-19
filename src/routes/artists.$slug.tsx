@@ -53,10 +53,7 @@ function ArtistDetail() {
     .sort((a, b) => b.date.localeCompare(a.date));
   const merged = new Map<string, (typeof matched)[number]>();
   for (const concert of matched) {
-    const festival = concert.festivalName?.trim().toLowerCase();
-    const key = festival
-      ? `festival|${festival}|${concert.date.slice(0, 4)}|${concert.city.trim().toLowerCase()}`
-      : `show|${concert.date.slice(0, 10)}|${concert.venue.trim().toLowerCase()}|${concert.city.trim().toLowerCase()}`;
+    const key = eventKey(concert);
     const existing = merged.get(key);
     if (!existing) {
       merged.set(key, concert);

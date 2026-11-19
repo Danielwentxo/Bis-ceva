@@ -187,8 +187,15 @@ function FriendsPage() {
           {shows.length ? (
             <ul className="space-y-2">
               {shows.reduce<typeof shows>((acc, show) => {
-                const key = `${show.date.slice(0, 10)}|${show.venue.trim().toLowerCase()}|${show.city.trim().toLowerCase()}`;
-                const existing = acc.find((item) => `${item.date.slice(0, 10)}|${item.venue.trim().toLowerCase()}|${item.city.trim().toLowerCase()}` === key);
+                const key = show.festivalName
+                  ? `festival|${show.festivalName.trim().toLowerCase()}|${show.date.slice(0, 4)}|${show.city.trim().toLowerCase()}`
+                  : `show|${show.date.slice(0, 10)}|${show.venue.trim().toLowerCase()}|${show.city.trim().toLowerCase()}`;
+                const existing = acc.find((item) => {
+                  const itemKey = item.festivalName
+                    ? `festival|${item.festivalName.trim().toLowerCase()}|${item.date.slice(0, 4)}|${item.city.trim().toLowerCase()}`
+                    : `show|${item.date.slice(0, 10)}|${item.venue.trim().toLowerCase()}|${item.city.trim().toLowerCase()}`;
+                  return itemKey === key;
+                });
                 if (!existing) acc.push({ ...show, artists: [...show.artists] });
                 else existing.artists = [...new Set([...existing.artists, ...show.artists])];
                 return acc;

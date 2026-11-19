@@ -117,6 +117,12 @@ function bump<T>(map: Map<string, CountItem<T>>, key: string, data: T) {
   else map.set(key, { key, count: 1, data });
 }
 
+export function eventKey(concert: Concert) {
+  const festival = concert.festivalName?.trim().toLowerCase();
+  if (festival) return `festival|${festival}|${concert.date.slice(0, 4)}|${concert.city.trim().toLowerCase()}`;
+  return `show|${concert.date.slice(0, 10)}|${concert.venue.trim().toLowerCase()}|${concert.city.trim().toLowerCase()}`;
+}
+
 export function computeStats(concerts: Concert[], artists: Record<string, Artist>): ArchiveStats {
   const today = todayIso();
   const past = concerts.filter((c) => c.date <= today);
@@ -133,11 +139,15 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
   const monthMap = new Map<number, number>();
   const seenArtists = new Set<string>();
 
+  const counted = new Set<string>();
   for (const c of concerts) {
     for (const slot of c.lineup) {
       const artist = artists[slot.artistId] ?? Object.values(artists).find((a) => artistKey(a.name) === artistKey(slot.artistId.split("--")[0] ?? slot.artistId));
       if (!artist) continue;
       seenArtists.add(artist.id);
+      const mark = `${artist.id}|${eventKey(c)}`;
+      if (counted.has(mark)) continue;
+      counted.add(mark);
       bump(artistMap, artist.id, artist);
     }
     bump(venueMap, venueKey(c.venue, c.city), {
@@ -231,7 +241,11 @@ export function computeStats(concerts: Concert[], artists: Record<string, Artist
 }
 
 export function artistShowCount(artistId: string, concerts: Concert[]) {
-  return concerts.filter((c) => c.lineup.some((l) => l.artistId === artistId)).length;
+  const keys = new Set<string>();
+  for (const concert of concerts) {
+    if (concert.lineup.some((slot) => slot.artistId === artistId)) keys.add(eventKey(concert));
+  }
+  return keys.size;
 }
 
 export function concertMatchesStatsFilter(
