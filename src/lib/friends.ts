@@ -33,7 +33,6 @@ export const listFriends = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
-    await repairCopiedLineups(sql, context.userId);
     const self = await me(sql, context.userId);
     if (self?.email) {
       const waiting = await sql<{ id: string; from_user_id: string; token: string }>`
@@ -490,29 +489,3 @@ export const friendAlerts = createServerFn({ method: "POST" })
     `;
     return Number(rows[0]?.n ?? 0);
   });
-
-async function repairCopiedLineups(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
-  const copies = await sql<{ copied_concert_id: string; concert_id: string; from_user_id: string }>`
-    select copied_concert_id, concert_id, from_user_id
-    from concert_tags
-    where status = 'accepted' and to_user_id = ${userId} and copied_concert_id is not null
-  `;
-  for (const copy of copies) {
-    const source = await sql<{ lineup: { artistId?: string }[] | null }>`
-      select lineup from concerts where user_id = ${copy.from_user_id} and id = ${copy.concert_id} limit 1
-    `;
-    const slots = Array.isArray(source[0]?.lineup) ? source[0]!.lineup! : [];
-    if (!slots.length) continue;
-    const mapped = [];
-    for (const slot of slots) {
-      const rows = await sql<{ name: string; country: string | null }>`
-        select name, country from artists where user_id = ${copy.from_user_id} and id = ${slot.artistId ?? ""} limit 1
-      `;
-      if (!rows[0]) continue;
-      mapped.push({ ...slot, artistId: artistKey(rows[0].name, rows[0].country) });
-    }
-    if (mapped.length) {
-      await sql`update concerts set lineup = ${JSON.stringify(mapped)}::jsonb where user_id = ${userId} and id = ${copy.copied_concert_id}`;
-    }
-  }
-}
