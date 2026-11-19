@@ -15,7 +15,7 @@ import { showsLabel } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 import { resizeImageFile } from "@/lib/image-file";
 import { moderateImage } from "@/lib/moderate-image";
-import { originCountry } from "@/lib/stats";
+import { eventKey, originCountry } from "@/lib/stats";
 import { useArchive } from "@/lib/store";
 import { artistKey } from "@/lib/utils";
 import type { Artist } from "@/lib/types";
@@ -56,7 +56,7 @@ function ArtistDetail() {
     const key = eventKey(concert);
     const existing = merged.get(key);
     if (!existing) {
-      merged.set(key, concert);
+      merged.set(key, { ...concert, lineup: [...concert.lineup] });
       continue;
     }
     const seen = new Set(existing.lineup.map((slot) => slot.artistId));
